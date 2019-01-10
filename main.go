@@ -51,6 +51,20 @@ var global_win_h int32
 //TODO: https://austburn.me/blog/go-profile.html  // IMPORANT!
 //TODO: https://segment.com/blog/allocation-efficiency-in-high-performance-go-services/
 
+//TODO: https://motion-express.com/blog/organizing-a-go-project 
+
+type Texture struct {
+    width  int
+    height int
+    texture *sdl.Texture
+}
+
+type Font struct {
+    size int
+    name string
+    data *ttf.Font
+}
+
 func main() {
     // PROFILING SNIPPET
     flag.Parse()
@@ -84,6 +98,7 @@ func main() {
     }
     defer window.Destroy()
 
+    // NOTE: I've heard that PRESENTVSYNC caps FPS
     renderer, err := sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED | sdl.RENDERER_PRESENTVSYNC)
     if err != nil {
         panic(err)
@@ -133,23 +148,34 @@ func main() {
     }
 
     var ttf_font_list []string
-
-    fmt.Println("****** FONTS ******")
     for _, f := range file_names {
         if strings.Contains(f.Name(), ".ttf") {
-            fmt.Println(f.Name())
             ttf_font_list = append(ttf_font_list, f.Name())
         }
     }
-    fmt.Println("-------------------")
+
+    allfonts := make([]Font, len(ttf_font_list))
 
     fmt.Println(ttf_font_list)
 
     font = load_font("Inconsolata-Regular.ttf", TTF_FONT_SIZE)
+	// NOTE: maybe I should font = all_fonts[...]
+	// and just interate over font = all_fonts[...]
+	// so that I don't have to do extra allocations
+	// basically we would keep them all in memory at all times
 
+	for index, element := range ttf_font_list {
+		// TODO: new_font(&Font[index])
+		// TODO: close_fonts(&[]Font)
+		allfonts[index].data = load_font(element, TTF_FONT_SIZE)
+		allfonts[index].name = element
+		allfonts[index].size = TTF_FONT_SIZE
+		fmt.Printf("[debug] ~> %#v\n", allfonts[index])
+		defer allfonts[index].data.Close() // @TEMPORARY
+	}
     //TODO: @FIND_USE_CASE: //font = reload_font(font, "Opensans-Bold.ttf", TTF_FONT_SIZE)
-
     //TODO: @NOT_IMPLEMENTED: I should be able to dynamically load font related functinos on demand
+
     // ----
     //var char rune = 0x41
     //fmt.Println(font.GlyphMetrics(char))
@@ -160,7 +186,7 @@ func main() {
     //font.SetKerning(true)
 
     var ttf_textures []*sdl.Texture
-    var ttf_texture_rects []*sdl.Rect
+    var ttf_texture_rects []*sdl.Rect // this should be [][]*sdl.Rect
 
     // TODO: @SLOW: Make it better!
     // I should try using a texture per line, instead of a texture
@@ -180,28 +206,6 @@ func main() {
     //////////////////////////
     // CMD_CONSOLE_STUFF
     //////////////////////////
-
-    //type CmdConsole struct {
-    //    win_h int32
-    //    ascii_text string
-    //    bg_color sdl.Color
-    //    bg_rect *sdl.Rect
-    //    ascii_text_ttf_rect *sdl.Rect
-    //    cursor_block *sdl.Rect
-    //    texture *sdl.Texture
-    //    cursor_move_left bool
-    //    text_input_buffer bytes.Buffer
-    //    command_history bytes.Buffer
-    //    ... -> ttf_w, ttf_h, letter_w, letter_h ...
-    //}
-
-    // CmdConsole.update()
-    // CmdConsole.draw()
-
-    //type CursorBlock struct {
-    //    move_left bool
-    //    bg_rect sdl.Rect
-    //}
 
     cmd_win_h := int32(18)
     show_cmd_console_rect := false
@@ -245,6 +249,7 @@ func main() {
     move_x  := 0
     move_y  := 0
     x_adder := 0
+    add_nl := false
     space_x, _ := get_font_size_in_w_h(font, " ")
     for index, str := range test_strings {
         ix, iy := get_font_size_in_w_h(font, str)
@@ -255,9 +260,20 @@ func main() {
             // TODO: Since the line is bigger than allowed, we'll have to "wrap"
             // global_win_w, global_win_h
             println("MAX_LINE_LEN diff:", MAX_LINE_LEN-(x_adder), (x_adder))
+            move_y += font.LineSkip()
+            move_x = 0
+            add_nl = true
+            println(len(test_text))
+            println(test_text[0:len(test_text)-(-1 * (MAX_LINE_LEN - x_adder))])
+            // create a new texture line here.
+            // new_texture_line := make_ttf_texture(renderer, font, test_text, clor)
         }
         test_rects[index] = sdl.Rect{int32(move_x), int32(move_y), int32(ix), int32(iy)}
-        move_x += (ix + space_x)
+        if !add_nl {
+            move_x += (ix + space_x)
+        } else {
+            add_nl = false
+        }
     }
     // TEST RENDERING TTF LINE 
 
@@ -304,7 +320,7 @@ func main() {
                             fmt.Printf("tx: %d ty: %d\n", tx, ty)
 
                             if global_win_w <= int32(tx) {
-                                println("We have to WRAP!")
+                                println("We have to implement WRAP!")
                                 wrap_line = true
                             } else {
                                 wrap_line = false
@@ -865,6 +881,7 @@ func generate_and_populate_ttf_textures_and_rects(r *sdl.Renderer, string_tokens
     return ttf_textures, ttf_texture_rects
 }
 
+// @RENAME: get_text_size_in_wh or something
 func get_font_size_in_w_h(font *ttf.Font, chars string) (int, int) {
     var err error
     line_w := 0
