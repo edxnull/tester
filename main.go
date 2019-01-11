@@ -7,6 +7,7 @@ import (
     "time"
     "flag"
     "bytes"
+	"errors"
     "reflect"
     "strings"
     "runtime"
@@ -54,15 +55,25 @@ var global_win_h int32
 //TODO: https://motion-express.com/blog/organizing-a-go-project 
 
 type Texture struct {
-    width  int
-    height int
-    texture *sdl.Texture
+    width  int32
+    height int32
+    data *sdl.Texture
 }
 
 type Font struct {
     size int
     name string
     data *ttf.Font
+}
+
+type Line struct { // should probably add Texture struct here
+    width int32
+    height int32
+    text string
+    color sdl.Color
+    texture Texture
+    bg_rect sdl.Rect
+    word_rects []sdl.Rect
 }
 
 func main() {
@@ -159,6 +170,7 @@ func main() {
     fmt.Println(ttf_font_list)
 
     font = load_font("Inconsolata-Regular.ttf", TTF_FONT_SIZE)
+
 	// NOTE: maybe I should font = all_fonts[...]
 	// and just interate over font = all_fonts[...]
 	// so that I don't have to do extra allocations
@@ -171,8 +183,11 @@ func main() {
 		allfonts[index].name = element
 		allfonts[index].size = TTF_FONT_SIZE
 		fmt.Printf("[debug] ~> %#v\n", allfonts[index])
-		defer allfonts[index].data.Close() // @TEMPORARY
+		defer allfonts[index].data.Close() // @TEMPORARY HACK
 	}
+
+    // font = allfonts[1].data
+
     //TODO: @FIND_USE_CASE: //font = reload_font(font, "Opensans-Bold.ttf", TTF_FONT_SIZE)
     //TODO: @NOT_IMPLEMENTED: I should be able to dynamically load font related functinos on demand
 
@@ -221,9 +236,9 @@ func main() {
 
     cmd_console_ttf_texture = make_ttf_texture(renderer, font, cmd_console_test_str, cmd_rand_color)
 
-    cmd_console_ttf_w, cmd_console_ttf_h := get_font_size_in_w_h(font, cmd_console_test_str)
+    cmd_console_ttf_w, cmd_console_ttf_h := get_text_size(font, cmd_console_test_str)
 
-    ttf_letter_w, ttf_letter_h := get_font_size_in_w_h(font, "A") // "A" is just a random letter for our usecase
+    ttf_letter_w, ttf_letter_h := get_text_size(font, "A") // "A" is just a random letter for our usecase
 
     cmd_console_ttf_rect     := sdl.Rect{0, WIN_H-cmd_win_h, int32(cmd_console_ttf_w), int32(cmd_console_ttf_h)}
     cmd_console_rect         := sdl.Rect{0, WIN_H-cmd_win_h, WIN_W, int32(cmd_console_ttf_h)}
@@ -239,9 +254,27 @@ func main() {
     test_strings := strings.Split(test_text, " ")
     clr := sdl.Color{0, 0, 0, 0}
     test_line_texture := make_ttf_texture(renderer, font, test_text, clr)
-    tx, ty := get_font_size_in_w_h(font, test_text)
+    tx, ty := get_text_size(font, test_text)
     test_line_rect := sdl.Rect{0, 0, int32(tx), int32(ty)}
     defer test_line_texture.Destroy()
+
+    // type Line test
+    // ....
+    line := Line{}
+    line.text = "Another type Line struct for our testing purposes. That's all, folks"
+    line.color = sdl.Color{0, 0, 0, 0}
+
+    new_ttf_texture_line(renderer, font, &line)
+
+    defer line.texture.data.Destroy()
+    fmt.Printf("%#v\n", line)
+
+    //newline := Line{}
+	//new_ttf_texture_line(renderer, font, &newline)
+    //fmt.Printf("%#v\n", newline)
+
+    // ....
+    // type Line test
 
     test_rects := make([]sdl.Rect, len(test_strings))
     test_mouse_over := make([]bool, len(test_strings))
@@ -250,9 +283,9 @@ func main() {
     move_y  := 0
     x_adder := 0
     add_nl := false
-    space_x, _ := get_font_size_in_w_h(font, " ")
+    space_x, _ := get_text_size(font, " ")
     for index, str := range test_strings {
-        ix, iy := get_font_size_in_w_h(font, str)
+        ix, iy := get_text_size(font, str)
         x_adder = move_x + ix
         if (x_adder) > MAX_LINE_LEN {
             // TODO: MAX_LINE_LEN here should, in fact, be the global (window_size x and y)
@@ -379,9 +412,9 @@ func main() {
                         cmd_console_ttf_texture.Destroy()
                         cmd_console_ttf_texture = make_ttf_texture(renderer, font, cmd_text_buffer.String(), test_rand_color)
 
-                        temp_w, temp_h := get_font_size_in_w_h(font, cmd_text_buffer.String())
+                        temp_w, temp_h := get_text_size(font, cmd_text_buffer.String())
 
-                        curr_char_w, _ = get_font_size_in_w_h(font, input_char)
+                        curr_char_w, _ = get_text_size(font, input_char)
 
                         cmd_console_ttf_rect.W = int32(temp_w)
                         cmd_console_ttf_rect.H = int32(temp_h)
@@ -403,10 +436,10 @@ func main() {
                                     cmd_console_ttf_texture.Destroy()
                                     cmd_console_ttf_texture = make_ttf_texture(renderer, font, temp_string, cmd_rand_color)
 
-                                    temp_w, temp_h := get_font_size_in_w_h(font, cmd_text_buffer.String())
+                                    temp_w, temp_h := get_text_size(font, cmd_text_buffer.String())
 
                                     if len(temp_string) != 0 {
-                                        curr_char_w, _ = get_font_size_in_w_h(font, string(temp_string[len(temp_string)-1]))
+                                        curr_char_w, _ = get_text_size(font, string(temp_string[len(temp_string)-1]))
                                         cmd_console_cursor_block.X -= int32(curr_char_w)
 
                                         cmd_console_ttf_rect.W = int32(temp_w)
@@ -447,10 +480,10 @@ func main() {
                                                 cmd_console_ttf_texture.Destroy()
                                                 cmd_console_ttf_texture = make_ttf_texture(renderer, font, temp_string, cmd_rand_color)
 
-                                                temp_w, temp_h := get_font_size_in_w_h(font, cmd_text_buffer.String())
+                                                temp_w, temp_h := get_text_size(font, cmd_text_buffer.String())
 
                                                 if len(temp_string) != 0 {
-                                                    curr_char_w, _ = get_font_size_in_w_h(font, string(temp_string[len(temp_string)-1]))
+                                                    curr_char_w, _ = get_text_size(font, string(temp_string[len(temp_string)-1]))
                                                     cmd_console_cursor_block.X -= int32(curr_char_w)
 
                                                     cmd_console_ttf_rect.W = int32(temp_w)
@@ -468,11 +501,11 @@ func main() {
                                         //       I'm just not sure which data structure to use, at the moment.
                                         if show_cmd_console_rect {
                                             if len(cmd_text_buffer.String()) > 0 {
-                                                fmt.Printf("DEBUG>>> PRE-Reset Buffer len %d \n", len(cmd_text_buffer.String()))
+                                                fmt.Printf("[debug] PRE-Reset Buffer len %d \n", len(cmd_text_buffer.String()))
                                                 cmd_text_buffer.Reset()
                                                 cmd_console_ttf_texture.Destroy()
                                                 cmd_console_cursor_block.X = 0
-                                                fmt.Printf(">>> Reset Buffer len %d \n", len(cmd_text_buffer.String()))
+                                                fmt.Printf("[debug] Reset Buffer len %d \n", len(cmd_text_buffer.String()))
                                             }
                                         }
                                         break
@@ -494,6 +527,12 @@ func main() {
                     if t.Keysym.Sym == sdl.K_DOWN {
                         move_text_down = true
                     }
+                    if t.Keysym.Sym == sdl.K_LEFT {
+                        println("SHOULD SCROLL FONT back")
+                    }
+                    if t.Keysym.Sym == sdl.K_RIGHT {
+                        println("SHOULD SCROLL FONT forward")
+                    }
                     break
                 default:
                     continue
@@ -505,6 +544,12 @@ func main() {
         // TODO: this works, but we still have to make sure we can do mouse interaction
         // NOTE: for some reason our text is being rendered as bold
         // @TEST RENDERING TTF LINE
+
+        renderer.SetDrawColor(255, 10, 100, uint8(cmd_console_anim_alpha))
+        renderer.FillRect(&line.bg_rect)
+        renderer.DrawRect(&line.bg_rect)
+        renderer.Copy(line.texture.data, nil, &line.bg_rect)
+
         for index := range test_rects {
             if test_mouse_over[index] {
                 renderer.SetDrawColor(255, 10, 100, uint8(cmd_console_anim_alpha))
@@ -675,10 +720,8 @@ func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color
     var texture *sdl.Texture
     var err error
 
-    // NOTE: Temporary hack!
-    if len(text) <= 0 {
-        return nil
-    }
+    // NOTE: @TEMPORARY HACK
+	assert_if(len(text) <= 0, "text: len(text) <= 0")
 
     if surface, err = font.RenderUTF8Blended(text, color); err != nil {
         panic(err)
@@ -751,7 +794,7 @@ func generate_all_textures(r *sdl.Renderer, string_tokens []string, font *ttf.Fo
         //ttf_textures = append(ttf_textures, solid_ttf_texture)
         ttf_textures[ttf_index] = solid_ttf_texture
 
-        ttf_w, ttf_h := get_font_size_in_w_h(font, element)
+        ttf_w, ttf_h := get_text_size(font, element)
         font_line_skip := font.LineSkip()
 
         // TODO: we also need to handle tabs, vtabs and carriage return... maybe others as well?
@@ -792,16 +835,6 @@ func generate_all_textures(r *sdl.Renderer, string_tokens []string, font *ttf.Fo
     return ttf_textures, ttf_texture_rects
 }
 
-
-// TODO: should we combine []*sdl.Texture and []*sdl.Rect into a struct?
-
-// TODO: we need to be able to reload all of this data on demand.
-// ttf_texture_rects should probably go into some kind of "cache" array
-// where we have ARRAY[0] => ttf_texture_rects[0..n]
-//               ARRAY[1] => ttf_texture_rects[0..n]
-//               ETC...
-// NOTE: maybe we should use a *[]string here?
-
 func generate_and_populate_ttf_textures_and_rects(r *sdl.Renderer, string_tokens []string, font *ttf.Font) ([]*sdl.Texture, []*sdl.Rect) {
     var ttf_textures []*sdl.Texture
     var ttf_texture_rects []*sdl.Rect
@@ -841,7 +874,7 @@ func generate_and_populate_ttf_textures_and_rects(r *sdl.Renderer, string_tokens
 
             ttf_textures = append(ttf_textures, solid_ttf_texture)
 
-            ttf_w, ttf_h := get_font_size_in_w_h(font, element)
+            ttf_w, ttf_h := get_text_size(font, element)
             font_line_skip := font.LineSkip()
 
             // TODO: we also need to handle tabs, vtabs and carriage return... maybe others as well?
@@ -882,7 +915,7 @@ func generate_and_populate_ttf_textures_and_rects(r *sdl.Renderer, string_tokens
 }
 
 // @RENAME: get_text_size_in_wh or something
-func get_font_size_in_w_h(font *ttf.Font, chars string) (int, int) {
+func get_text_size(font *ttf.Font, chars string) (int, int) {
     var err error
     line_w := 0
     line_h := 0
@@ -893,4 +926,27 @@ func get_font_size_in_w_h(font *ttf.Font, chars string) (int, int) {
     }
 
     return line_w, line_h
+}
+
+// @TEMPORARY: this is just a wrapper at the moment
+func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line) {
+	assert_if(len(line.text) == 0, "line.text was empty")
+	assert_if(font == nil, "font was nil")
+
+    line.texture.data = make_ttf_texture(rend, font, line.text, line.color)
+    str_array := strings.Split(line.text, " ")
+    line.word_rects = make([]sdl.Rect, len(str_array))
+    tw, th := get_text_size(font, line.text)
+    line.texture.width = int32(tw)
+    line.texture.height = int32(th)
+    skipline := int32(font.LineSkip()) // @TEMPORARY
+    line.bg_rect = sdl.Rect{0, skipline, line.texture.width, line.texture.height}
+}
+
+func assert_if(cond bool, error_msg string) {
+	if (cond) {
+		println("")
+		err := errors.New(error_msg)
+		panic(err)
+	}
 }
