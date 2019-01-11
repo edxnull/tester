@@ -142,6 +142,8 @@ func main() {
 
     string_tokens := strings.Split(string(file_data), " ")
 
+    line_tokens := strings.Split(string(file_data), "\n") // @WIP
+
     fmt.Printf("number of tokens: %d\n", len(string_tokens))
 
     // ------ TEXT_MANIP END
@@ -184,7 +186,7 @@ func main() {
 		allfonts[index].name = element
 		allfonts[index].size = TTF_FONT_SIZE
 		fmt.Printf("[debug] ~> %#v\n", allfonts[index])
-		defer allfonts[index].data.Close() // @TEMPORARY HACK
+		defer allfonts[index].data.Close() // @TEMPORARY HACK @SLOW
 	}
 
     // font = allfonts[1].data
@@ -214,6 +216,10 @@ func main() {
     }
 
     fmt.Printf("length is: %d, size is: %d\n", len(ttf_textures), reflect.TypeOf(ttf_textures).Size())
+
+    //////////////////////////////////////////////////
+    // new_generate_and_populate_lines()
+    //////////////////////////////////////////////////
 
     //////////////////////////
     // CMD_CONSOLE_STUFF
@@ -767,6 +773,22 @@ func generate_all_textures(r *sdl.Renderer, string_tokens []string, font *ttf.Fo
     return ttf_textures, ttf_texture_rects
 }
 
+// @WIP
+func new_generate_and_populate_lines(r *sdl.Renderer, tokens *[]string, font *ttf.Font,
+                                           textures *[]sdl.Texture, rects *[]sdl.Rect) {
+    //ttf_index := 0
+    //temp_x := 0
+    //temp_y := 0
+    //add_new_line := false
+    //already_added_new_line := false
+    //esc_seq_map := map[string]int{"nl": 0, "tab": 0, "vtab": 0, "cret": 0}
+
+    //for _, element := range string_tokens {
+        // generate_new_line_rects => [] [] [] [] []
+        // new_ttf_texture_line() => [lasjdlajsdlkajsd]
+    //}
+}
+
 func generate_and_populate_ttf_textures_and_rects(r *sdl.Renderer, string_tokens []string, font *ttf.Font) ([]*sdl.Texture, []*sdl.Rect) {
     var ttf_textures []*sdl.Texture
     var ttf_texture_rects []*sdl.Rect
@@ -860,6 +882,7 @@ func get_text_size(font *ttf.Font, chars string) (int, int) {
 }
 
 // @TEMPORARY: this is just a wrapper at the moment
+// I will probably have to pass line_skip as arg
 func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line) {
 	assert_if(len(line.text) == 0, "line.text was empty")
 	assert_if(font == nil, "font was nil")
@@ -876,7 +899,6 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line) {
     line.bg_rect = sdl.Rect{0, 0, line.texture.width, line.texture.height}
 }
 
-// NOTE: font *ttf.Font as args?
 func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string) {
     move_x  := 0
     move_y  := 0
@@ -887,10 +909,13 @@ func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string
         ix, iy := get_text_size(font, str)
         //x_adder = move_x + ix
         //if (x_adder) > MAX_LINE_LEN {
+
             // TODO: MAX_LINE_LEN here should, in fact, be the global (window_size x and y)
             // I would have to set proper line positioning and with in order for it to work.
+
             // TODO: Since the line is bigger than allowed, we'll have to "wrap"
             // global_win_w, global_win_h
+
             //println("MAX_LINE_LEN diff:", MAX_LINE_LEN-(x_adder), (x_adder))
             //move_y += font.LineSkip()
             //move_x = 0
