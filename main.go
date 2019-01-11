@@ -914,7 +914,6 @@ func generate_and_populate_ttf_textures_and_rects(r *sdl.Renderer, string_tokens
     return ttf_textures, ttf_texture_rects
 }
 
-// @RENAME: get_text_size_in_wh or something
 func get_text_size(font *ttf.Font, chars string) (int, int) {
     var err error
     line_w := 0
@@ -934,11 +933,13 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line) {
 	assert_if(font == nil, "font was nil")
 
     line.texture.data = make_ttf_texture(rend, font, line.text, line.color)
-    str_array := strings.Split(line.text, " ")
-    line.word_rects = make([]sdl.Rect, len(str_array))
+
+    line.word_rects = make([]sdl.Rect, len(strings.Split(line.text, " ")))
+
     tw, th := get_text_size(font, line.text)
     line.texture.width = int32(tw)
     line.texture.height = int32(th)
+
     skipline := int32(font.LineSkip()) // @TEMPORARY
     line.bg_rect = sdl.Rect{0, skipline, line.texture.width, line.texture.height}
 }
