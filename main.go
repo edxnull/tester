@@ -31,6 +31,7 @@ const TTF_FONT_SIZE int = 13
 const MAX_TOKENS int = 20
 const MAX_LINES  int = 18
 const MAX_TEXT_WIDTH int32 = 100
+const MAX_LINE_LEN int = 413 // @TEMPORARY
 
 const TEXT_SCROLL_SPEED int32 = 5
 
@@ -48,11 +49,11 @@ var global_win_h int32
 //TODO: https://www.ardanlabs.com/blog/2018/01/escape-analysis-flaws.html
 //TODO: We need to make sure we render 1 page as a texture, otherwise we are just wasting a lot of
 //      everything.
-
 //TODO: https://austburn.me/blog/go-profile.html  // IMPORANT!
 //TODO: https://segment.com/blog/allocation-efficiency-in-high-performance-go-services/
-
 //TODO: https://motion-express.com/blog/organizing-a-go-project 
+//TODO: https://justinas.org/best-practices-for-errors-in-go 
+//TODO: https://www.joeshaw.org/dont-defer-close-on-writable-files/
 
 type Texture struct {
     width  int32
@@ -201,20 +202,16 @@ func main() {
     //font.SetKerning(true)
 
     var ttf_textures []*sdl.Texture
-    var ttf_texture_rects []*sdl.Rect // this should be [][]*sdl.Rect
+    var ttf_texture_rects []*sdl.Rect
 
     // TODO: @SLOW: Make it better!
-    // I should try using a texture per line, instead of a texture
-    // per word basis.
     ttf_textures, ttf_texture_rects = generate_and_populate_ttf_textures_and_rects(renderer, string_tokens, font)
 
-    //var foobar_t []*sdl.Texture
-    //var foobar_r []*sdl.Rect
+    var ttf_texture_TEMP []sdl.Rect // TODO: TEMP SOLUTION!!!
 
-    //// TODO: SUPER SLOOOOW! Make it bettter!
-    //foobar_t, foobar_r = generate_all_textures(renderer, string_tokens, font)
-
-    //fmt.Println(foobar_t[0], foobar_r[0])
+    for _, element := range ttf_texture_rects {
+        ttf_texture_TEMP = append(ttf_texture_TEMP, *element)
+    }
 
     fmt.Printf("length is: %d, size is: %d\n", len(ttf_textures), reflect.TypeOf(ttf_textures).Size())
 
@@ -249,13 +246,12 @@ func main() {
     //////////////////////////
 
     // TEST RENDERING TTF LINE 
-    MAX_LINE_LEN := 400 //actual: 413
     test_text := "This is some random boonkers text that we are dealing with."
-    test_strings := strings.Split(test_text, " ")
+    //test_strings := strings.Split(test_text, " ")
     clr := sdl.Color{0, 0, 0, 0}
     test_line_texture := make_ttf_texture(renderer, font, test_text, clr)
     tx, ty := get_text_size(font, test_text)
-    test_line_rect := sdl.Rect{0, 0, int32(tx), int32(ty)}
+    //test_line_rect := sdl.Rect{0, 0, int32(tx), int32(ty)}
     defer test_line_texture.Destroy()
 
     // type Line test
@@ -265,49 +261,15 @@ func main() {
     line.color = sdl.Color{0, 0, 0, 0}
 
     new_ttf_texture_line(renderer, font, &line)
-
     defer line.texture.data.Destroy()
-    fmt.Printf("%#v\n", line)
 
-    //newline := Line{}
-	//new_ttf_texture_line(renderer, font, &newline)
-    //fmt.Printf("%#v\n", newline)
+    str_arr := strings.Split(line.text, " ")
+    //test_rects := make([]sdl.Rect, len(str_arr))
+    test_mouse_over := make([]bool, len(str_arr))
 
-    // ....
-    // type Line test
+     generate_new_line_rects(&line.word_rects, font, &str_arr)
+    //generate_new_line_rects(&test_rects, font, &test_strings)
 
-    test_rects := make([]sdl.Rect, len(test_strings))
-    test_mouse_over := make([]bool, len(test_strings))
-
-    move_x  := 0
-    move_y  := 0
-    x_adder := 0
-    add_nl := false
-    space_x, _ := get_text_size(font, " ")
-    for index, str := range test_strings {
-        ix, iy := get_text_size(font, str)
-        x_adder = move_x + ix
-        if (x_adder) > MAX_LINE_LEN {
-            // TODO: MAX_LINE_LEN here should, in fact, be the global (window_size x and y)
-            // I would have to set proper line positioning and with in order for it to work.
-            // TODO: Since the line is bigger than allowed, we'll have to "wrap"
-            // global_win_w, global_win_h
-            println("MAX_LINE_LEN diff:", MAX_LINE_LEN-(x_adder), (x_adder))
-            move_y += font.LineSkip()
-            move_x = 0
-            add_nl = true
-            println(len(test_text))
-            println(test_text[0:len(test_text)-(-1 * (MAX_LINE_LEN - x_adder))])
-            // create a new texture line here.
-            // new_texture_line := make_ttf_texture(renderer, font, test_text, clor)
-        }
-        test_rects[index] = sdl.Rect{int32(move_x), int32(move_y), int32(ix), int32(iy)}
-        if !add_nl {
-            move_x += (ix + space_x)
-        } else {
-            add_nl = false
-        }
-    }
     // TEST RENDERING TTF LINE 
 
     renderer_info, err := renderer.GetInfo()
@@ -365,33 +327,8 @@ func main() {
                     break
                 case *sdl.MouseMotionEvent:
                     //fmt.Printf("~> %d %d\n", t.X, t.Y)
-                    // TODO: @TEMPORARY @REFACTOR
-                    for index := range ttf_textures {
-                        mx_gt_rx :=    t.X > ttf_texture_rects[index].X
-                        mx_lt_rx_rw := t.X < ttf_texture_rects[index].X + ttf_texture_rects[index].W
-                        my_gt_ry :=    t.Y > ttf_texture_rects[index].Y
-                        my_lt_ry_rh := t.Y < ttf_texture_rects[index].Y + ttf_texture_rects[index].H
-
-                        if ((mx_gt_rx && mx_lt_rx_rw) && (my_gt_ry && my_lt_ry_rh)) {
-                            mouseover_word_texture[index] = true
-                        } else {
-                            mouseover_word_texture[index] = false
-                        }
-                    }
-
-                    // TODO: @TEMPORARY @REFACTOR
-                    for index := range test_rects {
-                        mx_gt_rx :=    t.X > test_rects[index].X
-                        mx_lt_rx_rw := t.X < test_rects[index].X + test_rects[index].W
-                        my_gt_ry :=    t.Y > test_rects[index].Y
-                        my_lt_ry_rh := t.Y < test_rects[index].Y + test_rects[index].H
-
-                        if ((mx_gt_rx && mx_lt_rx_rw) && (my_gt_ry && my_lt_ry_rh)) {
-                            test_mouse_over[index] = true
-                        } else {
-                            test_mouse_over[index] = false
-                        }
-                    }
+                    mouse_over_words(t, &ttf_texture_TEMP, &mouseover_word_texture)
+                    mouse_over_words(t, &line.word_rects, &test_mouse_over)
                     break
                 case *sdl.MouseButtonEvent:
                     switch t.Type {
@@ -545,34 +482,29 @@ func main() {
         // NOTE: for some reason our text is being rendered as bold
         // @TEST RENDERING TTF LINE
 
-        renderer.SetDrawColor(255, 10, 100, uint8(cmd_console_anim_alpha))
-        renderer.FillRect(&line.bg_rect)
-        renderer.DrawRect(&line.bg_rect)
-        renderer.Copy(line.texture.data, nil, &line.bg_rect)
-
-        for index := range test_rects {
+        for index := range line.word_rects {
             if test_mouse_over[index] {
                 renderer.SetDrawColor(255, 10, 100, uint8(cmd_console_anim_alpha))
-                renderer.FillRect(&test_rects[index])
-                renderer.DrawRect(&test_rects[index])
+                renderer.FillRect(&line.word_rects[index])
+                renderer.DrawRect(&line.word_rects[index])
                 if index == 0 {
-                    renderer.Copy(test_line_texture, nil, &test_line_rect)
+                    renderer.Copy(line.texture.data, nil, &line.bg_rect)
                 }
             } else {
                 if index == 0 {
                     renderer.SetDrawColor(255, 255, 255, 0)
-                    renderer.FillRect(&test_rects[index])
-                    renderer.DrawRect(&test_rects[index])
-                    renderer.Copy(test_line_texture, nil, &test_line_rect)
+                    renderer.FillRect(&line.word_rects[index])
+                    renderer.DrawRect(&line.word_rects[index])
+                    renderer.Copy(line.texture.data, nil, &line.bg_rect)
                 }
             }
         }
 
         if wrap_line {
             renderer.SetDrawColor(100, 255, 255, 100)
-            renderer.FillRect(&test_line_rect)
-            renderer.DrawRect(&test_line_rect)
-            renderer.Copy(test_line_texture, nil, &test_line_rect)
+            renderer.FillRect(&line.bg_rect)
+            renderer.DrawRect(&line.bg_rect)
+            renderer.Copy(line.texture.data, nil, &line.bg_rect)
         }
         // @TEST RENDERING TTF LINE
 
@@ -940,10 +872,60 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line) {
     line.texture.width = int32(tw)
     line.texture.height = int32(th)
 
-    skipline := int32(font.LineSkip()) // @TEMPORARY
-    line.bg_rect = sdl.Rect{0, skipline, line.texture.width, line.texture.height}
+    //skipline := int32(font.LineSkip()) // @TEMPORARY HACK
+    line.bg_rect = sdl.Rect{0, 0, line.texture.width, line.texture.height}
 }
 
+// NOTE: font *ttf.Font as args?
+func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string) {
+    move_x  := 0
+    move_y  := 0
+    //x_adder := 0
+    //add_nl := false
+    space_x, _ := get_text_size(font, " ")
+    for index, str := range *tokens {
+        ix, iy := get_text_size(font, str)
+        //x_adder = move_x + ix
+        //if (x_adder) > MAX_LINE_LEN {
+            // TODO: MAX_LINE_LEN here should, in fact, be the global (window_size x and y)
+            // I would have to set proper line positioning and with in order for it to work.
+            // TODO: Since the line is bigger than allowed, we'll have to "wrap"
+            // global_win_w, global_win_h
+            //println("MAX_LINE_LEN diff:", MAX_LINE_LEN-(x_adder), (x_adder))
+            //move_y += font.LineSkip()
+            //move_x = 0
+            //add_nl = true
+            //println(len(*tokens))
+            //println((*tokens)[0:len(*tokens)-(-1 * (MAX_LINE_LEN - x_adder))])
+            // create a new texture line here.
+            // new_texture_line := make_ttf_texture(renderer, font, tokens, clor)
+        //}
+        (*rects)[index] = sdl.Rect{int32(move_x), int32(move_y), int32(ix), int32(iy)}
+        //if !add_nl {
+        move_x += (ix + space_x)
+        //} else {
+        //    add_nl = false
+        //}
+    }
+}
+
+func mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.Rect, mouse_over *[]bool) {
+    for index := range *rects {
+        mx_gt_rx :=    event.X > (*rects)[index].X
+        mx_lt_rx_rw := event.X < (*rects)[index].X + (*rects)[index].W
+        my_gt_ry :=    event.Y > (*rects)[index].Y
+        my_lt_ry_rh := event.Y < (*rects)[index].Y + (*rects)[index].H
+
+        if ((mx_gt_rx && mx_lt_rx_rw) && (my_gt_ry && my_lt_ry_rh)) {
+            (*mouse_over)[index] = true
+        } else {
+            (*mouse_over)[index] = false
+        }
+    }
+}
+
+//NOTE: According to [go build -gcflags=-m main.go] this call has been inlined.
+//NOTE: It would be great to check if inlining calls are actually any good or note.
 func assert_if(cond bool, error_msg string) {
 	if (cond) {
 		println("")
