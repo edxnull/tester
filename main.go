@@ -207,18 +207,19 @@ func main() {
     // TODO: @SLOW: Make it better!
     ttf_textures, ttf_texture_rects = generate_and_populate_ttf_textures_and_rects(renderer, string_tokens, font)
 
-    var ttf_texture_TEMP []sdl.Rect // TODO: TEMP SOLUTION!!!
+    //var ttf_texture_TEMP []sdl.Rect // TODO: TEMP SOLUTION!!!
 
-    for _, element := range ttf_texture_rects {
-        ttf_texture_TEMP = append(ttf_texture_TEMP, *element)
-    }
+    //for _, element := range ttf_texture_rects {
+    //    ttf_texture_TEMP = append(ttf_texture_TEMP, *element)
+    //}
 
     fmt.Printf("length is: %d, size is: %d\n", len(ttf_textures), reflect.TypeOf(ttf_textures).Size())
 
     //////////////////////////////////////////////////
     // generate_and_populate_lines()
     line_tokens := strings.Split(string(file_data), "\n")
-    lines := generate_and_populate_lines(renderer, font, &line_tokens)
+
+    all_lines := generate_and_populate_lines(renderer, font, &line_tokens)
     //
     //////////////////////////////////////////////////
 
@@ -263,16 +264,16 @@ func main() {
 
     // type Line test
     // ....
-    line := Line{}
-    line.text = "Another type Line struct for our testing purposes. That's all, folks"
-    line.color = sdl.Color{0, 0, 0, 0}
+    //line := Line{}
+    //line.text = "Another type Line struct for our testing purposes. That's all, folks"
+    //line.color = sdl.Color{0, 0, 0, 0}
 
-    new_ttf_texture_line(renderer, font, &line)
-    defer line.texture.data.Destroy()
+    //new_ttf_texture_line(renderer, font, &line, 0)
+    //defer line.texture.data.Destroy()
 
-    str_arr := strings.Split(line.text, " ")
-    //test_rects := make([]sdl.Rect, len(str_arr))
-    test_mouse_over := make([]bool, len(str_arr))
+    //str_arr := strings.Split(line.text, " ")
+    ////test_rects := make([]sdl.Rect, len(str_arr))
+    //test_mouse_over := make([]bool, len(str_arr))
 
     //generate_new_line_rects(&line.word_rects, font, &str_arr)
     //generate_new_line_rects(&test_rects, font, &test_strings)
@@ -290,8 +291,8 @@ func main() {
     renderer.SetDrawBlendMode(sdl.BLENDMODE_BLEND)
 
     running := true
-    print_word := false
-    mouseover_word_texture := make([]bool, len(string_tokens))
+    //print_word := false
+    //mouseover_word_texture := make([]bool, len(string_tokens))
 
     fmt.Println("FONT_FIXED_WIDTH: ", font.FaceIsFixedWidth())
 
@@ -334,14 +335,14 @@ func main() {
                     break
                 case *sdl.MouseMotionEvent:
                     //fmt.Printf("~> %d %d\n", t.X, t.Y)
-                    mouse_over_words(t, &ttf_texture_TEMP, &mouseover_word_texture)
-                    mouse_over_words(t, &line.word_rects, &test_mouse_over)
+                    //mouse_over_words(t, &ttf_texture_TEMP, &mouseover_word_texture)
+                    //mouse_over_words(t, &line.word_rects, &test_mouse_over)
                     break
                 case *sdl.MouseButtonEvent:
                     switch t.Type {
                         case sdl.MOUSEBUTTONDOWN:
                         case sdl.MOUSEBUTTONUP:
-                            print_word = true
+                            //print_word = true
                             break
                         default:
                             break
@@ -488,30 +489,52 @@ func main() {
         // TODO: this works, but we still have to make sure we can do mouse interaction
         // NOTE: for some reason our text is being rendered as bold
         // @TEST RENDERING TTF LINE
-
-        for index := range line.word_rects {
-            if test_mouse_over[index] {
-                renderer.SetDrawColor(255, 10, 100, uint8(cmd_console_anim_alpha))
-                renderer.FillRect(&line.word_rects[index])
-                renderer.DrawRect(&line.word_rects[index])
-                if index == 0 {
-                    renderer.Copy(line.texture.data, nil, &line.bg_rect)
-                }
-            } else {
-                if index == 0 {
-                    renderer.SetDrawColor(255, 255, 255, 0)
-                    renderer.FillRect(&line.word_rects[index])
-                    renderer.DrawRect(&line.word_rects[index])
-                    renderer.Copy(line.texture.data, nil, &line.bg_rect)
-                }
+        for ln := range all_lines[0:18] {
+            for index := range all_lines[ln].word_rects {
+                renderer.SetDrawColor(100, 10, 100, uint8(cmd_console_anim_alpha))
+                renderer.FillRect(&all_lines[ln].word_rects[index])
+                renderer.DrawRect(&all_lines[ln].word_rects[index])
             }
+            renderer.Copy(all_lines[ln].texture.data, nil, &all_lines[ln].bg_rect)
         }
+
+        //for index := range all_lines[1].word_rects {
+        //    renderer.SetDrawColor(100, 10, 100, uint8(cmd_console_anim_alpha))
+        //    renderer.FillRect(&all_lines[1].word_rects[index])
+        //    renderer.DrawRect(&all_lines[1].word_rects[index])
+        //}
+        //renderer.Copy(all_lines[1].texture.data, nil, &all_lines[1].bg_rect)
+
+        //for index := range all_lines[2].word_rects {
+        //    renderer.SetDrawColor(100, 10, 100, uint8(cmd_console_anim_alpha))
+        //    renderer.FillRect(&all_lines[2].word_rects[index])
+        //    renderer.DrawRect(&all_lines[2].word_rects[index])
+        //}
+        //renderer.Copy(all_lines[2].texture.data, nil, &all_lines[2].bg_rect)
+
+        //for index := range line.word_rects {
+        //    if test_mouse_over[index] {
+        //        renderer.SetDrawColor(255, 10, 100, uint8(cmd_console_anim_alpha))
+        //        renderer.FillRect(&line.word_rects[index])
+        //        renderer.DrawRect(&line.word_rects[index])
+        //        if index == 0 {
+        //            renderer.Copy(line.texture.data, nil, &line.bg_rect)
+        //        }
+        //    } else {
+        //        if index == 0 {
+        //            renderer.SetDrawColor(255, 255, 255, 0)
+        //            renderer.FillRect(&line.word_rects[index])
+        //            renderer.DrawRect(&line.word_rects[index])
+        //            renderer.Copy(line.texture.data, nil, &line.bg_rect)
+        //        }
+        //    }
+        //}
 
         if wrap_line {
             renderer.SetDrawColor(100, 255, 255, 100)
-            renderer.FillRect(&line.bg_rect)
-            renderer.DrawRect(&line.bg_rect)
-            renderer.Copy(line.texture.data, nil, &line.bg_rect)
+            renderer.FillRect(&all_lines[0].bg_rect)
+            renderer.DrawRect(&all_lines[0].bg_rect)
+            renderer.Copy(all_lines[0].texture.data, nil, &all_lines[0].bg_rect)
         }
         // @TEST RENDERING TTF LINE
 
@@ -548,34 +571,34 @@ func main() {
         // DRAWING_CMD_CONSOLE
 
         //DRAW TEXT
-        for index := range ttf_textures {
-            if mouseover_word_texture[index] {
-                // TODO: we are not animating anymore
-                renderer.SetDrawColor(255, 0, 255, 100)
-                renderer.FillRect(ttf_texture_rects[index])
-                renderer.DrawRect(ttf_texture_rects[index])
-                renderer.Copy(ttf_textures[index], nil, ttf_texture_rects[index])
+        //for index := range ttf_textures {
+        //    if mouseover_word_texture[index] {
+        //        // TODO: we are not animating anymore
+        //        renderer.SetDrawColor(255, 0, 255, 100)
+        //        renderer.FillRect(ttf_texture_rects[index])
+        //        renderer.DrawRect(ttf_texture_rects[index])
+        //        renderer.Copy(ttf_textures[index], nil, ttf_texture_rects[index])
 
-                // NOTE
-                // using strings.TrimSpace just for debugging purposes
-                // there is no string_tokens array that would be cleaned up of all spaces
+        //        // NOTE
+        //        // using strings.TrimSpace just for debugging purposes
+        //        // there is no string_tokens array that would be cleaned up of all spaces
 
-                if print_word {
-                    fmt.Printf("%d, %#v\n", index, strings.TrimSpace(string_tokens[index]))
-                    print_word = false
-                }
+        //        if print_word {
+        //            fmt.Printf("%d, %#v\n", index, strings.TrimSpace(string_tokens[index]))
+        //            print_word = false
+        //        }
 
-                // NOTE
-                // should we break out of the loop
-                // and check if the index is the same as prev. index?
-                // so that we don't render over and over again???
-            } else {
-                renderer.SetDrawColor(255, 255, 255, 0)
-                renderer.FillRect(ttf_texture_rects[index])
-                renderer.DrawRect(ttf_texture_rects[index])
-                renderer.Copy(ttf_textures[index], nil, ttf_texture_rects[index])
-            }
-        }
+        //        // NOTE
+        //        // should we break out of the loop
+        //        // and check if the index is the same as prev. index?
+        //        // so that we don't render over and over again???
+        //    } else {
+        //        renderer.SetDrawColor(255, 255, 255, 0)
+        //        renderer.FillRect(ttf_texture_rects[index])
+        //        renderer.DrawRect(ttf_texture_rects[index])
+        //        renderer.Copy(ttf_textures[index], nil, ttf_texture_rects[index])
+        //    }
+        //}
 
         // -----------------
         // ANIMATIONS
@@ -609,7 +632,7 @@ func main() {
         ttf_textures[index].Destroy()
     }
 
-    destroy_lines(&lines) // @WIP
+    destroy_lines(&all_lines) // @WIP
 
     if cmd_console_ttf_texture != nil {
         println("The texture was not <nil>")
@@ -661,7 +684,6 @@ func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color
     var texture *sdl.Texture
     var err error
 
-    // NOTE: @TEMPORARY HACK
 	assert_if(len(text) <= 0, "text: len(text) <= 0")
 
     if surface, err = font.RenderUTF8Blended(text, color); err != nil {
@@ -793,7 +815,10 @@ func generate_and_populate_lines(renderer *sdl.Renderer, font *ttf.Font, tokens 
 
     for index, tk := range *tokens {
         all_lines[index].text = tk
-        new_ttf_texture_line(renderer, font, &all_lines[index]) // WE HAVE TO FREE
+        new_ttf_texture_line(renderer, font, &all_lines[index], int32(index)) // WE HAVE TO FREE
+        if index == 20 {
+            break
+        }
     }
     return all_lines
 }
@@ -892,7 +917,7 @@ func get_text_size(font *ttf.Font, chars string) (int, int) {
 
 // @TEMPORARY: this is just a wrapper at the moment
 // I will probably have to pass line_skip as arg
-func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line) {
+func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_nr int32) {
     // TODO: I also have to handle cases like '\r' and such with length of 1
 	assert_if(len(line.text) == 0, "line.text was empty")
 	assert_if(font == nil, "font was nil")
@@ -901,19 +926,24 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line) {
 
     text := strings.Split(line.text, " ")
     line.word_rects = make([]sdl.Rect, len(text))
-    generate_new_line_rects(&line.word_rects, font, &text)
 
     tw, th := get_text_size(font, line.text)
     line.texture.width = int32(tw)
     line.texture.height = int32(th)
 
-    //skipline := int32(font.LineSkip()) // @TEMPORARY HACK
-    line.bg_rect = sdl.Rect{0, 0, line.texture.width, line.texture.height}
+    skipline := int32(font.LineSkip()) // @TEMPORARY HACK
+    if (skip_nr > 0) {
+        skipline *= skip_nr
+    } else {
+        skipline = 0
+    }
+    generate_new_line_rects(&line.word_rects, font, &text, skip_nr)
+    line.bg_rect = sdl.Rect{0, skipline, line.texture.width, line.texture.height}
 }
 
-func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string) {
+func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string, skip_nr int32) {
     move_x  := 0
-    move_y  := 0
+    move_y  := skip_nr
     //x_adder := 0
     //add_nl := false
     space_x, _ := get_text_size(font, " ")
@@ -921,25 +951,26 @@ func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string
         ix, iy := get_text_size(font, str)
         //x_adder = move_x + ix
         //if (x_adder) > MAX_LINE_LEN {
-
-            // TODO: MAX_LINE_LEN here should, in fact, be the global (window_size x and y)
-            // I would have to set proper line positioning and with in order for it to work.
-
-            // TODO: Since the line is bigger than allowed, we'll have to "wrap"
-            // global_win_w, global_win_h
-
-            //println("MAX_LINE_LEN diff:", MAX_LINE_LEN-(x_adder), (x_adder))
-            //move_y += font.LineSkip()
-            //move_x = 0
-            //add_nl = true
-            //println(len(*tokens))
-            //println((*tokens)[0:len(*tokens)-(-1 * (MAX_LINE_LEN - x_adder))])
-            // create a new texture line here.
-            // new_texture_line := make_ttf_texture(renderer, font, tokens, clor)
+        //    // TODO: MAX_LINE_LEN here should, in fact, be the global (window_size x and y)
+        //    // I would have to set proper line positioning and with in order for it to work.
+        //    // TODO: Since the line is bigger than allowed, we'll have to "wrap"
+        //    // global_win_w, global_win_h
+        //    //println("MAX_LINE_LEN diff:", MAX_LINE_LEN-(x_adder), (x_adder))
+        //    move_y += font.LineSkip()
+        //    move_x = 0
+        //    add_nl = true
+        //    //println(len(*tokens))
+        //    //println((*tokens)[0:len(*tokens)-(-1 * (MAX_LINE_LEN - x_adder))])
+        //    // create a new texture line here.
+        //     //new_texture_line := make_ttf_texture(renderer, font, tokens, clor)
         //}
+        if index == 0 {
+            move_y *= int32(font.LineSkip())
+        }
         (*rects)[index] = sdl.Rect{int32(move_x), int32(move_y), int32(ix), int32(iy)}
-        //if !add_nl {
         move_x += (ix + space_x)
+        //if !add_nl {
+        //    move_x += (ix + space_x)
         //} else {
         //    add_nl = false
         //}
@@ -962,13 +993,17 @@ func mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.Rect, mouse_over
 }
 
 func destroy_lines(lines *[]Line) {
-    for index := range *lines {
+    for index := range *lines { // @TEMPORARY HACK
+        if ((*lines)[index]).texture.data == nil {
+            break
+        }
         if err := ((*lines)[index]).texture.data.Destroy(); err != nil {
             println(index)
             panic(err)
         }
     }
 }
+
 //NOTE: According to [go build -gcflags=-m main.go] this call has been inlined.
 //NOTE: It would be great to check if inlining calls are actually any good or note.
 func assert_if(cond bool, error_msg string) {
