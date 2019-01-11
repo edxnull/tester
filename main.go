@@ -68,8 +68,6 @@ type Font struct {
 }
 
 type Line struct { // should probably add Texture struct here
-    width int32
-    height int32
     text string
     color sdl.Color
     texture Texture
@@ -258,7 +256,7 @@ func main() {
     //test_strings := strings.Split(test_text, " ")
     clr := sdl.Color{0, 0, 0, 0}
     test_line_texture := make_ttf_texture(renderer, font, test_text, clr)
-    tx, ty := get_text_size(font, test_text)
+    //tx, ty := get_text_size(font, test_text)
     //test_line_rect := sdl.Rect{0, 0, int32(tx), int32(ty)}
     defer test_line_texture.Destroy()
 
@@ -320,9 +318,9 @@ func main() {
                             global_win_w, global_win_h = t.Data1, t.Data2
                             fmt.Printf("g_ww: %d, g_wh: %d, t.Data1: %d, t.Data2: %d\n",
                                             global_win_w, global_win_h, t.Data1, t.Data2)
-                            fmt.Printf("tx: %d ty: %d\n", tx, ty)
+                            fmt.Printf("tx: %d ty: %d\n", all_lines[0].texture.width, all_lines[0].texture.height)
 
-                            if global_win_w <= int32(tx) {
+                            if global_win_w <= int32(all_lines[0].texture.width) {
                                 println("We have to implement WRAP!")
                                 wrap_line = true
                             } else {
@@ -1013,4 +1011,3 @@ func assert_if(cond bool, error_msg string) {
 		panic(err)
 	}
 }
-
