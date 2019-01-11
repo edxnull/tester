@@ -142,7 +142,6 @@ func main() {
 
     string_tokens := strings.Split(string(file_data), " ")
 
-    line_tokens := strings.Split(string(file_data), "\n") // @WIP
 
     fmt.Printf("number of tokens: %d\n", len(string_tokens))
 
@@ -185,7 +184,6 @@ func main() {
 		allfonts[index].data = load_font(element, TTF_FONT_SIZE)
 		allfonts[index].name = element
 		allfonts[index].size = TTF_FONT_SIZE
-		fmt.Printf("[debug] ~> %#v\n", allfonts[index])
 		defer allfonts[index].data.Close() // @TEMPORARY HACK @SLOW
 	}
 
@@ -218,7 +216,10 @@ func main() {
     fmt.Printf("length is: %d, size is: %d\n", len(ttf_textures), reflect.TypeOf(ttf_textures).Size())
 
     //////////////////////////////////////////////////
-    // new_generate_and_populate_lines()
+    // generate_and_populate_lines()
+    line_tokens := strings.Split(string(file_data), "\n")
+    lines := generate_and_populate_lines(renderer, font, &line_tokens)
+    //
     //////////////////////////////////////////////////
 
     //////////////////////////
@@ -273,7 +274,7 @@ func main() {
     //test_rects := make([]sdl.Rect, len(str_arr))
     test_mouse_over := make([]bool, len(str_arr))
 
-     generate_new_line_rects(&line.word_rects, font, &str_arr)
+    //generate_new_line_rects(&line.word_rects, font, &str_arr)
     //generate_new_line_rects(&test_rects, font, &test_strings)
 
     // TEST RENDERING TTF LINE 
@@ -608,6 +609,8 @@ func main() {
         ttf_textures[index].Destroy()
     }
 
+    destroy_lines(&lines) // @WIP
+
     if cmd_console_ttf_texture != nil {
         println("The texture was not <nil>")
         cmd_console_ttf_texture.Destroy()
@@ -774,19 +777,25 @@ func generate_all_textures(r *sdl.Renderer, string_tokens []string, font *ttf.Fo
 }
 
 // @WIP
-func new_generate_and_populate_lines(r *sdl.Renderer, tokens *[]string, font *ttf.Font,
-                                           textures *[]sdl.Texture, rects *[]sdl.Rect) {
-    //ttf_index := 0
+func generate_and_populate_lines(renderer *sdl.Renderer, font *ttf.Font, tokens *[]string) (line []Line) {
     //temp_x := 0
     //temp_y := 0
     //add_new_line := false
     //already_added_new_line := false
+    //start_index := 0
+    //end_index := MAX_TOKENS
     //esc_seq_map := map[string]int{"nl": 0, "tab": 0, "vtab": 0, "cret": 0}
+    all_lines := make([]Line, len(*tokens))
 
-    //for _, element := range string_tokens {
-        // generate_new_line_rects => [] [] [] [] []
-        // new_ttf_texture_line() => [lasjdlajsdlkajsd]
-    //}
+    // [A]: lkjalskdjalksjdl lkdd jasdd oijqdw oijasd
+    // [B]: lkjalskdjalksjdl lksd jasdd oijqdw oijasd
+    // [C]: lkjalskdjalksjdl lkzd jasdd oijqdw oijasd
+
+    for index, tk := range *tokens {
+        all_lines[index].text = tk
+        new_ttf_texture_line(renderer, font, &all_lines[index]) // WE HAVE TO FREE
+    }
+    return all_lines
 }
 
 func generate_and_populate_ttf_textures_and_rects(r *sdl.Renderer, string_tokens []string, font *ttf.Font) ([]*sdl.Texture, []*sdl.Rect) {
@@ -884,12 +893,15 @@ func get_text_size(font *ttf.Font, chars string) (int, int) {
 // @TEMPORARY: this is just a wrapper at the moment
 // I will probably have to pass line_skip as arg
 func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line) {
+    // TODO: I also have to handle cases like '\r' and such with length of 1
 	assert_if(len(line.text) == 0, "line.text was empty")
 	assert_if(font == nil, "font was nil")
 
     line.texture.data = make_ttf_texture(rend, font, line.text, line.color)
 
-    line.word_rects = make([]sdl.Rect, len(strings.Split(line.text, " ")))
+    text := strings.Split(line.text, " ")
+    line.word_rects = make([]sdl.Rect, len(text))
+    generate_new_line_rects(&line.word_rects, font, &text)
 
     tw, th := get_text_size(font, line.text)
     line.texture.width = int32(tw)
@@ -949,6 +961,14 @@ func mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.Rect, mouse_over
     }
 }
 
+func destroy_lines(lines *[]Line) {
+    for index := range *lines {
+        if err := ((*lines)[index]).texture.data.Destroy(); err != nil {
+            println(index)
+            panic(err)
+        }
+    }
+}
 //NOTE: According to [go build -gcflags=-m main.go] this call has been inlined.
 //NOTE: It would be great to check if inlining calls are actually any good or note.
 func assert_if(cond bool, error_msg string) {
@@ -958,3 +978,4 @@ func assert_if(cond bool, error_msg string) {
 		panic(err)
 	}
 }
+
