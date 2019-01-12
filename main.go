@@ -737,8 +737,8 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
 }
 
 func destroy_lines(lines *[]Line) {
-    for index := range *lines { // @TEMPORARY HACK
-        if ((*lines)[index]).texture.data == nil {
+    for index := range *lines {
+        if ((*lines)[index]).texture.data == nil { // @TEMPORARY HACK
             break
         }
         if err := ((*lines)[index]).texture.data.Destroy(); err != nil {
@@ -756,4 +756,8 @@ func assert_if(cond bool, error_msg string) {
 		err := errors.New(error_msg)
 		panic(err)
 	}
+}
+
+func is_ascii_alpha(char string) bool {
+    return ((char >= "A") && (char <= "z"))
 }
