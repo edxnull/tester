@@ -317,8 +317,8 @@ func main() {
                     break
                 case *sdl.MouseMotionEvent:
                     //fmt.Printf("~> %d %d\n", t.X, t.Y)
-                    //mouse_over_words(t, &ttf_texture_TEMP, &mouseover_word_texture)
-                    //mouse_over_words(t, &line.word_rects, &test_mouse_over)
+                    //check_collision_mouse_over_words(t, &ttf_texture_TEMP, &mouseover_word_texture)
+                    //check_collision_mouse_over_words(t, &line.word_rects, &test_mouse_over)
                     break
                 case *sdl.MouseButtonEvent:
                     switch t.Type {
@@ -721,7 +721,7 @@ func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string
     }
 }
 
-func mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.Rect, mouse_over *[]bool) {
+func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.Rect, mouse_over *[]bool) {
     for index := range *rects {
         mx_gt_rx :=    event.X > (*rects)[index].X
         mx_lt_rx_rw := event.X < (*rects)[index].X + (*rects)[index].W
