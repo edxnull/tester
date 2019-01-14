@@ -46,6 +46,10 @@ var global_win_h int32
 //TODO: https://justinas.org/best-practices-for-errors-in-go 
 //TODO: https://www.joeshaw.org/dont-defer-close-on-writable-files/
 
+//TODO: https://gobyexample.com/collection-functions
+//TODO: https://gobyexample.com/command-line-flags
+//TODO: https://gobyexample.com/environment-variables
+
 type Texture struct {
     width  int32
     height int32
@@ -193,7 +197,7 @@ func main() {
     // @TEMPORARY
     const LINE_LENGTH int = 640
     test_tokens := do_wrap_lines(font, &line_tokens[0], LINE_LENGTH)
-    for index := 1; index < 15; index += 1 {
+    for index := 1; index < 20; index += 1 {
         if (len(line_tokens[index]) > 1) {
             current := do_wrap_lines(font, &line_tokens[index], LINE_LENGTH)
             for _, element := range current {
