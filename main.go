@@ -255,33 +255,6 @@ func main() {
     // END_CMD_CONSOLE_STUFF
     //////////////////////////
 
-    // TEST RENDERING TTF LINE 
-    test_text := "This is some random boonkers text that we are dealing with."
-    //test_strings := strings.Split(test_text, " ")
-    clr := sdl.Color{0, 0, 0, 0}
-    test_line_texture := make_ttf_texture(renderer, font, test_text, clr)
-    //tx, ty := get_text_size(font, test_text)
-    //test_line_rect := sdl.Rect{0, 0, int32(tx), int32(ty)}
-    defer test_line_texture.Destroy()
-
-    // type Line test
-    // ....
-    //line := Line{}
-    //line.text = "Another type Line struct for our testing purposes. That's all, folks"
-    //line.color = sdl.Color{0, 0, 0, 0}
-
-    //new_ttf_texture_line(renderer, font, &line, 0)
-    //defer line.texture.data.Destroy()
-
-    //str_arr := strings.Split(line.text, " ")
-    ////test_rects := make([]sdl.Rect, len(str_arr))
-    //test_mouse_over := make([]bool, len(str_arr))
-
-    //generate_new_line_rects(&line.word_rects, font, &str_arr)
-    //generate_new_line_rects(&test_rects, font, &test_strings)
-
-    // TEST RENDERING TTF LINE 
-
     renderer_info, err := renderer.GetInfo()
     if err != nil {
         panic(err)
