@@ -66,13 +66,21 @@ type Font struct {
     data *ttf.Font
 }
 
-type Line struct { // should probably add Texture struct here
+type Line struct {
     text string
     color sdl.Color
     texture Texture
     bg_rect sdl.Rect
     word_rects []sdl.Rect
 }
+
+// type Tester struct
+// ------------------
+// TEXT:     [n1, n2, n3 ... n]
+// WORDS:    [n1, n2, n3 ... n]
+// RECTS:    [n1, n2, n3 ... n]
+// BG_RECTS: [n1, n2, n3 ... n]
+// TEXTURES: [n1, n2, n3 ... n]
 
 func main() {
     // PROFILING SNIPPET
@@ -172,7 +180,6 @@ func main() {
 	}
 
     // font = allfonts[1].data
-
     //TODO: @FIND_USE_CASE: //font = reload_font(font, "Opensans-Bold.ttf", TTF_FONT_SIZE)
     //TODO: @NOT_IMPLEMENTED: I should be able to dynamically load font related functinos on demand
 
@@ -185,26 +192,7 @@ func main() {
     //font.SetStyle(ttf.STYLE_UNDERLINE) //STYLE_UNDERLINE; STYLE_BOLD; STYLE_ITALIC; STYLE_STRIKETHROUGH
     //font.SetKerning(true)
 
-    //var ttf_textures []*sdl.Texture
-    //var ttf_texture_rects []*sdl.Rect
-
-    // TODO: @SLOW: Make it better!
-    //ttf_textures, ttf_texture_rects = generate_and_populate_ttf_textures_and_rects(renderer, string_tokens, font)
-
-    //var ttf_texture_TEMP []sdl.Rect // TODO: TEMP SOLUTION!!!
-
-    //for _, element := range ttf_texture_rects {
-    //    ttf_texture_TEMP = append(ttf_texture_TEMP, *element)
-    //}
-
-    ////fmt.Printf("length is: %d, size is: %d\n", len(ttf_textures), reflect.TypeOf(ttf_textures).Size())
-
-    //////////////////////////////////////////////////
-    // generate_and_populate_lines()
     line_tokens := strings.Split(string(file_data), "\n")
-
-    //println(line_tokens[8])
-    //split_at_length(font *ttf.Font, str *string, max_len int) ([]string) {
 
     // @TEMPORARY
     const LINE_LENGTH int = 640
@@ -218,10 +206,8 @@ func main() {
         }
     }
 
-    //all_lines := generate_and_populate_lines(renderer, font, &line_tokens)
     all_lines := generate_and_populate_lines(renderer, font, &test_tokens)
-    //
-    //////////////////////////////////////////////////
+    //all_lines := generate_and_populate_lines(renderer, font, &line_tokens)
 
     //////////////////////////
     // CMD_CONSOLE_STUFF
@@ -661,36 +647,11 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
     return tex
 }
 
-// @WIP
 func generate_and_populate_lines(renderer *sdl.Renderer, font *ttf.Font, tokens *[]string) (line []Line) {
-    //temp_x := 0
-    //temp_y := 0
-    //add_new_line := false
-    //already_added_new_line := false
-    //start_index := 0
-    //end_index := MAX_TOKENS
-    //esc_seq_map := map[string]int{"nl": 0, "tab": 0, "vtab": 0, "cret": 0}
-    all_lines := make([]Line, len(*tokens)) // <--- we should append in later loops
-    //const LINE_LEN_CAP int = 450
-    //current := 0
+    all_lines := make([]Line, len(*tokens))
     for index, tk := range *tokens {
-        // we should break down the tk before assigning in to all_lines[index].text
-       // size_x, _, _ := font.SizeUTF8(" ")
-       // if (len(tk) * size_x) >= LINE_LEN_CAP {
-       //     str := do_wrap_lines(font, &tk, LINE_LEN_CAP)
-       //     for xindex, s := range str {
-       //         current = index+xindex+1
-       //         all_lines[current].text = s
-       //         new_ttf_texture_line(renderer, font, &all_lines[current], int32(xindex))
-       //     }
-       //}
-
         all_lines[index].text = tk
-
         new_ttf_texture_line(renderer, font, &all_lines[index], int32(index))
-        //if index == 7 { // @TEMP RANDOM VALUE IN HERE
-        //    break
-        //}
     }
     return all_lines
 }
