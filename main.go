@@ -207,10 +207,11 @@ func main() {
     //split_at_length(font *ttf.Font, str *string, max_len int) ([]string) {
 
     // @TEMPORARY
-    test_tokens := do_wrap_lines(font, &line_tokens[0], 640)
-    for index := 1; index < 9; index += 1 {
+    const LINE_LENGTH int = 640
+    test_tokens := do_wrap_lines(font, &line_tokens[0], LINE_LENGTH)
+    for index := 1; index < 15; index += 1 {
         if (len(line_tokens[index]) > 1) {
-            current := do_wrap_lines(font, &line_tokens[index], 640)
+            current := do_wrap_lines(font, &line_tokens[index], LINE_LENGTH)
             println(current)
             for index, element := range current {
                 println(element, index)
@@ -218,8 +219,6 @@ func main() {
             }
         }
     }
-
-    fmt.Printf("%#v\n", test_tokens)
 
     //all_lines := generate_and_populate_lines(renderer, font, &line_tokens)
     all_lines := generate_and_populate_lines(renderer, font, &test_tokens)
@@ -316,15 +315,8 @@ func main() {
                 case *sdl.WindowEvent:
                     switch t.Event {
                         case sdl.WINDOWEVENT_SIZE_CHANGED:
-                            global_win_w, global_win_h = t.Data1, t.Data2
-                            fmt.Printf("g_ww: %d, g_wh: %d, t.Data1: %d, t.Data2: %d\n",
-                                            global_win_w, global_win_h, t.Data1, t.Data2)
-                            fmt.Printf("tx: %d ty: %d\n", all_lines[0].texture.width, all_lines[0].texture.height)
-
-                            if global_win_w <= int32(all_lines[0].texture.width) {
-                                println("We have to implement WRAP!")
-                                szw, szh := get_text_size(font, "a")
-                                fmt.Printf("\nstring: [%s]; len: [%d]; char_siz: [w:%d h:%d]\n", all_lines[0].text, len(all_lines[0].text), szw, szh)
+                            global_win_w = t.Data1
+                            if global_win_w <= int32(LINE_LENGTH) {
                                 wrap_line = true
                             } else {
                                 wrap_line = false
@@ -500,10 +492,12 @@ func main() {
         }
 
         if wrap_line {
-            renderer.SetDrawColor(100, 255, 255, 100)
-            renderer.FillRect(&all_lines[0].bg_rect)
-            renderer.DrawRect(&all_lines[0].bg_rect)
-            renderer.Copy(all_lines[0].texture.data, nil, &all_lines[0].bg_rect)
+            for index := range all_lines {
+                renderer.SetDrawColor(100, 255, 255, 100)
+                renderer.FillRect(&all_lines[index].bg_rect)
+                renderer.DrawRect(&all_lines[index].bg_rect)
+                renderer.Copy(all_lines[index].texture.data, nil, &all_lines[index].bg_rect)
+            }
         }
         // @TEST RENDERING TTF LINE
 
@@ -524,6 +518,9 @@ func main() {
             renderer.DrawRect(&cmd_console_cursor_block)
         }
         // DRAWING_CMD_CONSOLE
+
+        renderer.SetDrawColor(255, 100, 0, uint8(cmd_console_anim_alpha))
+        renderer.DrawLine(int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H)
 
         // -----------------
         // ANIMATIONS
@@ -774,7 +771,9 @@ func do_wrap_lines(font *ttf.Font, str *string, max_len int) ([]string) {
     current_len := 0
     save_token := ""
     buffstr := ""
-    assert_if(len(*str) <= 1, "Assert STRING size!!!!!!")
+
+    assert_if(len(*str) <= 1, "assert: do_wrap_lines str size <= 1!\n")
+
     for index, _ := range tokens {
         if len(save_token) > 0 {
             buff.WriteString(save_token + " ")
