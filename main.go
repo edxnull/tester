@@ -203,7 +203,13 @@ func main() {
     // generate_and_populate_lines()
     line_tokens := strings.Split(string(file_data), "\n")
 
-    all_lines := generate_and_populate_lines(renderer, font, &line_tokens)
+    println(line_tokens[8])
+    //split_at_length(font *ttf.Font, str *string, max_len int) ([]string) {
+    test_tokens := split_at_length(font, &line_tokens[8], 450)
+    fmt.Printf("%#v\n", test_tokens)
+
+    //all_lines := generate_and_populate_lines(renderer, font, &line_tokens)
+    all_lines := generate_and_populate_lines(renderer, font, &test_tokens)
     //
     //////////////////////////////////////////////////
 
@@ -469,7 +475,8 @@ func main() {
         renderer.Clear()
 
         // @TEST RENDERING TTF LINE
-        for ln := range all_lines[0:18] {
+        //for ln := range all_lines[0:18] {
+        for ln := range all_lines {
             for index := range all_lines[ln].word_rects {
                 renderer.SetDrawColor(100, 10, 100, uint8(cmd_console_anim_alpha))
                 renderer.FillRect(&all_lines[ln].word_rects[index])
@@ -630,18 +637,27 @@ func generate_and_populate_lines(renderer *sdl.Renderer, font *ttf.Font, tokens 
     //start_index := 0
     //end_index := MAX_TOKENS
     //esc_seq_map := map[string]int{"nl": 0, "tab": 0, "vtab": 0, "cret": 0}
-    all_lines := make([]Line, len(*tokens))
-
-    // [A]: lkjalskdjalksjdl lkdd jasdd oijqdw oijasd
-    // [B]: lkjalskdjalksjdl lksd jasdd oijqdw oijasd
-    // [C]: lkjalskdjalksjdl lkzd jasdd oijqdw oijasd
-
+    all_lines := make([]Line, len(*tokens)) // <--- we should append in later loops
+    //const LINE_LEN_CAP int = 450
+    //current := 0
     for index, tk := range *tokens {
+        // we should break down the tk before assigning in to all_lines[index].text
+       // size_x, _, _ := font.SizeUTF8(" ")
+       // if (len(tk) * size_x) >= LINE_LEN_CAP {
+       //     str := split_at_length(font, &tk, LINE_LEN_CAP)
+       //     for xindex, s := range str {
+       //         current = index+xindex+1
+       //         all_lines[current].text = s
+       //         new_ttf_texture_line(renderer, font, &all_lines[current], int32(xindex))
+       //     }
+       //}
+
         all_lines[index].text = tk
-        new_ttf_texture_line(renderer, font, &all_lines[index], int32(index)) // WE HAVE TO FREE
-        if index == 20 {
-            break
-        }
+
+        new_ttf_texture_line(renderer, font, &all_lines[index], int32(index))
+        //if index == 7 { // @TEMP RANDOM VALUE IN HERE
+        //    break
+        //}
     }
     return all_lines
 }
@@ -734,6 +750,45 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
             (*mouse_over)[index] = false
         }
     }
+}
+
+func split_at_length(font *ttf.Font, str *string, max_len int) ([]string) {
+    var buff bytes.Buffer
+    var result []string
+    tokens := strings.Split(*str, " ")
+    size_x, _, _ := font.SizeUTF8(" ")
+    current_len := 0
+    save_token := ""
+    buffstr := ""
+    for index, _ := range tokens {
+        if len(save_token) > 0 {
+            buff.WriteString(save_token + " ")
+            current_len = len(buff.String()) * size_x
+            save_token = ""
+        }
+        if (current_len + (len(tokens[index]) * size_x) <= max_len) {
+            buff.WriteString(tokens[index] + " ")
+            current_len = len(buff.String()) * size_x
+        } else {
+            save_token = tokens[index]
+            buffstr = buff.String()
+            result = append(result, buffstr[0:len(buffstr)-1])
+            buff.Reset()
+            current_len = 0
+        }
+    }
+    if len(buff.String()) > 0 {
+        buffstr = buff.String()
+        end := len(buffstr)-1
+        cut := 0
+        for string(buffstr[end]) == " " || string(buffstr[end]) == "\r" {
+            end -= 1
+            cut += 1
+        }
+        result = append(result, buffstr[0:len(buffstr)-cut])
+        buff.Reset()
+    }
+    return result
 }
 
 func destroy_lines(lines *[]Line) {
