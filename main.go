@@ -23,17 +23,7 @@ const WIN_W int32 = 800
 const WIN_H int32 = 600
 
 const X_OFFSET int = 7
-
-const OFFSCREEN_W int32 = 800
-const OFFSCREEN_H int32 = 1200
-
 const TTF_FONT_SIZE int = 13
-
-const MAX_TOKENS int = 20
-const MAX_LINES  int = 18
-const MAX_TEXT_WIDTH int32 = 100
-const MAX_LINE_LEN int = 413 // @TEMPORARY
-
 const TEXT_SCROLL_SPEED int32 = 5
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to 'file'")
@@ -76,7 +66,7 @@ type Line struct {
     word_rects []sdl.Rect
 }
 
-type WrapLine struct {
+type DebugWrapLine struct {
     x, y int32
     w, h int32
     clicked bool
@@ -294,7 +284,7 @@ func main() {
 
     curr_char_w := 0
 
-    wrapline := WrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H, false}
+    wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H, false}
     fmt.Printf("%#v\n", wrapline)
 
     for running {
