@@ -407,7 +407,10 @@ func main() {
                                                 cmd_text_buffer.WriteString(temp_string)
 
                                                 cmd_console_ttf_texture.Destroy()
-                                                cmd_console_ttf_texture = make_ttf_texture(renderer, font, temp_string, cmd_rand_color)
+
+                                                if len(cmd_text_buffer.String()) > 0 {
+                                                    cmd_console_ttf_texture = make_ttf_texture(renderer, font, temp_string, cmd_rand_color)
+                                                }
 
                                                 temp_w, temp_h := get_text_size(font, cmd_text_buffer.String())
 
