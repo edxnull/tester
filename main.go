@@ -308,11 +308,23 @@ func main() {
                 case *sdl.WindowEvent:
                     switch t.Event {
                         case sdl.WINDOWEVENT_SIZE_CHANGED:
-                            global_win_w = t.Data1
+                            global_win_w, global_win_h = t.Data1, t.Data2
                             if global_win_w <= int32(LINE_LENGTH) {
                                 wrap_line = true
                             } else {
                                 wrap_line = false
+                            }
+
+                            if global_win_w > WIN_W && global_win_h > WIN_H {
+                                cmd_console_rect.W = global_win_w
+                                cmd_console_rect.Y = global_win_h-cmd_win_h
+                                cmd_console_ttf_rect.Y = global_win_h-cmd_win_h
+                                cmd_console_cursor_block.Y = global_win_h-cmd_win_h
+                            } else {
+                                cmd_console_rect.W = global_win_w
+                                cmd_console_rect.Y = global_win_h-cmd_win_h
+                                cmd_console_ttf_rect.Y = global_win_h-cmd_win_h
+                                cmd_console_cursor_block.Y = global_win_h-cmd_win_h
                             }
                             break
                         default:
