@@ -203,9 +203,22 @@ func main() {
     // generate_and_populate_lines()
     line_tokens := strings.Split(string(file_data), "\n")
 
-    println(line_tokens[8])
+    //println(line_tokens[8])
     //split_at_length(font *ttf.Font, str *string, max_len int) ([]string) {
-    test_tokens := split_at_length(font, &line_tokens[8], 450)
+
+    // @TEMPORARY
+    test_tokens := split_at_length(font, &line_tokens[0], 640)
+    for index := 1; index < 9; index += 1 {
+        if (len(line_tokens[index]) > 1) {
+            current := split_at_length(font, &line_tokens[index], 640)
+            println(current)
+            for index, element := range current {
+                println(element, index)
+                test_tokens = append(test_tokens, element)
+            }
+        }
+    }
+
     fmt.Printf("%#v\n", test_tokens)
 
     //all_lines := generate_and_populate_lines(renderer, font, &line_tokens)
@@ -478,7 +491,8 @@ func main() {
         //for ln := range all_lines[0:18] {
         for ln := range all_lines {
             for index := range all_lines[ln].word_rects {
-                renderer.SetDrawColor(100, 10, 100, uint8(cmd_console_anim_alpha))
+                //renderer.SetDrawColor(100, 10, 100, uint8(cmd_console_anim_alpha))
+                renderer.SetDrawColor(0, 0, 0, 0)
                 renderer.FillRect(&all_lines[ln].word_rects[index])
                 renderer.DrawRect(&all_lines[ln].word_rects[index])
             }
@@ -760,6 +774,7 @@ func split_at_length(font *ttf.Font, str *string, max_len int) ([]string) {
     current_len := 0
     save_token := ""
     buffstr := ""
+    assert_if(len(*str) <= 1, "Assert STRING size!!!!!!")
     for index, _ := range tokens {
         if len(save_token) > 0 {
             buff.WriteString(save_token + " ")
