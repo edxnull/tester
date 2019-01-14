@@ -207,10 +207,10 @@ func main() {
     //split_at_length(font *ttf.Font, str *string, max_len int) ([]string) {
 
     // @TEMPORARY
-    test_tokens := split_at_length(font, &line_tokens[0], 640)
+    test_tokens := do_wrap_lines(font, &line_tokens[0], 640)
     for index := 1; index < 9; index += 1 {
         if (len(line_tokens[index]) > 1) {
-            current := split_at_length(font, &line_tokens[index], 640)
+            current := do_wrap_lines(font, &line_tokens[index], 640)
             println(current)
             for index, element := range current {
                 println(element, index)
@@ -323,7 +323,7 @@ func main() {
 
                             if global_win_w <= int32(all_lines[0].texture.width) {
                                 println("We have to implement WRAP!")
-                                szw, szh, _ := font.SizeUTF8("a")
+                                szw, szh := get_text_size(font, "a")
                                 fmt.Printf("\nstring: [%s]; len: [%d]; char_siz: [w:%d h:%d]\n", all_lines[0].text, len(all_lines[0].text), szw, szh)
                                 wrap_line = true
                             } else {
@@ -658,7 +658,7 @@ func generate_and_populate_lines(renderer *sdl.Renderer, font *ttf.Font, tokens 
         // we should break down the tk before assigning in to all_lines[index].text
        // size_x, _, _ := font.SizeUTF8(" ")
        // if (len(tk) * size_x) >= LINE_LEN_CAP {
-       //     str := split_at_length(font, &tk, LINE_LEN_CAP)
+       //     str := do_wrap_lines(font, &tk, LINE_LEN_CAP)
        //     for xindex, s := range str {
        //         current = index+xindex+1
        //         all_lines[current].text = s
@@ -766,11 +766,11 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
     }
 }
 
-func split_at_length(font *ttf.Font, str *string, max_len int) ([]string) {
+func do_wrap_lines(font *ttf.Font, str *string, max_len int) ([]string) {
     var buff bytes.Buffer
     var result []string
     tokens := strings.Split(*str, " ")
-    size_x, _, _ := font.SizeUTF8(" ")
+    size_x, _ := get_text_size(font, " ")
     current_len := 0
     save_token := ""
     buffstr := ""
