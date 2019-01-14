@@ -279,8 +279,8 @@ func main() {
 
     wrap_line := false
 
-    //move_text_up := false
-    //move_text_down := false
+    move_text_up := false
+    move_text_down := false
 
     test_rand_color := sdl.Color{uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255))}
 
@@ -451,10 +451,10 @@ func main() {
                         break
                     }
                     if t.Keysym.Sym == sdl.K_UP {
-                        //move_text_up = true
+                        move_text_up = true
                     }
                     if t.Keysym.Sym == sdl.K_DOWN {
-                        //move_text_down = true
+                        move_text_down = true
                     }
                     if t.Keysym.Sym == sdl.K_LEFT {
                         println("SHOULD SCROLL FONT back")
@@ -471,6 +471,7 @@ func main() {
         renderer.Clear()
 
         // @TEST RENDERING TTF LINE
+        //for ln := range all_lines[0:18] {
         for ln := range all_lines {
             for index := range all_lines[ln].word_rects {
                 //renderer.SetDrawColor(100, 10, 100, uint8(cmd_console_anim_alpha))
@@ -499,6 +500,25 @@ func main() {
                 renderer.SetDrawColor(0, 0, 0, 0)
                 renderer.FillRect(&_RECTS_[index])
                 renderer.DrawRect(&_RECTS_[index])
+            }
+        }
+
+        if move_text_down {
+            move_text_down = false
+            for index := range all_lines {
+                all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
+            }
+            for index := range _RECTS_ {
+                _RECTS_[index].Y += TEXT_SCROLL_SPEED
+            }
+        }
+        if move_text_up {
+            move_text_up = false
+            for index := range all_lines {
+                all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
+            }
+            for index := range _RECTS_ {
+                _RECTS_[index].Y -= TEXT_SCROLL_SPEED
             }
         }
 
