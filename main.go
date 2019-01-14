@@ -212,9 +212,7 @@ func main() {
     for index := 1; index < 15; index += 1 {
         if (len(line_tokens[index]) > 1) {
             current := do_wrap_lines(font, &line_tokens[index], LINE_LENGTH)
-            println(current)
-            for index, element := range current {
-                println(element, index)
+            for _, element := range current {
                 test_tokens = append(test_tokens, element)
             }
         }
@@ -266,8 +264,30 @@ func main() {
     renderer.SetDrawBlendMode(sdl.BLENDMODE_BLEND)
 
     running := true
-    //print_word := false
-    //mouseover_word_texture := make([]bool, len(string_tokens))
+    print_word := false
+
+    total := 0
+    for index := range all_lines {
+        total += len(all_lines[index].word_rects)
+    }
+    mouseover_word_texture := make([]bool, total)
+
+    _RECTS_ := make([]sdl.Rect, 0)
+    for index := range all_lines {
+        for _, rct := range all_lines[index].word_rects {
+            _RECTS_ = append(_RECTS_, rct)
+        }
+    }
+    println(len(_RECTS_), len(mouseover_word_texture))
+
+    _WORDS_ := make([]string, 0)
+    for index := range all_lines {
+        for _, rct := range strings.Split(all_lines[index].text, " ") {
+            _WORDS_ = append(_WORDS_, rct)
+        }
+    }
+
+    println(len(_RECTS_), len(mouseover_word_texture), len(_WORDS_))
 
     fmt.Println("FONT_FIXED_WIDTH: ", font.FaceIsFixedWidth())
 
@@ -301,14 +321,14 @@ func main() {
                     break
                 case *sdl.MouseMotionEvent:
                     //fmt.Printf("~> %d %d\n", t.X, t.Y)
-                    //check_collision_mouse_over_words(t, &ttf_texture_TEMP, &mouseover_word_texture)
+                    check_collision_mouse_over_words(t, &_RECTS_, &mouseover_word_texture)
                     //check_collision_mouse_over_words(t, &line.word_rects, &test_mouse_over)
                     break
                 case *sdl.MouseButtonEvent:
                     switch t.Type {
                         case sdl.MOUSEBUTTONDOWN:
                         case sdl.MOUSEBUTTONUP:
-                            //print_word = true
+                            print_word = true
                             break
                         default:
                             break
@@ -462,6 +482,23 @@ func main() {
                 renderer.DrawRect(&all_lines[ln].word_rects[index])
             }
             renderer.Copy(all_lines[ln].texture.data, nil, &all_lines[ln].bg_rect)
+        }
+
+        // @HIGHLIGHT WORDS
+        for index := range _RECTS_ {
+            if mouseover_word_texture[index] {
+                renderer.SetDrawColor(255, 100, 200, 100)
+                renderer.FillRect(&_RECTS_[index])
+                renderer.DrawRect(&_RECTS_[index])
+                if print_word {
+                    fmt.Printf("%s\n", _WORDS_[index])
+                    print_word = false
+                }
+            } else {
+                renderer.SetDrawColor(0, 0, 0, 0)
+                renderer.FillRect(&_RECTS_[index])
+                renderer.DrawRect(&_RECTS_[index])
+            }
         }
 
         if wrap_line {
