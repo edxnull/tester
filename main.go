@@ -171,8 +171,6 @@ func main() {
 	// basically we would keep them all in memory at all times
 
 	for index, element := range ttf_font_list {
-		// TODO: new_font(&Font[index])
-		// TODO: close_fonts(&[]Font)
 		allfonts[index].data = load_font(element, TTF_FONT_SIZE)
 		allfonts[index].name = element
 		allfonts[index].size = TTF_FONT_SIZE
@@ -203,6 +201,8 @@ func main() {
             for _, element := range current {
                 test_tokens = append(test_tokens, element)
             }
+        } else {
+            test_tokens = append(test_tokens, "\n")
         }
     }
 
@@ -471,7 +471,6 @@ func main() {
         renderer.Clear()
 
         // @TEST RENDERING TTF LINE
-        //for ln := range all_lines[0:18] {
         for ln := range all_lines {
             for index := range all_lines[ln].word_rects {
                 //renderer.SetDrawColor(100, 10, 100, uint8(cmd_console_anim_alpha))
@@ -485,12 +484,16 @@ func main() {
         // @HIGHLIGHT WORDS
         for index := range _RECTS_ {
             if mouseover_word_texture[index] {
-                renderer.SetDrawColor(255, 100, 200, 100)
-                renderer.FillRect(&_RECTS_[index])
-                renderer.DrawRect(&_RECTS_[index])
-                if print_word {
-                    fmt.Printf("%s\n", _WORDS_[index])
-                    print_word = false
+                if _WORDS_[index] != "\n" {
+                    renderer.SetDrawColor(255, 100, 200, 100)
+                    renderer.FillRect(&_RECTS_[index])
+                    renderer.DrawRect(&_RECTS_[index])
+                    if print_word {
+                        if _WORDS_[index] != "\n" {
+                            fmt.Printf("%s\n", _WORDS_[index])
+                            print_word = false
+                        }
+                    }
                 }
             } else {
                 renderer.SetDrawColor(0, 0, 0, 0)
