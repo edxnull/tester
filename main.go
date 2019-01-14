@@ -22,6 +22,8 @@ const WIN_TITLE string = "GO_TEXT_APPLICATION"
 const WIN_W int32 = 800
 const WIN_H int32 = 600
 
+const X_OFFSET int = 7
+
 const OFFSCREEN_W int32 = 800
 const OFFSCREEN_H int32 = 1200
 
@@ -72,6 +74,12 @@ type Line struct {
     texture Texture
     bg_rect sdl.Rect
     word_rects []sdl.Rect
+}
+
+type WrapLine struct {
+    x, y int32
+    w, h int32
+    clicked bool
 }
 
 // type Tester struct
@@ -285,6 +293,10 @@ func main() {
     test_rand_color := sdl.Color{uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255))}
 
     curr_char_w := 0
+
+    wrapline := WrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H, false}
+    fmt.Printf("%#v\n", wrapline)
+
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
             switch t := event.(type) {
@@ -363,7 +375,10 @@ func main() {
                                     cmd_text_buffer.WriteString(temp_string)
 
                                     cmd_console_ttf_texture.Destroy()
-                                    cmd_console_ttf_texture = make_ttf_texture(renderer, font, temp_string, cmd_rand_color)
+
+                                    if len(cmd_text_buffer.String()) > 0 {
+                                        cmd_console_ttf_texture = make_ttf_texture(renderer, font, temp_string, cmd_rand_color)
+                                    }
 
                                     temp_w, temp_h := get_text_size(font, cmd_text_buffer.String())
 
@@ -553,8 +568,10 @@ func main() {
         }
         // DRAWING_CMD_CONSOLE
 
+        // WRAPLINE
         renderer.SetDrawColor(255, 100, 0, uint8(cmd_console_anim_alpha))
-        renderer.DrawLine(int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H)
+        renderer.DrawLine(wrapline.x, wrapline.y, wrapline.w, wrapline.h)
+        // WRAPLINE
 
         // -----------------
         // ANIMATIONS
@@ -718,42 +735,20 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
         skipline = 0
     }
     generate_new_line_rects(&line.word_rects, font, &text, skip_nr)
-    line.bg_rect = sdl.Rect{0, skipline, line.texture.width, line.texture.height}
+    line.bg_rect = sdl.Rect{int32(X_OFFSET), skipline, line.texture.width, line.texture.height}
 }
 
 func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string, skip_nr int32) {
-    move_x  := 0
+    move_x  := X_OFFSET
     move_y  := skip_nr
-    //x_adder := 0
-    //add_nl := false
     space_x, _ := get_text_size(font, " ")
     for index, str := range *tokens {
         ix, iy := get_text_size(font, str)
-        //x_adder = move_x + ix
-        //if (x_adder) > MAX_LINE_LEN {
-        //    // TODO: MAX_LINE_LEN here should, in fact, be the global (window_size x and y)
-        //    // I would have to set proper line positioning and with in order for it to work.
-        //    // TODO: Since the line is bigger than allowed, we'll have to "wrap"
-        //    // global_win_w, global_win_h
-        //    //println("MAX_LINE_LEN diff:", MAX_LINE_LEN-(x_adder), (x_adder))
-        //    move_y += font.LineSkip()
-        //    move_x = 0
-        //    add_nl = true
-        //    //println(len(*tokens))
-        //    //println((*tokens)[0:len(*tokens)-(-1 * (MAX_LINE_LEN - x_adder))])
-        //    // create a new texture line here.
-        //     //new_texture_line := make_ttf_texture(renderer, font, tokens, clor)
-        //}
         if index == 0 {
             move_y *= int32(font.LineSkip())
         }
         (*rects)[index] = sdl.Rect{int32(move_x), int32(move_y), int32(ix), int32(iy)}
         move_x += (ix + space_x)
-        //if !add_nl {
-        //    move_x += (ix + space_x)
-        //} else {
-        //    add_nl = false
-        //}
     }
 }
 
@@ -789,9 +784,9 @@ func do_wrap_lines(font *ttf.Font, str *string, max_len int) ([]string) {
             current_len = len(buff.String()) * size_x
             save_token = ""
         }
-        if (current_len + (len(tokens[index]) * size_x) <= max_len) {
+        if (current_len + (len(tokens[index]) * size_x)+X_OFFSET <= max_len) {
             buff.WriteString(tokens[index] + " ")
-            current_len = len(buff.String()) * size_x
+            current_len = (len(buff.String()) * size_x)+X_OFFSET
         } else {
             save_token = tokens[index]
             buffstr = buff.String()
