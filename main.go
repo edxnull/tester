@@ -24,7 +24,7 @@ const WIN_H int32 = 600
 
 const X_OFFSET int = 7
 const TTF_FONT_SIZE int = 13
-const TEXT_SCROLL_SPEED int32 = 5
+const TEXT_SCROLL_SPEED int32 = 14
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to 'file'")
 var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
@@ -328,6 +328,14 @@ func main() {
                     check_collision_mouse_over_words(t, &_RECTS_, &mouseover_word_texture)
                     //check_collision_mouse_over_words(t, &line.word_rects, &test_mouse_over)
                     break
+                case *sdl.MouseWheelEvent:
+					if t.Y == -1 {
+						move_text_up = true
+					}
+					if t.Y == 1 {
+						move_text_down = true
+					}
+					break
                 case *sdl.MouseButtonEvent:
                     switch t.Type {
                         case sdl.MOUSEBUTTONDOWN:
