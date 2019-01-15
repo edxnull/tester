@@ -25,6 +25,7 @@ const WIN_H int32 = 600
 const X_OFFSET int = 7
 const TTF_FONT_SIZE int = 13
 const TEXT_SCROLL_SPEED int32 = 14
+const LINE_LENGTH int = 640
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to 'file'")
 var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
@@ -195,7 +196,6 @@ func main() {
     line_tokens := strings.Split(string(file_data), "\n")
 
     // @TEMPORARY
-    const LINE_LENGTH int = 640
     test_tokens := do_wrap_lines(font, &line_tokens[0], LINE_LENGTH)
     for index := 1; index < 20; index += 1 {
         if (len(line_tokens[index]) > 1) {
