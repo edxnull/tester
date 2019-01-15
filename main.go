@@ -140,7 +140,7 @@ func main() {
     file.Read(file_data)
     file.Close()
 
-    ticker := time.NewTicker(time.Second / 30)
+    ticker := time.NewTicker(time.Second / 60)
 
     //////////////////////////
     // ------ CREATE_FONTS
@@ -541,19 +541,19 @@ func main() {
         if move_text_down {
             move_text_down = false
             for index := range all_lines {
-                all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
+                all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
             }
             for index := range _RECTS_ {
-                _RECTS_[index].Y += TEXT_SCROLL_SPEED
+                _RECTS_[index].Y -= TEXT_SCROLL_SPEED
             }
         }
         if move_text_up {
             move_text_up = false
             for index := range all_lines {
-                all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
+                all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
             }
             for index := range _RECTS_ {
-                _RECTS_[index].Y -= TEXT_SCROLL_SPEED
+                _RECTS_[index].Y += TEXT_SCROLL_SPEED
             }
         }
 
