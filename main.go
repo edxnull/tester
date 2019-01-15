@@ -70,8 +70,8 @@ type Line struct {
 }
 
 type DebugWrapLine struct {
-    x, y int32
-    w, h int32
+    x1, y1 int32
+    x2, y2 int32
     clicked bool
 }
 
@@ -258,6 +258,7 @@ func main() {
     for index := range all_lines {
         total += len(all_lines[index].word_rects)
     }
+
     mouseover_word_texture := make([]bool, total)
 
     _RECTS_ := make([]sdl.Rect, 0)
@@ -275,6 +276,15 @@ func main() {
         }
     }
 
+    var heights int32 = 0
+    var nlines  int32 = 0
+    for index := range all_lines {
+        heights += all_lines[index].bg_rect.H
+        nlines += 1
+    }
+    println("HEIGHT: ", heights)
+    println("NLINES: ", nlines)
+
     println(len(_RECTS_), len(mouseover_word_texture), len(_WORDS_))
 
     fmt.Println("FONT_FIXED_WIDTH: ", font.FaceIsFixedWidth())
@@ -289,7 +299,9 @@ func main() {
     curr_char_w := 0
 
     wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H, false}
+    renderline := DebugWrapLine{0, int32(LINE_LENGTH)-50, int32(LINE_LENGTH), int32(LINE_LENGTH)-50, false}
     fmt.Printf("%#v\n", wrapline)
+    fmt.Printf("%#v\n", renderline)
 
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -492,7 +504,6 @@ func main() {
         renderer.Clear()
 
         // @TEST RENDERING TTF LINE
-        //for ln := range all_lines[0:18] {
         if first_pass {
             for ln := range all_lines {
                 for index := range all_lines[ln].word_rects {
@@ -587,8 +598,12 @@ func main() {
 
         // WRAPLINE
         renderer.SetDrawColor(255, 100, 0, uint8(cmd_console_anim_alpha))
-        renderer.DrawLine(wrapline.x, wrapline.y, wrapline.w, wrapline.h)
+        renderer.DrawLine(wrapline.x1, wrapline.y1, wrapline.x2, wrapline.y2)
+
+        renderer.SetDrawColor(255, 100, 0, uint8(cmd_console_anim_alpha))
+        renderer.DrawLine(renderline.x1, renderline.y1, renderline.x2, renderline.y2)
         // WRAPLINE
+
 
         // -----------------
         // ANIMATIONS
