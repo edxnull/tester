@@ -3,7 +3,7 @@
 echo "Building *tester* app"
 REM set GOOS=windows
 REM set GOARCH=386
-go build main.go
+go build -x main.go
 echo "Finished...."
 
 REM go build -gcflags=m main.go

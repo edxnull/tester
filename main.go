@@ -39,8 +39,6 @@ var global_win_h int32
 //TODO: https://github.com/benbjohnson/testing 
 //TODO: https://golang.org/pkg/runtime/pprof/
 //TODO: https://www.ardanlabs.com/blog/2018/01/escape-analysis-flaws.html
-//TODO: We need to make sure we render 1 page as a texture, otherwise we are just wasting a lot of
-//      everything.
 //TODO: https://austburn.me/blog/go-profile.html  // IMPORANT!
 //TODO: https://segment.com/blog/allocation-efficiency-in-high-performance-go-services/
 //TODO: https://motion-express.com/blog/organizing-a-go-project 
@@ -253,6 +251,8 @@ func main() {
 
     running := true
     print_word := false
+    engage_loop := false
+    first_pass := true
 
     total := 0
     for index := range all_lines {
@@ -329,6 +329,7 @@ func main() {
                     //check_collision_mouse_over_words(t, &line.word_rects, &test_mouse_over)
                     break
                 case *sdl.MouseWheelEvent:
+                    //fmt.Printf("%#v\n", t)
 					if t.Y == -1 {
 						move_text_up = true
 					}
@@ -492,35 +493,49 @@ func main() {
 
         // @TEST RENDERING TTF LINE
         //for ln := range all_lines[0:18] {
-        for ln := range all_lines {
-            for index := range all_lines[ln].word_rects {
-                //renderer.SetDrawColor(100, 10, 100, uint8(cmd_console_anim_alpha))
-                renderer.SetDrawColor(0, 0, 0, 0)
-                renderer.FillRect(&all_lines[ln].word_rects[index])
-                renderer.DrawRect(&all_lines[ln].word_rects[index])
+        if first_pass {
+            for ln := range all_lines {
+                for index := range all_lines[ln].word_rects {
+                    //renderer.SetDrawColor(100, 10, 100, uint8(cmd_console_anim_alpha))
+                    renderer.SetDrawColor(0, 0, 0, 0)
+                    renderer.FillRect(&all_lines[ln].word_rects[index])
+                    renderer.DrawRect(&all_lines[ln].word_rects[index])
+                }
+                renderer.Copy(all_lines[ln].texture.data, nil, &all_lines[ln].bg_rect)
             }
-            renderer.Copy(all_lines[ln].texture.data, nil, &all_lines[ln].bg_rect)
+            first_pass = false
+        } else {
+            for i := range all_lines {
+                renderer.Copy(all_lines[i].texture.data, nil, &all_lines[i].bg_rect)
+            }
         }
 
-        // @HIGHLIGHT WORDS
-        for index := range _RECTS_ {
-            if mouseover_word_texture[index] {
-                if _WORDS_[index] != "\n" {
-                    renderer.SetDrawColor(255, 100, 200, 100)
-                    renderer.FillRect(&_RECTS_[index])
-                    renderer.DrawRect(&_RECTS_[index])
-                    if print_word {
-                        if _WORDS_[index] != "\n" {
-                            fmt.Printf("%s\n", _WORDS_[index])
-                            print_word = false
+        for i := range mouseover_word_texture {
+            if mouseover_word_texture[i] == true {
+                engage_loop = true
+            }
+        }
+        if engage_loop {
+            for index := range _RECTS_ {
+                if mouseover_word_texture[index] {
+                    if _WORDS_[index] != "\n" {
+                        renderer.SetDrawColor(255, 100, 200, 100)
+                        renderer.FillRect(&_RECTS_[index])
+                        renderer.DrawRect(&_RECTS_[index])
+                        if print_word {
+                            if _WORDS_[index] != "\n" {
+                                fmt.Printf("%s\n", _WORDS_[index])
+                                print_word = false
+                            }
                         }
                     }
+                } else {
+                    renderer.SetDrawColor(0, 0, 0, 0)
+                    renderer.FillRect(&_RECTS_[index])
+                    renderer.DrawRect(&_RECTS_[index])
                 }
-            } else {
-                renderer.SetDrawColor(0, 0, 0, 0)
-                renderer.FillRect(&_RECTS_[index])
-                renderer.DrawRect(&_RECTS_[index])
             }
+            engage_loop = false
         }
 
         if move_text_down {
@@ -661,6 +676,7 @@ func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color
 
 	assert_if(len(text) <= 0, "text: len(text) <= 0")
 
+    // we could have used RenderUTF8BlenderWrapped here
     if surface, err = font.RenderUTF8Blended(text, color); err != nil {
         panic(err)
     }
