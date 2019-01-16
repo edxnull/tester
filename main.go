@@ -195,7 +195,7 @@ func main() {
 
     // @TEMPORARY
     test_tokens := do_wrap_lines(font, &line_tokens[0], LINE_LENGTH)
-    for index := 1; index < 20; index += 1 {
+    for index := 1; index < 42; index += 1 {
         if (len(line_tokens[index]) > 1) {
             current := do_wrap_lines(font, &line_tokens[index], LINE_LENGTH)
             for _, element := range current {
@@ -206,8 +206,39 @@ func main() {
         }
     }
 
+    println("ALAAAALALLA LINES :", len(line_tokens))
+
     all_lines := generate_and_populate_lines(renderer, font, &test_tokens)
-    //all_lines := generate_and_populate_lines(renderer, font, &line_tokens)
+
+    //////////////////////////
+    // TEST_SHIT
+    //////////////////////////
+
+    foo := Line{}
+    foo_text := strings.Join(line_tokens[0:41], "")
+    foo.texture.data = FOO(renderer, font, foo_text, sdl.Color{0, 0, 0, 0})
+    println("FOO LINESKIP:", font.LineSkip())
+    defer foo.texture.data.Destroy()
+    _, _, w, h, _ := foo.texture.data.Query()
+    println("TEXTURE LKJASLKJD :", w, h)
+    ww, wh := get_text_size(font, "A")
+    nlw, nlh := get_text_size(font, "\n")
+    println("NEWLINE WH AND HGH: ", nlw, nlh)
+    skip := font.LineSkip()+1
+    foo.bg_rect = sdl.Rect{int32(X_OFFSET), 0, w, h}
+    foo.word_rects = make([]sdl.Rect, 10)
+    foo.word_rects[0] = sdl.Rect{int32(X_OFFSET), 0, int32(ww)*5, int32(wh)}
+    foo.word_rects[1] = sdl.Rect{int32(X_OFFSET), int32(skip), int32(ww)*5, int32(wh)}
+    foo.word_rects[2] = sdl.Rect{int32(X_OFFSET), int32(skip*2), int32(ww)*5, int32(wh)}
+    foo.word_rects[3] = sdl.Rect{int32(X_OFFSET), int32(skip*3), int32(ww)*5, int32(wh)}
+    foo.word_rects[4] = sdl.Rect{int32(X_OFFSET), int32(skip*4), int32(ww)*5, int32(wh)}
+    foo.word_rects[5] = sdl.Rect{int32(X_OFFSET), int32(skip*5), int32(ww)*5, int32(wh)}
+    foo.word_rects[6] = sdl.Rect{int32(X_OFFSET), int32(skip*6), int32(ww)*5, int32(wh)}
+    foo.word_rects[7] = sdl.Rect{int32(X_OFFSET), int32(skip*7), int32(ww)*5, int32(wh)}
+
+    //////////////////////////
+    // TEST_SHIT
+    //////////////////////////
 
     //////////////////////////
     // CMD_CONSOLE_STUFF
@@ -255,14 +286,14 @@ func main() {
     first_pass := true
 
     total := 0
-    for index := range all_lines {
+    for index := range all_lines[0:42] {
         total += len(all_lines[index].word_rects)
     }
 
     mouseover_word_texture := make([]bool, total)
 
     _RECTS_ := make([]sdl.Rect, 0)
-    for index := range all_lines {
+    for index := range all_lines[0:42] {
         for _, rct := range all_lines[index].word_rects {
             _RECTS_ = append(_RECTS_, rct)
         }
@@ -270,7 +301,7 @@ func main() {
     println(len(_RECTS_), len(mouseover_word_texture))
 
     _WORDS_ := make([]string, 0)
-    for index := range all_lines {
+    for index := range all_lines[0:42] {
         for _, rct := range strings.Split(all_lines[index].text, " ") {
             _WORDS_ = append(_WORDS_, rct)
         }
@@ -278,7 +309,7 @@ func main() {
 
     var heights int32 = 0
     var nlines  int32 = 0
-    for index := range all_lines {
+    for index := range all_lines[0:42] {
         heights += all_lines[index].bg_rect.H
         nlines += 1
     }
@@ -299,9 +330,7 @@ func main() {
     curr_char_w := 0
 
     wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H, false}
-    renderline := DebugWrapLine{0, int32(LINE_LENGTH)-50, int32(LINE_LENGTH), int32(LINE_LENGTH)-50, false}
     fmt.Printf("%#v\n", wrapline)
-    fmt.Printf("%#v\n", renderline)
 
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -503,22 +532,53 @@ func main() {
         renderer.SetDrawColor(255, 255, 255, 0)
         renderer.Clear()
 
+        renderer.SetDrawColor(0, 0, 0, 0)
+        renderer.FillRect(&foo.bg_rect)
+        renderer.DrawRect(&foo.bg_rect)
+        renderer.Copy(foo.texture.data, nil, &foo.bg_rect)
+
+        renderer.SetDrawColor(100, 212, 12, 100)
+
+        renderer.FillRect(&foo.word_rects[0])
+        renderer.DrawRect(&foo.word_rects[0])
+
+        renderer.FillRect(&foo.word_rects[1])
+        renderer.DrawRect(&foo.word_rects[1])
+
+        renderer.FillRect(&foo.word_rects[2])
+        renderer.DrawRect(&foo.word_rects[2])
+
+        renderer.FillRect(&foo.word_rects[3])
+        renderer.DrawRect(&foo.word_rects[3])
+
+        renderer.FillRect(&foo.word_rects[4])
+        renderer.DrawRect(&foo.word_rects[4])
+
+        renderer.FillRect(&foo.word_rects[5])
+        renderer.DrawRect(&foo.word_rects[5])
+
+        renderer.FillRect(&foo.word_rects[6])
+        renderer.DrawRect(&foo.word_rects[7])
+
+        renderer.FillRect(&foo.word_rects[7])
+        renderer.DrawRect(&foo.word_rects[7])
+
         // @TEST RENDERING TTF LINE
         if first_pass {
-            for ln := range all_lines {
+            for ln := range all_lines[0:42] {
                 for index := range all_lines[ln].word_rects {
                     //renderer.SetDrawColor(100, 10, 100, uint8(cmd_console_anim_alpha))
                     renderer.SetDrawColor(0, 0, 0, 0)
                     renderer.FillRect(&all_lines[ln].word_rects[index])
                     renderer.DrawRect(&all_lines[ln].word_rects[index])
                 }
-                renderer.Copy(all_lines[ln].texture.data, nil, &all_lines[ln].bg_rect)
+                //renderer.Copy(all_lines[ln].texture.data, nil, &all_lines[ln].bg_rect)
             }
             first_pass = false
         } else {
-            for i := range all_lines {
-                renderer.Copy(all_lines[i].texture.data, nil, &all_lines[i].bg_rect)
-            }
+            //for i := range all_lines[0:42] {
+            //    //renderer.Copy(all_lines[i].texture.data, nil, &all_lines[i].bg_rect)
+            //}
         }
 
         for i := range mouseover_word_texture {
@@ -551,25 +611,27 @@ func main() {
 
         if move_text_down {
             move_text_down = false
-            for index := range all_lines {
+            for index := range all_lines[0:42] {
                 all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
             }
+            foo.bg_rect.Y -= TEXT_SCROLL_SPEED
             for index := range _RECTS_ {
                 _RECTS_[index].Y -= TEXT_SCROLL_SPEED
             }
         }
         if move_text_up {
             move_text_up = false
-            for index := range all_lines {
+            for index := range all_lines[0:42] {
                 all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
             }
+            foo.bg_rect.Y += TEXT_SCROLL_SPEED
             for index := range _RECTS_ {
                 _RECTS_[index].Y += TEXT_SCROLL_SPEED
             }
         }
 
         if wrap_line {
-            for index := range all_lines {
+            for index := range all_lines[0:42] {
                 renderer.SetDrawColor(100, 255, 255, 100)
                 renderer.FillRect(&all_lines[index].bg_rect)
                 renderer.DrawRect(&all_lines[index].bg_rect)
@@ -599,9 +661,6 @@ func main() {
         // WRAPLINE
         renderer.SetDrawColor(255, 100, 0, uint8(cmd_console_anim_alpha))
         renderer.DrawLine(wrapline.x1, wrapline.y1, wrapline.x2, wrapline.y2)
-
-        renderer.SetDrawColor(255, 100, 0, uint8(cmd_console_anim_alpha))
-        renderer.DrawLine(renderline.x1, renderline.y1, renderline.x2, renderline.y2)
         // WRAPLINE
 
 
@@ -703,6 +762,28 @@ func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color
 
     return texture
 }
+
+func FOO(renderer *sdl.Renderer, font *ttf.Font, text string, color sdl.Color) (*sdl.Texture) {
+    var surface *sdl.Surface
+    var texture *sdl.Texture
+    var err error
+
+	assert_if(len(text) <= 0, "text: len(text) <= 0")
+
+    // we could have used RenderUTF8BlenderWrapped here
+    if surface, err = font.RenderUTF8BlendedWrapped(text, color, LINE_LENGTH); err != nil {
+        panic(err)
+    }
+
+    if texture, err = renderer.CreateTextureFromSurface(surface); err != nil {
+        panic(err)
+    }
+    surface.Free()
+
+    return texture
+}
+
+
 
 func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string, c sdl.Color) (*sdl.Texture) {
     var surface *sdl.Surface
