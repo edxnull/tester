@@ -2,18 +2,18 @@ package main
 
 import (
     "os"
-    //"log"
+    "log"
     "fmt"
     "time"
-    //"flag"
+    "flag"
     "bytes"
 	"errors"
     "strconv"
     "strings"
-    //"runtime"
+    "runtime"
     "io/ioutil"
     "math/rand"
-    //"runtime/pprof"
+    "runtime/pprof"
     "github.com/veandco/go-sdl2/sdl"
     "github.com/veandco/go-sdl2/ttf"
 )
@@ -28,8 +28,8 @@ const TTF_FONT_SIZE int = 16
 const TEXT_SCROLL_SPEED int32 = 14
 const LINE_LENGTH int = 640
 
-//var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to 'file'")
-//var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to 'file'")
+var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 
 // @GLOBAL MUT VARS 
 var global_win_w int32
@@ -62,13 +62,12 @@ type Font struct {
 }
 
 type Line struct {
-    text string
-    color sdl.Color
+    text string // DELETE
     texture *sdl.Texture
-    texture_w int32
-    texture_h int32
+    texture_w int32 // DELETE
+    texture_h int32 // DELETE
     bg_rect sdl.Rect
-    word_rects []sdl.Rect
+    word_rects []sdl.Rect  //DELETE
 }
 
 type DebugWrapLine struct {
@@ -77,30 +76,19 @@ type DebugWrapLine struct {
     clicked bool
 }
 
-// type Tester struct
-// ------------------
-// TEXT:     [n1, n2, n3 ... n]
-// WORDS:    [n1, n2, n3 ... n]
-// RECTS:    [n1, n2, n3 ... n]
-// BG_RECTS: [n1, n2, n3 ... n]
-// TEXTURES: [n1, n2, n3 ... n]
-
-//type CmdConsole {
-//}
-
 func main() {
     // PROFILING SNIPPET
-    //flag.Parse()
-    //if *cpuprofile != "" {
-    //    f, err := os.Create(*cpuprofile)
-    //    if err != nil {
-    //        log.Fatal("could not *create* CPU profile: ", err)
-    //    }
-    //    if err := pprof.StartCPUProfile(f); err != nil {
-    //        log.Fatal("could not *start* CPU profile: ", err)
-    //    }
-    //    defer pprof.StopCPUProfile()
-    //}
+    flag.Parse()
+    if *cpuprofile != "" {
+        f, err := os.Create(*cpuprofile)
+        if err != nil {
+            log.Fatal("could not *create* CPU profile: ", err)
+        }
+        if err := pprof.StartCPUProfile(f); err != nil {
+            log.Fatal("could not *start* CPU profile: ", err)
+        }
+        defer pprof.StopCPUProfile()
+    }
     // PROFILING SNIPPET
 
 	// Shouldn't init everything!
@@ -196,7 +184,7 @@ func main() {
     line_tokens := strings.Split(string(file_data), "\n")
 
     // @TEMPORARY
-    MAX_INDEX := 100
+    MAX_INDEX := 40
     test_tokens := do_wrap_lines(font, &line_tokens[0], LINE_LENGTH)
     for index := 1; index < len(line_tokens); index += 1 {
         if (len(line_tokens[index]) > 1) {
@@ -210,12 +198,10 @@ func main() {
     }
 
     now_gen := time.Now()
+	//@PERFORMANCE SLOW
     all_lines := generate_and_populate_lines(renderer, font, &test_tokens)
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
-
-	rinfo, _ := renderer.GetInfo()
-	fmt.Printf("%#v\n", rinfo)
 
     //////////////////////////
     // CMD_CONSOLE_STUFF
@@ -223,7 +209,6 @@ func main() {
 
     cmd_win_h := int32(18)
     show_cmd_console_rect := false
-    println("ALLL_LINES", len(all_lines))
     cmd_console_test_str := strings.Join([]string{"LINE COUNT: ", strconv.Itoa(len(test_tokens))}, "")
     cmd_console_anim_alpha := 0
     cmd_move_left := false
@@ -268,7 +253,6 @@ func main() {
             _RECTS_ = append(_RECTS_, rct)
         }
     }
-    println(len(_RECTS_), len(mouseover_word_texture))
 
     _WORDS_ := make([]string, 0)
     for index := range all_lines[0:MAX_INDEX] {
@@ -276,19 +260,6 @@ func main() {
             _WORDS_ = append(_WORDS_, rct)
         }
     }
-
-    var heights int32 = 0
-    var nlines  int32 = 0
-    for index := range all_lines[0:MAX_INDEX] {
-        heights += all_lines[index].bg_rect.H
-        nlines += 1
-    }
-    println("HEIGHT: ", heights)
-    println("NLINES: ", nlines)
-
-    println(len(_RECTS_), len(mouseover_word_texture), len(_WORDS_))
-
-    fmt.Println("FONT_FIXED_WIDTH: ", font.FaceIsFixedWidth())
 
     wrap_line := false
 
@@ -300,7 +271,6 @@ func main() {
     curr_char_w := 0
 
     wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H, false}
-    fmt.Printf("%#v\n", wrapline)
 
 	//viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
 	//renderer.SetViewport(&viewport_rect)
@@ -664,17 +634,17 @@ func main() {
     sdl.Quit()
 
     // PROFILING SNIPPET
-    //if *memprofile != "" {
-    //    f, err := os.Create(*memprofile)
-    //    if err != nil {
-    //        log.Fatal("could not *create* MEM profile: ", err)
-    //    }
-    //    runtime.GC()
-    //    if err := pprof.WriteHeapProfile(f); err != nil {
-    //        log.Fatal("could not *start*  MEM profile: ", err)
-    //    }
-    //    f.Close()
-    //}
+    if *memprofile != "" {
+        f, err := os.Create(*memprofile)
+        if err != nil {
+            log.Fatal("could not *create* MEM profile: ", err)
+        }
+        runtime.GC()
+        if err := pprof.WriteHeapProfile(f); err != nil {
+            log.Fatal("could not *start*  MEM profile: ", err)
+        }
+        f.Close()
+    }
     // PROFILING SNIPPET
 }
 
@@ -762,6 +732,8 @@ func get_text_size(font *ttf.Font, chars string) (int, int) {
     return line_w, line_h
 }
 
+// TODO: we are Spliting too much everywhere
+
 // @TEMPORARY: this is just a wrapper at the moment
 // NOTE: I'm not sure I like this function!!
 func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_nr int32) {
@@ -769,12 +741,13 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
 	assert_if(len(line.text) == 0, "line.text was empty")
 	assert_if(font == nil, "font was nil")
 
-    line.texture = make_ttf_texture(rend, font, line.text, line.color)
+    line.texture = make_ttf_texture(rend, font, line.text, sdl.Color{0, 0, 0, 0})
 
     text := strings.Split(line.text, " ")
     line.word_rects = make([]sdl.Rect, len(text))
 
     tw, th := get_text_size(font, line.text)
+	// TODO: we don't need this stuff here
     line.texture_w = int32(tw)
     line.texture_h = int32(th)
 
@@ -817,6 +790,8 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
     }
 }
 
+// TODO: @PERFORMANCE: apparently bytes.Buffer is slow
+// https://habr.com/en/company/intel/blog/422447/ 
 func do_wrap_lines(font *ttf.Font, str *string, max_len int) ([]string) {
     var buff bytes.Buffer
     var result []string
@@ -874,6 +849,7 @@ func destroy_lines(lines *[]Line) {
 
 //NOTE: According to [go build -gcflags=-m main.go] this call has been inlined.
 //NOTE: It would be great to check if inlining calls are actually any good or note.
+// @PERFORMANCE: errors.New takes up a lot of space, for some reason
 func assert_if(cond bool, error_msg string) {
 	if (cond) {
 		println("")
