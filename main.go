@@ -223,66 +223,69 @@ func main() {
 
     foo := Line{}
     foo_text := strings.Join(line_tokens[0:200], "")
-    foo.texture.data = FOO(renderer, font, foo_text, sdl.Color{0, 0, 0, 0})
+    foo.texture.data = FOO_FUNC(renderer, font, foo_text, sdl.Color{0, 0, 0, 0})
 
     testing_string := string(strings.Join(line_tokens, ""))
-    println(len(testing_string))
-    println(string(testing_string[0]))
-    println(string(testing_string[len(testing_string)-1]))
-    println(string(testing_string[len(testing_string)-2]))
-    println(string(testing_string[len(testing_string)-3]))
-    println(string(testing_string[len(testing_string)-4]))
-    println(string(testing_string[len(testing_string)-5]))
-    println(len(line_tokens))
     final_strings := make([]string, 0)
-    max_ch := 22014
+    max_ch := 20000
     s := 0
-    i := 0
-    cap_ch := max_ch
+    i := max_ch
     for {
-        if len(testing_string[s:i]) == max_ch {
-            fmt.Printf("s: %d, i: %d, cap_ch: %d, max_ch: %d len(%d)\n", s, i, cap_ch, max_ch, len(testing_string[s:i]))
-            if s == 0 {
-                println("OK 999")
-                final_strings = append(final_strings, testing_string[s:i])
-            }
-            s = i
-            i += max_ch
-            cap_ch += max_ch
+        if s == 0 {
             final_strings = append(final_strings, testing_string[s:i])
-            if i > len(testing_string) {
-                // delta has to go instead of i here
-                delta := i - len(testing_string)
-                fmt.Printf("delta:: i:%d, delta:%d\n", i, delta)
-                println("[EEEEEEROOOOOOOOOOOOOOOOOOR !!!!!!!!!!!!!!!!]\n")
-                break
-            }
-            fmt.Printf("s: %d, i: %d, cap_ch: %d, max_ch: %d len(%d)\n", s, i, cap_ch, max_ch, len(testing_string[s:i]))
+        }
+
+        s = i
+        i += max_ch
+
+        if i >= len(testing_string) {
+            final_strings = append(final_strings, testing_string[s:len(testing_string)-1])
+            break
+        }
+
+        final_strings = append(final_strings, testing_string[s:i])
+        fmt.Printf("s: %d, i: %d, max_ch: %d len(%d)\n", s, i, max_ch, len(testing_string[s:i]))
+
+        if s >= len(testing_string) {
+            final_strings = append(final_strings, testing_string[s:len(testing_string)-1])
+            break
         }
 
         if i == len(testing_string) {
-            println("IIII ", i)
-            println("BREAK")
+            assert_if(i == len(testing_string), "Failed")
             break
         }
-        i += 1
     }
     defer foo.texture.data.Destroy()
 
     final_lines := make([]*sdl.Texture, 0)
-    for _, s := range final_strings {
-        final_lines = append(final_lines, FOO(renderer, font, s, sdl.Color{0, 0, 0, 0}))
+    for i, s := range final_strings {
+        final_lines = append(final_lines, FOO_FUNC(renderer, font, s, sdl.Color{0, 0, 0, 0}))
+        w, h := get_texture_query_wh(final_lines[i])
+        fmt.Printf("%d ~> %d %d\n", i, w, h)
     }
-    fmt.Printf("%#v\n", final_lines)
-    println(len(final_strings))
 
-    w0, h0 := get_texture_query_wh(final_lines[0])
-    bg_rect_0 := sdl.Rect{int32(X_OFFSET), 0, w0, h0}
-    fmt.Printf("WH_0 w: %d, h: %d\n", w0, h0)
+    ALL_LINES := make([]Line, len(final_lines))
 
-    w1, h1 := get_texture_query_wh(final_lines[1])
-    bg_rect_1 := sdl.Rect{int32(X_OFFSET), h0, w1, h1}
-    fmt.Printf("WH_1 w: %d, h: %d\n", w1, h1)
+    prev_h := int32(0)
+    for i, s := range final_lines {
+        ALL_LINES[i].texture.data = s
+        w, h := get_texture_query_wh(s)
+        ALL_LINES[i].bg_rect = sdl.Rect{int32(X_OFFSET), prev_h, w, h}
+        prev_h += h
+    }
+
+    for _, s := range final_lines {
+        defer s.Destroy()
+    }
+
+    //  w0, h0 := get_texture_query_wh(final_lines[0])
+    //  bg_rect_0 := sdl.Rect{int32(X_OFFSET), 0, w0, h0}
+    //  fmt.Printf("WH_0 w: %d, h: %d\n", w0, h0)
+
+    //  w1, h1 := get_texture_query_wh(final_lines[1])
+    //  bg_rect_1 := sdl.Rect{int32(X_OFFSET), h0, w1, h1}
+    //  fmt.Printf("WH_1 w: %d, h: %d\n", w1, h1)
 
     _, _, w, h, _ := foo.texture.data.Query()
     //ww, wh := get_text_size(font, " ")
@@ -596,15 +599,17 @@ func main() {
         //renderer.DrawRect(&foo.bg_rect)
         //renderer.Copy(foo.texture.data, nil, &foo.bg_rect)
 
-        renderer.SetDrawColor(0, 0, 0, 0)
-        renderer.FillRect(&bg_rect_0)
-        renderer.DrawRect(&bg_rect_0)
-        renderer.Copy(final_lines[0], nil, &bg_rect_0)
+        for index := range ALL_LINES {
+            renderer.SetDrawColor(100, 100, 0, 100)
+            renderer.FillRect(&ALL_LINES[index].bg_rect)
+            renderer.DrawRect(&ALL_LINES[index].bg_rect)
+            renderer.Copy(ALL_LINES[index].texture.data, nil, &ALL_LINES[index].bg_rect)
+        }
 
-        renderer.SetDrawColor(0, 0, 0, 0)
-        renderer.FillRect(&bg_rect_1)
-        renderer.DrawRect(&bg_rect_1)
-        renderer.Copy(final_lines[1], nil, &bg_rect_1)
+        //renderer.SetDrawColor(0, 0, 0, 0)
+        //renderer.FillRect(&bg_rect_1)
+        //renderer.DrawRect(&bg_rect_1)
+        //renderer.Copy(final_lines[1], nil, &bg_rect_1)
 
         //renderer.SetDrawColor(100, 212, 12, 100)
 
@@ -661,27 +666,33 @@ func main() {
 
         if move_text_down {
             move_text_down = false
-            for index := range all_lines[0:42] {
-                all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
+            for index := range ALL_LINES {
+                ALL_LINES[index].bg_rect.Y -= (TEXT_SCROLL_SPEED*3)
             }
+            //for index := range all_lines[0:42] {
+            //    all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
+            //}
             //foo.bg_rect.Y -= TEXT_SCROLL_SPEED
-            bg_rect_0.Y -= TEXT_SCROLL_SPEED
-            bg_rect_1.Y -= TEXT_SCROLL_SPEED
-            for index := range _RECTS_ {
-                _RECTS_[index].Y -= TEXT_SCROLL_SPEED
-            }
+            //bg_rect_0.Y -= TEXT_SCROLL_SPEED
+            //bg_rect_1.Y -= TEXT_SCROLL_SPEED
+            ///for index := range _RECTS_ {
+            ///    _RECTS_[index].Y -= TEXT_SCROLL_SPEED
+            ///}
         }
         if move_text_up {
             move_text_up = false
-            for index := range all_lines[0:42] {
-                all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
+            for index := range ALL_LINES {
+                ALL_LINES[index].bg_rect.Y += (TEXT_SCROLL_SPEED*3)
             }
+            //for index := range all_lines[0:42] {
+            //    all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
+            //}
             //foo.bg_rect.Y += TEXT_SCROLL_SPEED
-            bg_rect_0.Y += TEXT_SCROLL_SPEED
-            bg_rect_1.Y += TEXT_SCROLL_SPEED
-            for index := range _RECTS_ {
-                _RECTS_[index].Y += TEXT_SCROLL_SPEED
-            }
+            //bg_rect_0.Y += TEXT_SCROLL_SPEED
+            //bg_rect_1.Y += TEXT_SCROLL_SPEED
+            //for index := range _RECTS_ {
+            //    _RECTS_[index].Y += TEXT_SCROLL_SPEED
+            //}
         }
 
         if wrap_line {
@@ -818,7 +829,7 @@ func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color
     return texture
 }
 
-func FOO(renderer *sdl.Renderer, font *ttf.Font, text string, color sdl.Color) (*sdl.Texture) {
+func FOO_FUNC(renderer *sdl.Renderer, font *ttf.Font, text string, color sdl.Color) (*sdl.Texture) {
     var surface *sdl.Surface
     var texture *sdl.Texture
     var err error
@@ -826,6 +837,7 @@ func FOO(renderer *sdl.Renderer, font *ttf.Font, text string, color sdl.Color) (
 	assert_if(len(text) <= 0, "text: len(text) <= 0")
 
     if surface, err = font.RenderUTF8BlendedWrapped(text, color, LINE_LENGTH); err != nil {
+        //NOTE: I could break text into multiple lines here
         panic(err)
     }
 
