@@ -49,6 +49,11 @@ var global_win_h int32
 //TODO: https://gobyexample.com/command-line-flags
 //TODO: https://gobyexample.com/environment-variables
 
+//TODO: https://eatenbyagrue.org/using_stb_truetype_with_sdl.html 
+//TODO: https://gist.github.com/REPOmAN2v2/c3ab203e7cbf2fd2fa47 
+//TODO: https://www.youtube.com/watch?v=H8sGla6glM4 
+//TODO: https://openclassrooms.com/fr/courses/19980-apprenez-a-programmer-en-c/18902-maitrisez-le-temps 
+
 type Texture struct {
     width  int32
     height int32
@@ -83,6 +88,9 @@ type DebugWrapLine struct {
 // BG_RECTS: [n1, n2, n3 ... n]
 // TEXTURES: [n1, n2, n3 ... n]
 
+//type CmdConsole {
+//}
+
 func main() {
     // PROFILING SNIPPET
     flag.Parse()
@@ -97,6 +105,8 @@ func main() {
         defer pprof.StopCPUProfile()
     }
     // PROFILING SNIPPET
+
+	// Shouldn't init everything!
     if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
         panic(err)
     }
@@ -206,39 +216,87 @@ func main() {
         }
     }
 
-    println("ALAAAALALLA LINES :", len(line_tokens))
-
     all_lines := generate_and_populate_lines(renderer, font, &test_tokens)
 
-    //////////////////////////
-    // TEST_SHIT
-    //////////////////////////
+	rinfo, _ := renderer.GetInfo()
+	fmt.Printf("%#v\n", rinfo)
 
     foo := Line{}
-    foo_text := strings.Join(line_tokens[0:41], "")
+    foo_text := strings.Join(line_tokens[0:200], "")
     foo.texture.data = FOO(renderer, font, foo_text, sdl.Color{0, 0, 0, 0})
-    println("FOO LINESKIP:", font.LineSkip())
-    defer foo.texture.data.Destroy()
-    _, _, w, h, _ := foo.texture.data.Query()
-    println("TEXTURE LKJASLKJD :", w, h)
-    ww, wh := get_text_size(font, "A")
-    nlw, nlh := get_text_size(font, "\n")
-    println("NEWLINE WH AND HGH: ", nlw, nlh)
-    skip := font.LineSkip()+1
-    foo.bg_rect = sdl.Rect{int32(X_OFFSET), 0, w, h}
-    foo.word_rects = make([]sdl.Rect, 10)
-    foo.word_rects[0] = sdl.Rect{int32(X_OFFSET), 0, int32(ww)*5, int32(wh)}
-    foo.word_rects[1] = sdl.Rect{int32(X_OFFSET), int32(skip), int32(ww)*5, int32(wh)}
-    foo.word_rects[2] = sdl.Rect{int32(X_OFFSET), int32(skip*2), int32(ww)*5, int32(wh)}
-    foo.word_rects[3] = sdl.Rect{int32(X_OFFSET), int32(skip*3), int32(ww)*5, int32(wh)}
-    foo.word_rects[4] = sdl.Rect{int32(X_OFFSET), int32(skip*4), int32(ww)*5, int32(wh)}
-    foo.word_rects[5] = sdl.Rect{int32(X_OFFSET), int32(skip*5), int32(ww)*5, int32(wh)}
-    foo.word_rects[6] = sdl.Rect{int32(X_OFFSET), int32(skip*6), int32(ww)*5, int32(wh)}
-    foo.word_rects[7] = sdl.Rect{int32(X_OFFSET), int32(skip*7), int32(ww)*5, int32(wh)}
 
-    //////////////////////////
-    // TEST_SHIT
-    //////////////////////////
+    testing_string := string(strings.Join(line_tokens, ""))
+    println(len(testing_string))
+    println(string(testing_string[0]))
+    println(string(testing_string[len(testing_string)-1]))
+    println(string(testing_string[len(testing_string)-2]))
+    println(string(testing_string[len(testing_string)-3]))
+    println(string(testing_string[len(testing_string)-4]))
+    println(string(testing_string[len(testing_string)-5]))
+    println(len(line_tokens))
+    final_strings := make([]string, 0)
+    max_ch := 22014
+    s := 0
+    i := 0
+    cap_ch := max_ch
+    for {
+        if len(testing_string[s:i]) == max_ch {
+            fmt.Printf("s: %d, i: %d, cap_ch: %d, max_ch: %d len(%d)\n", s, i, cap_ch, max_ch, len(testing_string[s:i]))
+            if s == 0 {
+                println("OK 999")
+                final_strings = append(final_strings, testing_string[s:i])
+            }
+            s = i
+            i += max_ch
+            cap_ch += max_ch
+            final_strings = append(final_strings, testing_string[s:i])
+            if i > len(testing_string) {
+                // delta has to go instead of i here
+                delta := i - len(testing_string)
+                fmt.Printf("delta:: i:%d, delta:%d\n", i, delta)
+                println("[EEEEEEROOOOOOOOOOOOOOOOOOR !!!!!!!!!!!!!!!!]\n")
+                break
+            }
+            fmt.Printf("s: %d, i: %d, cap_ch: %d, max_ch: %d len(%d)\n", s, i, cap_ch, max_ch, len(testing_string[s:i]))
+        }
+
+        if i == len(testing_string) {
+            println("IIII ", i)
+            println("BREAK")
+            break
+        }
+        i += 1
+    }
+    defer foo.texture.data.Destroy()
+
+    final_lines := make([]*sdl.Texture, 0)
+    for _, s := range final_strings {
+        final_lines = append(final_lines, FOO(renderer, font, s, sdl.Color{0, 0, 0, 0}))
+    }
+    fmt.Printf("%#v\n", final_lines)
+    println(len(final_strings))
+
+    w0, h0 := get_texture_query_wh(final_lines[0])
+    bg_rect_0 := sdl.Rect{int32(X_OFFSET), 0, w0, h0}
+    fmt.Printf("WH_0 w: %d, h: %d\n", w0, h0)
+
+    w1, h1 := get_texture_query_wh(final_lines[1])
+    bg_rect_1 := sdl.Rect{int32(X_OFFSET), h0, w1, h1}
+    fmt.Printf("WH_1 w: %d, h: %d\n", w1, h1)
+
+    _, _, w, h, _ := foo.texture.data.Query()
+    //ww, wh := get_text_size(font, " ")
+    //skip := font.LineSkip()+1
+    foo.bg_rect = sdl.Rect{int32(X_OFFSET), 0, w, h}
+    //foo.word_rects = make([]sdl.Rect, 10)
+    //foo.word_rects[0] = sdl.Rect{int32(X_OFFSET), 0, int32(ww)*5, int32(wh)}
+    //foo.word_rects[1] = sdl.Rect{int32(X_OFFSET), int32(skip), int32(ww)*5, int32(wh)}
+    //foo.word_rects[2] = sdl.Rect{int32(X_OFFSET), int32(skip*2), int32(ww)*5, int32(wh)}
+    //foo.word_rects[3] = sdl.Rect{int32(X_OFFSET), int32(skip*3), int32(ww)*5, int32(wh)}
+    //foo.word_rects[4] = sdl.Rect{int32(X_OFFSET), int32(skip*4), int32(ww)*5, int32(wh)}
+    //foo.word_rects[5] = sdl.Rect{int32(X_OFFSET), int32(skip*5), int32(ww)*5, int32(wh)}
+    //foo.word_rects[6] = sdl.Rect{int32(X_OFFSET), int32(skip*6), int32(ww)*5, int32(wh)}
+    //foo.word_rects[7] = sdl.Rect{int32(X_OFFSET), int32(skip*7), int32(ww)*5, int32(wh)}
 
     //////////////////////////
     // CMD_CONSOLE_STUFF
@@ -269,14 +327,6 @@ func main() {
     //////////////////////////
     // END_CMD_CONSOLE_STUFF
     //////////////////////////
-
-    renderer_info, err := renderer.GetInfo()
-    if err != nil {
-        panic(err)
-    }
-
-    fmt.Println(renderer_info)
-    fmt.Println(sdl.GetPlatform())
 
     renderer.SetDrawBlendMode(sdl.BLENDMODE_BLEND)
 
@@ -332,6 +382,9 @@ func main() {
     wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H, false}
     fmt.Printf("%#v\n", wrapline)
 
+	viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
+	renderer.SetViewport(&viewport_rect)
+
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
             switch t := event.(type) {
@@ -353,11 +406,17 @@ func main() {
                                 cmd_console_rect.Y = global_win_h-cmd_win_h
                                 cmd_console_ttf_rect.Y = global_win_h-cmd_win_h
                                 cmd_console_cursor_block.Y = global_win_h-cmd_win_h
+
+                                wrapline.y2 = global_win_h
+								renderer.SetViewport(&viewport_rect)
                             } else {
                                 cmd_console_rect.W = global_win_w
                                 cmd_console_rect.Y = global_win_h-cmd_win_h
                                 cmd_console_ttf_rect.Y = global_win_h-cmd_win_h
                                 cmd_console_cursor_block.Y = global_win_h-cmd_win_h
+
+                                wrapline.y2 = global_win_h
+								renderer.SetViewport(&viewport_rect)
                             }
                             break
                         default:
@@ -532,36 +591,27 @@ func main() {
         renderer.SetDrawColor(255, 255, 255, 0)
         renderer.Clear()
 
+        //renderer.SetDrawColor(0, 0, 0, 0)
+        //renderer.FillRect(&foo.bg_rect)
+        //renderer.DrawRect(&foo.bg_rect)
+        //renderer.Copy(foo.texture.data, nil, &foo.bg_rect)
+
         renderer.SetDrawColor(0, 0, 0, 0)
-        renderer.FillRect(&foo.bg_rect)
-        renderer.DrawRect(&foo.bg_rect)
-        renderer.Copy(foo.texture.data, nil, &foo.bg_rect)
+        renderer.FillRect(&bg_rect_0)
+        renderer.DrawRect(&bg_rect_0)
+        renderer.Copy(final_lines[0], nil, &bg_rect_0)
 
-        renderer.SetDrawColor(100, 212, 12, 100)
+        renderer.SetDrawColor(0, 0, 0, 0)
+        renderer.FillRect(&bg_rect_1)
+        renderer.DrawRect(&bg_rect_1)
+        renderer.Copy(final_lines[1], nil, &bg_rect_1)
 
-        renderer.FillRect(&foo.word_rects[0])
-        renderer.DrawRect(&foo.word_rects[0])
+        //renderer.SetDrawColor(100, 212, 12, 100)
 
-        renderer.FillRect(&foo.word_rects[1])
-        renderer.DrawRect(&foo.word_rects[1])
-
-        renderer.FillRect(&foo.word_rects[2])
-        renderer.DrawRect(&foo.word_rects[2])
-
-        renderer.FillRect(&foo.word_rects[3])
-        renderer.DrawRect(&foo.word_rects[3])
-
-        renderer.FillRect(&foo.word_rects[4])
-        renderer.DrawRect(&foo.word_rects[4])
-
-        renderer.FillRect(&foo.word_rects[5])
-        renderer.DrawRect(&foo.word_rects[5])
-
-        renderer.FillRect(&foo.word_rects[6])
-        renderer.DrawRect(&foo.word_rects[7])
-
-        renderer.FillRect(&foo.word_rects[7])
-        renderer.DrawRect(&foo.word_rects[7])
+		//for index := range foo.word_rects {
+		//	renderer.FillRect(&foo.word_rects[index])
+		//	renderer.DrawRect(&foo.word_rects[index])
+		//}
 
         // @TEST RENDERING TTF LINE
         if first_pass {
@@ -614,7 +664,9 @@ func main() {
             for index := range all_lines[0:42] {
                 all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
             }
-            foo.bg_rect.Y -= TEXT_SCROLL_SPEED
+            //foo.bg_rect.Y -= TEXT_SCROLL_SPEED
+            bg_rect_0.Y -= TEXT_SCROLL_SPEED
+            bg_rect_1.Y -= TEXT_SCROLL_SPEED
             for index := range _RECTS_ {
                 _RECTS_[index].Y -= TEXT_SCROLL_SPEED
             }
@@ -624,7 +676,9 @@ func main() {
             for index := range all_lines[0:42] {
                 all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
             }
-            foo.bg_rect.Y += TEXT_SCROLL_SPEED
+            //foo.bg_rect.Y += TEXT_SCROLL_SPEED
+            bg_rect_0.Y += TEXT_SCROLL_SPEED
+            bg_rect_1.Y += TEXT_SCROLL_SPEED
             for index := range _RECTS_ {
                 _RECTS_[index].Y += TEXT_SCROLL_SPEED
             }
@@ -643,6 +697,7 @@ func main() {
         // DRAWING_CMD_CONSOLE
         if show_cmd_console_rect {
             renderer.SetDrawColor(255, 10, 100, uint8(cmd_console_anim_alpha))
+            //renderer.SetDrawColor(255, 255, 255, 255)
             renderer.FillRect(&cmd_console_rect)
             renderer.DrawRect(&cmd_console_rect)
 
@@ -660,7 +715,7 @@ func main() {
 
         // WRAPLINE
         renderer.SetDrawColor(255, 100, 0, uint8(cmd_console_anim_alpha))
-        renderer.DrawLine(wrapline.x1, wrapline.y1, wrapline.x2, wrapline.y2)
+        renderer.DrawLine(wrapline.x1+int32(X_OFFSET), wrapline.y1, wrapline.x2+int32(X_OFFSET), wrapline.y2)
         // WRAPLINE
 
 
@@ -770,7 +825,6 @@ func FOO(renderer *sdl.Renderer, font *ttf.Font, text string, color sdl.Color) (
 
 	assert_if(len(text) <= 0, "text: len(text) <= 0")
 
-    // we could have used RenderUTF8BlenderWrapped here
     if surface, err = font.RenderUTF8BlendedWrapped(text, color, LINE_LENGTH); err != nil {
         panic(err)
     }
@@ -947,4 +1001,9 @@ func assert_if(cond bool, error_msg string) {
 
 func is_ascii_alpha(char string) bool {
     return ((char >= "A") && (char <= "z"))
+}
+
+func get_texture_query_wh(texture *sdl.Texture) (int32, int32) {
+    _, _, w, h, _ := texture.Query()
+    return w, h
 }
