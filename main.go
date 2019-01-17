@@ -55,12 +55,6 @@ var global_win_h int32
 //TODO: https://www.youtube.com/watch?v=H8sGla6glM4 
 //TODO: https://openclassrooms.com/fr/courses/19980-apprenez-a-programmer-en-c/18902-maitrisez-le-temps 
 
-type Texture struct {
-    width  int32
-    height int32
-    data *sdl.Texture
-}
-
 type Font struct {
     size int
     name string
@@ -70,7 +64,9 @@ type Font struct {
 type Line struct {
     text string
     color sdl.Color
-    texture Texture
+    texture *sdl.Texture
+    texture_w int32
+    texture_h int32
     bg_rect sdl.Rect
     word_rects []sdl.Rect
 }
@@ -111,12 +107,10 @@ func main() {
     if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
         panic(err)
     }
-    defer sdl.Quit()
 
     if err := ttf.Init(); err != nil {
         panic(err)
     }
-    defer ttf.Quit()
 
     window, err := sdl.CreateWindow(WIN_TITLE, sdl.WINDOWPOS_CENTERED,
                                                sdl.WINDOWPOS_CENTERED,
@@ -125,14 +119,12 @@ func main() {
     if err != nil {
         panic(err)
     }
-    defer window.Destroy()
 
     // NOTE: I've heard that PRESENTVSYNC caps FPS
     renderer, err := sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED | sdl.RENDERER_PRESENTVSYNC)
     if err != nil {
         panic(err)
     }
-    defer renderer.Destroy()
 
     file_stat, err := os.Stat("HP01.txt")
     if err != nil {
@@ -173,7 +165,7 @@ func main() {
 
     allfonts := make([]Font, len(ttf_font_list))
 
-    fmt.Println(ttf_font_list)
+    //fmt.Println(ttf_font_list)
 
     font = load_font("Inconsolata-Regular.ttf", TTF_FONT_SIZE)
 
@@ -186,7 +178,6 @@ func main() {
 		allfonts[index].data = load_font(element, TTF_FONT_SIZE)
 		allfonts[index].name = element
 		allfonts[index].size = TTF_FONT_SIZE
-		defer allfonts[index].data.Close() // @TEMPORARY HACK @SLOW
 	}
 
     // font = allfonts[1].data
@@ -207,7 +198,7 @@ func main() {
     // @TEMPORARY
     MAX_INDEX := 100
     test_tokens := do_wrap_lines(font, &line_tokens[0], LINE_LENGTH)
-    for index := 1; index < MAX_INDEX; index += 1 {
+    for index := 1; index < len(line_tokens); index += 1 {
         if (len(line_tokens[index]) > 1) {
             current := do_wrap_lines(font, &line_tokens[index], LINE_LENGTH)
             for _, element := range current {
@@ -218,7 +209,10 @@ func main() {
         }
     }
 
+    now_gen := time.Now()
     all_lines := generate_and_populate_lines(renderer, font, &test_tokens)
+    end_gen := time.Now().Sub(now_gen)
+    fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
 
 	rinfo, _ := renderer.GetInfo()
 	fmt.Printf("%#v\n", rinfo)
@@ -526,12 +520,12 @@ func main() {
                     renderer.FillRect(&all_lines[ln].word_rects[index])
                     renderer.DrawRect(&all_lines[ln].word_rects[index])
                 }
-                renderer.Copy(all_lines[ln].texture.data, nil, &all_lines[ln].bg_rect)
+                renderer.Copy(all_lines[ln].texture, nil, &all_lines[ln].bg_rect)
             }
             first_pass = false
         } else {
             for i := range all_lines[0:MAX_INDEX] {
-                renderer.Copy(all_lines[i].texture.data, nil, &all_lines[i].bg_rect)
+                renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
             }
         }
 
@@ -587,7 +581,7 @@ func main() {
                 renderer.SetDrawColor(100, 255, 255, 100)
                 renderer.FillRect(&all_lines[index].bg_rect)
                 renderer.DrawRect(&all_lines[index].bg_rect)
-                renderer.Copy(all_lines[index].texture.data, nil, &all_lines[index].bg_rect)
+                renderer.Copy(all_lines[index].texture, nil, &all_lines[index].bg_rect)
             }
         }
         // @TEST RENDERING TTF LINE
@@ -648,7 +642,10 @@ func main() {
     //    ttf_textures[index].Destroy()
     //}
 
+    now_destroy := time.Now()
     destroy_lines(&all_lines) // @WIP
+    end_destroy := time.Now().Sub(now_destroy)
+    fmt.Printf("[[destroy_lines took %s]]\n", end_destroy.String())
 
     if cmd_console_ttf_texture != nil {
         println("The texture was not <nil>")
@@ -656,6 +653,15 @@ func main() {
     } else {
         println("ERROR!!!! The texture was already Destroyed somewhere")
     }
+
+	for index := range ttf_font_list {
+		allfonts[index].data.Close() // @TEMPORARY HACK @SLOW
+	}
+
+    window.Destroy()
+    renderer.Destroy()
+    ttf.Quit()
+    sdl.Quit()
 
     // PROFILING SNIPPET
     //if *memprofile != "" {
@@ -763,14 +769,14 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
 	assert_if(len(line.text) == 0, "line.text was empty")
 	assert_if(font == nil, "font was nil")
 
-    line.texture.data = make_ttf_texture(rend, font, line.text, line.color)
+    line.texture = make_ttf_texture(rend, font, line.text, line.color)
 
     text := strings.Split(line.text, " ")
     line.word_rects = make([]sdl.Rect, len(text))
 
     tw, th := get_text_size(font, line.text)
-    line.texture.width = int32(tw)
-    line.texture.height = int32(th)
+    line.texture_w = int32(tw)
+    line.texture_h = int32(th)
 
     skipline := int32(font.LineSkip()) // @TEMPORARY HACK
     if (skip_nr > 0) {
@@ -779,7 +785,7 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
         skipline = 0
     }
     generate_new_line_rects(&line.word_rects, font, &text, skip_nr)
-    line.bg_rect = sdl.Rect{int32(X_OFFSET), skipline, line.texture.width, line.texture.height}
+    line.bg_rect = sdl.Rect{int32(X_OFFSET), skipline, line.texture_w, line.texture_h}
 }
 
 func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string, skip_nr int32) {
@@ -855,13 +861,14 @@ func do_wrap_lines(font *ttf.Font, str *string, max_len int) ([]string) {
 
 func destroy_lines(lines *[]Line) {
     for index := range *lines {
-        if ((*lines)[index]).texture.data == nil { // @TEMPORARY HACK
-            break
-        }
-        if err := ((*lines)[index]).texture.data.Destroy(); err != nil {
-            println(index)
-            panic(err)
-        }
+        //if ((*lines)[index]).texture == nil { // @TEMPORARY HACK
+        //    break
+        //}
+        (*lines)[index].texture.Destroy()
+        //if err := ((*lines)[index]).texture.Destroy(); err != nil {
+        //    println(index)
+        //    panic(err)
+        //}
     }
 }
 
