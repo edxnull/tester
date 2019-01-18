@@ -8,6 +8,7 @@ import (
     "flag"
     "bytes"
 	"errors"
+    //"unsafe"
     "strconv"
     "strings"
     "runtime"
@@ -54,6 +55,17 @@ var global_win_h int32
 //TODO: https://gist.github.com/REPOmAN2v2/c3ab203e7cbf2fd2fa47 
 //TODO: https://www.youtube.com/watch?v=H8sGla6glM4 
 //TODO: https://openclassrooms.com/fr/courses/19980-apprenez-a-programmer-en-c/18902-maitrisez-le-temps 
+
+//TODO: https://syslog.ravelin.com/bytes-buffer-i-thought-you-were-my-friend-4148fd001229 
+//TODO: https://syslog.ravelin.com/bytes-buffer-revisited-edee5a882030
+
+//TODO: check speed benchmarks for: for _, e := range x {e} | for i := range x {x[i]} | for i, e := range x {e}
+
+//TODO: I'm passing font *ttf.Font to almost every function, which is BAD!
+//      There should be a single font structure with all necessary data in it. Or? ...
+
+//TODO: https://www.ardanlabs.com/blog/2013/09/iterating-over-slices-in-go.html 
+//TODO: https://garbagecollected.org/2017/02/22/go-range-loop-internals/ 
 
 type Font struct {
     size int
@@ -213,6 +225,7 @@ func main() {
     cmd_console_anim_alpha := 0
     cmd_move_left := false
 
+    //@SPEED this is slow. Use strings.Builder{} instead, or something else.
     var cmd_text_buffer bytes.Buffer
     // TODO: we need to save our commands in a bytes.Buffer. We also need a command_list.
     var cmd_console_ttf_texture *sdl.Texture
@@ -713,7 +726,7 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
 func generate_and_populate_lines(renderer *sdl.Renderer, font *ttf.Font, tokens *[]string) (line []Line) {
     all_lines := make([]Line, len(*tokens))
     for index, tk := range *tokens {
-        all_lines[index].text = tk
+        all_lines[index].text = tk //TODO: saving .text in unnecessary here. Need to find a better way...
         new_ttf_texture_line(renderer, font, &all_lines[index], int32(index))
     }
     return all_lines
@@ -791,6 +804,7 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
 }
 
 // TODO: @PERFORMANCE: apparently bytes.Buffer is slow
+//@SPEED this is slow. Use strings.Builder{} instead, or something else.
 // https://habr.com/en/company/intel/blog/422447/ 
 func do_wrap_lines(font *ttf.Font, str *string, max_len int) ([]string) {
     var buff bytes.Buffer
