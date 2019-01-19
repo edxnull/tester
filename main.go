@@ -8,7 +8,6 @@ import (
     "flag"
     "bytes"
 	"errors"
-    //"unsafe"
     "strconv"
     "strings"
     "runtime"
@@ -36,33 +35,8 @@ var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 var global_win_w int32
 var global_win_h int32
 
-//TODO: https://www-archive.mozilla.org/projects/intl/input-method-spec.html
-//TODO: https://pavelfatin.com/scrolling-with-pleasure/
-//TODO: https://github.com/benbjohnson/testing 
-//TODO: https://golang.org/pkg/runtime/pprof/
-//TODO: https://www.ardanlabs.com/blog/2018/01/escape-analysis-flaws.html
-//TODO: https://austburn.me/blog/go-profile.html  // IMPORANT!
-//TODO: https://segment.com/blog/allocation-efficiency-in-high-performance-go-services/
-//TODO: https://motion-express.com/blog/organizing-a-go-project 
-//TODO: https://justinas.org/best-practices-for-errors-in-go 
-//TODO: https://www.joeshaw.org/dont-defer-close-on-writable-files/
-
-//TODO: https://gobyexample.com/collection-functions
-//TODO: https://gobyexample.com/command-line-flags
-//TODO: https://gobyexample.com/environment-variables
-
-//TODO: https://eatenbyagrue.org/using_stb_truetype_with_sdl.html 
-//TODO: https://gist.github.com/REPOmAN2v2/c3ab203e7cbf2fd2fa47 
-//TODO: https://www.youtube.com/watch?v=H8sGla6glM4 
-//TODO: https://openclassrooms.com/fr/courses/19980-apprenez-a-programmer-en-c/18902-maitrisez-le-temps 
-
 //TODO: https://syslog.ravelin.com/bytes-buffer-i-thought-you-were-my-friend-4148fd001229 
 //TODO: https://syslog.ravelin.com/bytes-buffer-revisited-edee5a882030
-
-//TODO: check speed benchmarks for: for _, e := range x {e} | for i := range x {x[i]} | for i, e := range x {e}
-
-//TODO: I'm passing font *ttf.Font to almost every function, which is BAD!
-//      There should be a single font structure with all necessary data in it. Or? ...
 
 //TODO: https://www.ardanlabs.com/blog/2013/09/iterating-over-slices-in-go.html 
 //TODO: https://garbagecollected.org/2017/02/22/go-range-loop-internals/ 
@@ -77,6 +51,16 @@ var global_win_h int32
 
 //TODO: http://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/index.html#slice_hidden_data 
 
+//TODO: https://golang.org/pkg/sync/#Pool
+// A Pool is a set of temporary objects that may be individually saved and retrieved.
+// Any item stored in the Pool may be removed automatically at any time without notification.
+// If the Pool holds the only reference when this happens, the item might be deallocated.
+// A Pool is safe for use by multiple goroutines simultaneously.
+// 
+// Pool's purpose is to cache allocated but unused items for later reuse, relieving pressure on 
+// the garbage collector. That is, it makes it easy to build efficient, thread-safe free lists. 
+// However, it is not suitable for all free lists. 
+
 type Font struct {
     size int
     name string
@@ -86,8 +70,6 @@ type Font struct {
 type Line struct {
     text string // DELETE
     texture *sdl.Texture
-    texture_w int32 // DELETE
-    texture_h int32 // DELETE
     bg_rect sdl.Rect
     word_rects []sdl.Rect  //DELETE
 }
@@ -153,6 +135,8 @@ func main() {
     file.Read(file_data)
     file.Close()
 
+    line_tokens := strings.Split(string(file_data), "\n")
+
     ticker := time.NewTicker(time.Second / 60)
 
     //////////////////////////
@@ -190,6 +174,7 @@ func main() {
 		allfonts[index].size = TTF_FONT_SIZE
 	}
 
+    CHAR_W, CHAR_H, _ := font.SizeUTF8(" ")
     // font = allfonts[1].data
     //TODO: @FIND_USE_CASE: //font = reload_font(font, "Opensans-Bold.ttf", TTF_FONT_SIZE)
     //TODO: @NOT_IMPLEMENTED: I should be able to dynamically load font related functinos on demand
@@ -203,16 +188,17 @@ func main() {
     //font.SetStyle(ttf.STYLE_UNDERLINE) //STYLE_UNDERLINE; STYLE_BOLD; STYLE_ITALIC; STYLE_STRIKETHROUGH
     //font.SetKerning(true)
 
-    line_tokens := strings.Split(string(file_data), "\n")
 
     // @TEMPORARY
 	// do_wrap_lines should return []*strings
 	// we should append(test_tokens, &element) that way we won't copy elements over and over again.
+    start := time.Now()
+    //x_size, _ := get_text_size(font, " ")
     MAX_INDEX := 40
-    test_tokens := do_wrap_lines(font, &line_tokens[0], LINE_LENGTH)
+    test_tokens := do_wrap_lines(&line_tokens[0], LINE_LENGTH, CHAR_W)
     for index := 1; index < len(line_tokens); index += 1 {
         if (len(line_tokens[index]) > 1) {
-            current := do_wrap_lines(font, &line_tokens[index], LINE_LENGTH)
+            current := do_wrap_lines(&line_tokens[index], LINE_LENGTH, CHAR_W)
 			// current and element are both copies, so we end up copying multiple times for no reason
             for _, element := range current {
                 test_tokens = append(test_tokens, element)
@@ -221,10 +207,13 @@ func main() {
             test_tokens = append(test_tokens, "\n")
         }
     }
+    end_start := time.Now().Sub(start)
+    fmt.Printf("[[do_wrap_lines loop took %s]]\n", end_start.String())
+
 
     now_gen := time.Now()
 	//@PERFORMANCE SLOW
-    all_lines := generate_and_populate_lines(renderer, font, &test_tokens)
+    all_lines := generate_and_populate_lines(renderer, font, &test_tokens, CHAR_W, CHAR_H)
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
 
@@ -247,13 +236,13 @@ func main() {
 
     cmd_console_ttf_texture = make_ttf_texture(renderer, font, cmd_console_test_str, cmd_rand_color)
 
-    cmd_console_ttf_w, cmd_console_ttf_h := get_text_size(font, cmd_console_test_str)
+    //cmd_console_ttf_w, cmd_console_ttf_h := get_text_size(font, cmd_console_test_str)
 
-    ttf_letter_w, ttf_letter_h := get_text_size(font, "A") // "A" is just a random letter for our usecase
+    //ttf_letter_w, ttf_letter_h := get_text_size(font, "A") // "A" is just a random letter for our usecase
 
-    cmd_console_ttf_rect     := sdl.Rect{0, WIN_H-cmd_win_h, int32(cmd_console_ttf_w), int32(cmd_console_ttf_h)}
-    cmd_console_rect         := sdl.Rect{0, WIN_H-cmd_win_h, WIN_W, int32(cmd_console_ttf_h)}
-    cmd_console_cursor_block := sdl.Rect{0, WIN_H-cmd_win_h, int32(ttf_letter_w), int32(ttf_letter_h)}
+    cmd_console_ttf_rect     := sdl.Rect{0, WIN_H-cmd_win_h, int32(CHAR_W * len(cmd_console_test_str)), int32(CHAR_H)}
+    cmd_console_rect         := sdl.Rect{0, WIN_H-cmd_win_h, WIN_W, int32(CHAR_H)}
+    cmd_console_cursor_block := sdl.Rect{0, WIN_H-cmd_win_h, int32(CHAR_W), int32(CHAR_H)}
 
     //////////////////////////
     // END_CMD_CONSOLE_STUFF
@@ -265,6 +254,7 @@ func main() {
     first_pass := true
     print_word := false
     engage_loop := false
+
 
     total := 0
     for index := range all_lines[0:MAX_INDEX] {
@@ -634,10 +624,11 @@ func main() {
         <-ticker.C
     }
 
-    now_destroy := time.Now()
+	ticker.Stop()
+    renderer.Destroy()
+    window.Destroy()
+
     destroy_lines(&all_lines) // @WIP
-    end_destroy := time.Now().Sub(now_destroy)
-    fmt.Printf("[[destroy_lines took %s]]\n", end_destroy.String())
 
     if cmd_console_ttf_texture != nil {
         println("The texture was not <nil>")
@@ -649,11 +640,8 @@ func main() {
 	for index := range ttf_font_list {
 		allfonts[index].data.Close() // @TEMPORARY HACK @SLOW
 	}
-
-	ticker.Stop()
     font.Close()
-    window.Destroy()
-    renderer.Destroy()
+
     ttf.Quit()
     sdl.Quit()
 
@@ -702,7 +690,6 @@ func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color
 
 	assert_if(len(text) <= 0, "text: len(text) <= 0")
 
-    // we could have used RenderUTF8BlenderWrapped here
     if surface, err = font.RenderUTF8Blended(text, color); err != nil {
         panic(err)
     }
@@ -734,11 +721,11 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
     return tex
 }
 
-func generate_and_populate_lines(renderer *sdl.Renderer, font *ttf.Font, tokens *[]string) (line []Line) {
+func generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, tokens *[]string, x int, y int) (line []Line) {
     all_lines := make([]Line, len(*tokens))
     for index, tk := range *tokens {
         all_lines[index].text = tk //TODO: saving .text in unnecessary here. Need to find a better way...
-        new_ttf_texture_line(renderer, font, &all_lines[index], int32(index))
+        new_ttf_texture_line(r, font, &all_lines[index], int32(index), x, y)
     }
     return all_lines
 }
@@ -746,24 +733,24 @@ func generate_and_populate_lines(renderer *sdl.Renderer, font *ttf.Font, tokens 
 // we should probably only call font.SizeUTF8 a couple of times for w and h
 // then we can calculate whatever we need as w = len(char) * char_w; we can alos use ttf.Height()
 // 
-func get_text_size(font *ttf.Font, chars string) (int, int) {
-    //var err error
-    //line_w := 0
-    //line_h := 0
-
-    line_w, line_h, _ := font.SizeUTF8(chars)
-    //if err != nil {
-    //    panic(err)
-    //}
-
-    return line_w, line_h
-}
+//func get_text_size(font *ttf.Font, chars string) (int, int) {
+//    //var err error
+//    //line_w := 0
+//    //line_h := 0
+//
+//    line_w, line_h, _ := font.SizeUTF8(chars)
+//    //if err != nil {
+//    //    panic(err)
+//    //}
+//
+//    return line_w, line_h
+//}
 
 // TODO: we are Spliting too much everywhere
 
 // @TEMPORARY: this is just a wrapper at the moment
 // NOTE: I'm not sure I like this function!!
-func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_nr int32) {
+func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_nr int32, x int, y int) {
     // TODO: I also have to handle cases like '\r' and such with length of 1
 	assert_if(len(line.text) == 0, "line.text was empty")
 	assert_if(font == nil, "font was nil")
@@ -773,7 +760,8 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
     text := strings.Split(line.text, " ")
     line.word_rects = make([]sdl.Rect, len(text))
 
-    tw, th := get_text_size(font, line.text)
+    //tw, th := get_text_size(font, line.text)
+    tw := x * len(line.text)
 
     skipline := int32(font.LineSkip()) // @TEMPORARY HACK
     if (skip_nr > 0) {
@@ -781,16 +769,20 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
     } else {
         skipline = 0
     }
-    generate_new_line_rects(&line.word_rects, font, &text, skip_nr)
-    line.bg_rect = sdl.Rect{int32(X_OFFSET), skipline, int32(tw), int32(th)}
+    generate_new_line_rects(&line.word_rects, font, &text, skip_nr, x, y)
+    line.bg_rect = sdl.Rect{int32(X_OFFSET), skipline, int32(tw), int32(y)}
 }
 
-func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string, skip_nr int32) {
+func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string, skip_nr int32, x int, y int) {
     move_x  := X_OFFSET
     move_y  := skip_nr
-    space_x, _ := get_text_size(font, " ")
+    //space_x, _ := get_text_size(font, " ")
+    space_x := x
+    ix, iy := 0, 0
     for index, str := range *tokens {
-        ix, iy := get_text_size(font, str)
+        //ix, iy := get_text_size(font, str)
+        ix = x * len(str)
+        iy = y
         if index == 0 {
             move_y *= int32(font.LineSkip())
         }
@@ -817,15 +809,23 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
 // TODO: @PERFORMANCE: apparently bytes.Buffer is slow
 //@SPEED this is slow. Use strings.Builder{} instead, or something else.
 // https://habr.com/en/company/intel/blog/422447/ 
-func do_wrap_lines(font *ttf.Font, str *string, max_len int) ([]string) {
-    var buff bytes.Buffer
+func do_wrap_lines(str *string, max_len int, xsize int) ([]string) {
+    var buff strings.Builder
     var result []string
     tokens := strings.Split(*str, " ")
-    size_x, _ := get_text_size(font, " ")
+    size_x := xsize
     current_len := 0
     save_token := ""
     buffstr := ""
 
+    //buff.Grow((len(tokens) * size_x) + X_OFFSET)
+
+    // 1) split string into word_sized tokens
+    // 2) loop through each word token
+    // 3) if save_token is not empty we write
+    // 4) if ...
+
+    //TODO: simplify asserts
     assert_if(len(*str) <= 1, "assert: do_wrap_lines str size <= 1!\n")
 
     for index := range tokens {
@@ -860,14 +860,15 @@ func do_wrap_lines(font *ttf.Font, str *string, max_len int) ([]string) {
 }
 
 func destroy_lines(lines *[]Line) {
-    for index := range *lines {
-        if ((*lines)[index]).texture == nil { // @TEMPORARY HACK
-            break
-        }
-        if err := ((*lines)[index]).texture.Destroy(); err != nil {
-            println(index)
-            panic(err)
-        }
+    for _, line := range *lines {
+        //if (line).texture == nil { // @TEMPORARY HACK
+        //    break
+        //}
+        line.texture.Destroy()
+        //if err := ((*lines)[index]).texture.Destroy(); err != nil {
+        //    println(index)
+        //    panic(err)
+        //}
     }
 }
 
