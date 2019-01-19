@@ -798,8 +798,6 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
 
         if ((mx_gt_rx && mx_lt_rx_rw) && (my_gt_ry && my_lt_ry_rh)) {
             (*mouse_over)[index] = true
-        } else {
-            (*mouse_over)[index] = false
         }
     }
 }
