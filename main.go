@@ -67,6 +67,16 @@ var global_win_h int32
 //TODO: https://www.ardanlabs.com/blog/2013/09/iterating-over-slices-in-go.html 
 //TODO: https://garbagecollected.org/2017/02/22/go-range-loop-internals/ 
 
+//TODO: https://stackoverflow.com/questions/28432658/does-go-garbage-collect-parts-of-slices
+//TODO: https://appliedgo.net/slices/ 
+
+//TODO: https://www.ardanlabs.com/blog/2017/05/language-mechanics-on-escape-analysis.html 
+//TODO: https://www.ardanlabs.com/blog/2017/05/language-mechanics-on-stacks-and-pointers.html 
+
+//TODO: https://divan.github.io/posts/avoid_gotchas/ 
+
+//TODO: http://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/index.html#slice_hidden_data 
+
 type Font struct {
     size int
     name string
@@ -196,11 +206,14 @@ func main() {
     line_tokens := strings.Split(string(file_data), "\n")
 
     // @TEMPORARY
+	// do_wrap_lines should return []*strings
+	// we should append(test_tokens, &element) that way we won't copy elements over and over again.
     MAX_INDEX := 40
     test_tokens := do_wrap_lines(font, &line_tokens[0], LINE_LENGTH)
     for index := 1; index < len(line_tokens); index += 1 {
         if (len(line_tokens[index]) > 1) {
             current := do_wrap_lines(font, &line_tokens[index], LINE_LENGTH)
+			// current and element are both copies, so we end up copying multiple times for no reason
             for _, element := range current {
                 test_tokens = append(test_tokens, element)
             }
@@ -249,9 +262,9 @@ func main() {
     renderer.SetDrawBlendMode(sdl.BLENDMODE_BLEND)
 
     running := true
+    first_pass := true
     print_word := false
     engage_loop := false
-    first_pass := true
 
     total := 0
     for index := range all_lines[0:MAX_INDEX] {
@@ -616,14 +629,10 @@ func main() {
         renderer.Present()
 
         //NOTE: this is not for framerate independance
+        //NOTE: it's probably also slower than calling SDL_Timer/SDL_Delay functions
+		//NOTE: OR try using sdl2_gfx package functions like: FramerateDelay...
         <-ticker.C
     }
-
-    font.Close()
-
-    //for index := range ttf_textures {
-    //    ttf_textures[index].Destroy()
-    //}
 
     now_destroy := time.Now()
     destroy_lines(&all_lines) // @WIP
@@ -641,6 +650,8 @@ func main() {
 		allfonts[index].data.Close() // @TEMPORARY HACK @SLOW
 	}
 
+	ticker.Stop()
+    font.Close()
     window.Destroy()
     renderer.Destroy()
     ttf.Quit()
@@ -732,15 +743,18 @@ func generate_and_populate_lines(renderer *sdl.Renderer, font *ttf.Font, tokens 
     return all_lines
 }
 
+// we should probably only call font.SizeUTF8 a couple of times for w and h
+// then we can calculate whatever we need as w = len(char) * char_w; we can alos use ttf.Height()
+// 
 func get_text_size(font *ttf.Font, chars string) (int, int) {
-    var err error
-    line_w := 0
-    line_h := 0
+    //var err error
+    //line_w := 0
+    //line_h := 0
 
-    line_w, line_h, err = font.SizeUTF8(chars)
-    if err != nil {
-        panic(err)
-    }
+    line_w, line_h, _ := font.SizeUTF8(chars)
+    //if err != nil {
+    //    panic(err)
+    //}
 
     return line_w, line_h
 }
@@ -760,9 +774,6 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
     line.word_rects = make([]sdl.Rect, len(text))
 
     tw, th := get_text_size(font, line.text)
-	// TODO: we don't need this stuff here
-    line.texture_w = int32(tw)
-    line.texture_h = int32(th)
 
     skipline := int32(font.LineSkip()) // @TEMPORARY HACK
     if (skip_nr > 0) {
@@ -771,7 +782,7 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
         skipline = 0
     }
     generate_new_line_rects(&line.word_rects, font, &text, skip_nr)
-    line.bg_rect = sdl.Rect{int32(X_OFFSET), skipline, line.texture_w, line.texture_h}
+    line.bg_rect = sdl.Rect{int32(X_OFFSET), skipline, int32(tw), int32(th)}
 }
 
 func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string, skip_nr int32) {
@@ -817,7 +828,7 @@ func do_wrap_lines(font *ttf.Font, str *string, max_len int) ([]string) {
 
     assert_if(len(*str) <= 1, "assert: do_wrap_lines str size <= 1!\n")
 
-    for index, _ := range tokens {
+    for index := range tokens {
         if len(save_token) > 0 {
             buff.WriteString(save_token + " ")
             current_len = len(buff.String()) * size_x
@@ -850,14 +861,13 @@ func do_wrap_lines(font *ttf.Font, str *string, max_len int) ([]string) {
 
 func destroy_lines(lines *[]Line) {
     for index := range *lines {
-        //if ((*lines)[index]).texture == nil { // @TEMPORARY HACK
-        //    break
-        //}
-        (*lines)[index].texture.Destroy()
-        //if err := ((*lines)[index]).texture.Destroy(); err != nil {
-        //    println(index)
-        //    panic(err)
-        //}
+        if ((*lines)[index]).texture == nil { // @TEMPORARY HACK
+            break
+        }
+        if err := ((*lines)[index]).texture.Destroy(); err != nil {
+            println(index)
+            panic(err)
+        }
     }
 }
 
