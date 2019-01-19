@@ -179,22 +179,8 @@ func main() {
 
     CHAR_W, CHAR_H, _ := font.SizeUTF8(" ")
     SKIP_LINE := font.LineSkip()
-    // font = allfonts[1].data
-    //TODO: @FIND_USE_CASE: //font = reload_font(font, "Opensans-Bold.ttf", TTF_FONT_SIZE)
-    //TODO: @NOT_IMPLEMENTED: I should be able to dynamically load font related functinos on demand
-
-    // ----
-    //var char rune = 0x41
-    //fmt.Println(font.GlyphMetrics(char))
-    //fmt.Printf("font ascend: %d\n", font.Ascent())
-    //fmt.Printf("font descend: %d\n", font.Descent())
-    //font.SetOutline(1)
-    //font.SetStyle(ttf.STYLE_UNDERLINE) //STYLE_UNDERLINE; STYLE_BOLD; STYLE_ITALIC; STYLE_STRIKETHROUGH
-    //font.SetKerning(true)
-
 
     // @TEMPORARY
-	// do_wrap_lines should return []*strings
 	// we should append(test_tokens, &element) that way we won't copy elements over and over again.
     start := time.Now()
     //x_size, _ := get_text_size(font, " ")
