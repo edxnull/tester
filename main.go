@@ -4,6 +4,7 @@ import (
     "os"
     "log"
     "fmt"
+    "math"
     "time"
     "flag"
     "bytes"
@@ -16,6 +17,13 @@ import (
     "github.com/veandco/go-sdl2/sdl"
     "github.com/veandco/go-sdl2/ttf"
 )
+
+// TODO
+// https://gist.github.com/tetsuok/3025333
+// we have to turn off compiler optimizations in order to debug properly
+// TODO try to use: go tool vet 
+
+// https://www.integralist.co.uk/posts/profiling-go/ 
 
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
@@ -183,15 +191,13 @@ func main() {
     // @TEMPORARY
 	// we should append(test_tokens, &element) that way we won't copy elements over and over again.
     start := time.Now()
-    //x_size, _ := get_text_size(font, " ")
     MAX_INDEX := 40
-    test_tokens := do_wrap_lines(&line_tokens[0], LINE_LENGTH, CHAR_W)
+    test_tokens := do_wrap_lines(line_tokens[0], LINE_LENGTH, CHAR_W)
     for index := 1; index < len(line_tokens); index += 1 {
         if (len(line_tokens[index]) > 1) {
-            current := do_wrap_lines(&line_tokens[index], LINE_LENGTH, CHAR_W)
-			// current and element are both copies, so we end up copying multiple times for no reason
-            for _, element := range current {
-                test_tokens = append(test_tokens, element)
+            current := do_wrap_lines(line_tokens[index], LINE_LENGTH, CHAR_W)
+            for index := range current {
+                test_tokens = append(test_tokens, current[index])
             }
         } else {
             test_tokens = append(test_tokens, "\n")
@@ -200,7 +206,7 @@ func main() {
     end_start := time.Now().Sub(start)
     fmt.Printf("[[do_wrap_lines loop took %s]]\n", end_start.String())
 
-
+    //fmt.Printf("%#v\n", test_tokens)
     now_gen := time.Now()
 	//@PERFORMANCE SLOW
     all_lines := generate_and_populate_lines(renderer, font, &test_tokens, CHAR_W, CHAR_H, SKIP_LINE)
@@ -226,10 +232,6 @@ func main() {
 
     cmd_console_ttf_texture = make_ttf_texture(renderer, font, cmd_console_test_str, cmd_rand_color)
 
-    //cmd_console_ttf_w, cmd_console_ttf_h := get_text_size(font, cmd_console_test_str)
-
-    //ttf_letter_w, ttf_letter_h := get_text_size(font, "A") // "A" is just a random letter for our usecase
-
     cmd_console_ttf_rect     := sdl.Rect{0, WIN_H-cmd_win_h, int32(CHAR_W * len(cmd_console_test_str)), int32(CHAR_H)}
     cmd_console_rect         := sdl.Rect{0, WIN_H-cmd_win_h, WIN_W, int32(CHAR_H)}
     cmd_console_cursor_block := sdl.Rect{0, WIN_H-cmd_win_h, int32(CHAR_W), int32(CHAR_H)}
@@ -244,7 +246,6 @@ func main() {
     first_pass := true
     print_word := false
     engage_loop := false
-
 
     total := 0
     for index := range all_lines[0:MAX_INDEX] {
@@ -265,6 +266,7 @@ func main() {
         for _, rct := range strings.Split(all_lines[index].text, " ") {
             _WORDS_ = append(_WORDS_, rct)
         }
+        //fmt.Printf("%#v\n", all_lines[index].text)
     }
 
     wrap_line := false
@@ -274,9 +276,9 @@ func main() {
 
     test_rand_color := sdl.Color{uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255))}
 
-    curr_char_w := 0
-
     wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H, false}
+
+    curr_char_w := 0
 
 	//viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
 	//renderer.SetViewport(&viewport_rect)
@@ -716,29 +718,15 @@ func generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, tokens *[]stri
     return all_lines
 }
 
-// we should probably only call font.SizeUTF8 a couple of times for w and h
-// then we can calculate whatever we need as w = len(char) * char_w; we can alos use ttf.Height()
-// 
-//func get_text_size(font *ttf.Font, chars string) (int, int) {
-//    //var err error
-//    //line_w := 0
-//    //line_h := 0
-//
-//    line_w, line_h, _ := font.SizeUTF8(chars)
-//    //if err != nil {
-//    //    panic(err)
-//    //}
-//
-//    return line_w, line_h
-//}
-
 // TODO: we are Spliting too much everywhere
-
 // @TEMPORARY: this is just a wrapper at the moment
 // NOTE: I'm not sure I like this function!!
 func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_nr int32, x int, y int, lineskip int) {
     // TODO: I also have to handle cases like '\r' and such with length of 1
 	assert_if(len(line.text) == 0)
+    //if len(line.text) == 0 {
+    //    return
+    //}
 	assert_if(font == nil)
 
     line.texture = make_ttf_texture(rend, font, line.text, sdl.Color{0, 0, 0, 0})
@@ -746,7 +734,6 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
     text := strings.Split(line.text, " ")
     line.word_rects = make([]sdl.Rect, len(text))
 
-    //tw, th := get_text_size(font, line.text)
     tw := x * len(line.text)
 
     skipline := int32(lineskip) // @TEMPORARY HACK
@@ -784,58 +771,52 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
 
         if ((mx_gt_rx && mx_lt_rx_rw) && (my_gt_ry && my_lt_ry_rh)) {
             (*mouse_over)[index] = true
+        } else {
+            (*mouse_over)[index] = false
         }
     }
 }
 
-// TODO: @PERFORMANCE: apparently bytes.Buffer is slow
-//@SPEED this is slow. Use strings.Builder{} instead, or something else.
-// https://habr.com/en/company/intel/blog/422447/ 
-func do_wrap_lines(str *string, max_len int, xsize int) ([]string) {
-    var buff strings.Builder
+func do_wrap_lines(str string, max_len int, xsize int) []string {
     var result []string
-    tokens := strings.Split(*str, " ")
-    size_x := xsize
-    current_len := 0
-    save_token := ""
-    buffstr := ""
+    assert_if(len(str) <= 1)
 
-    //buff.Grow((len(tokens) * size_x) + X_OFFSET)
-
-    // 1) split string into word_sized tokens
-    // 2) loop through each word token
-    // 3) if save_token is not empty we write
-    // 4) if ...
-
-    assert_if(len(*str) <= 1)
-
-    for index := range tokens {
-        if len(save_token) > 0 {
-            buff.WriteString(save_token + " ")
-            current_len = len(buff.String()) * size_x
-            save_token = ""
+    if (len(str) * xsize) + X_OFFSET <= max_len {
+        result = append(result,  str)
+        return result
+    } else {
+        start := 0
+        mmax := int(math.RoundToEven(float64(max_len / xsize))) // use math.Round instead?
+        slice := str[start:mmax]
+        end := mmax
+        slice_len := 0
+        for end < len(str) {
+            slice_len = len(slice)
+            if !is_space(string(slice[slice_len-1])) {
+                for !is_space(string(slice[slice_len-1])) {
+                    end = end-1
+                    slice_len = slice_len - 1
+                }
+            }
+            end = end - 1 // remove space
+            slice = str[start:end]
+            result = append(result, slice)
+            start = end+1
+            end = (end + mmax)
+            if (end > len(str)) {
+                slice = str[start:end-(end-len(str))]
+                result = append(result, slice)
+                break
+            }
+            slice = str[start:end]
+            //if end+mmax >= len(str) {
+            //    result = append(result, slice)
+            //    start = end
+            //    slice = str[start:len(str)]
+            //    result = append(result, slice)
+            //    break
+            //}
         }
-        if (current_len + (len(tokens[index]) * size_x)+X_OFFSET <= max_len) {
-            buff.WriteString(tokens[index] + " ")
-            current_len = (len(buff.String()) * size_x)+X_OFFSET
-        } else {
-            save_token = tokens[index]
-            buffstr = buff.String()
-            result = append(result, buffstr[0:len(buffstr)-1])
-            buff.Reset()
-            current_len = 0
-        }
-    }
-    if len(buff.String()) > 0 {
-        buffstr = buff.String()
-        end := len(buffstr)-1
-        cut := 0
-        for string(buffstr[end]) == " " || string(buffstr[end]) == "\r" {
-            end -= 1
-            cut += 1
-        }
-        result = append(result, buffstr[0:len(buffstr)-cut])
-        buff.Reset()
     }
     return result
 }
@@ -851,4 +832,12 @@ func assert_if(cond bool) {
 	if (cond) {
 		panic("assertion failed")
 	}
+}
+
+func is_alpha(schr string) bool {
+    return (schr >= "A") && (schr <= "z")
+}
+
+func is_space(s string) bool {
+    return s == " "
 }
