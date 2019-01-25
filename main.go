@@ -33,7 +33,7 @@ const WIN_H int32 = 600
 const X_OFFSET int = 7
 const TTF_FONT_SIZE int = 16
 const TEXT_SCROLL_SPEED int32 = 14
-const LINE_LENGTH int = 640
+const LINE_LENGTH int = 730
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to 'file'")
 var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
@@ -206,9 +206,8 @@ func main() {
     end_start := time.Now().Sub(start)
     fmt.Printf("[[do_wrap_lines loop took %s]]\n", end_start.String())
 
-    //fmt.Printf("%#v\n", test_tokens)
-    now_gen := time.Now()
 	//@PERFORMANCE SLOW
+    now_gen := time.Now()
     all_lines := generate_and_populate_lines(renderer, font, &test_tokens, CHAR_W, CHAR_H, SKIP_LINE)
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
@@ -248,25 +247,24 @@ func main() {
     engage_loop := false
 
     total := 0
-    for index := range all_lines[0:MAX_INDEX] {
+    for index := 0; index <= MAX_INDEX; index++ {
         total += len(all_lines[index].word_rects)
     }
 
     mouseover_word_texture := make([]bool, total)
 
     _RECTS_ := make([]sdl.Rect, 0)
-    for index := range all_lines[0:MAX_INDEX] {
+    for index := 0; index <= MAX_INDEX; index++ {
         for _, rct := range all_lines[index].word_rects {
             _RECTS_ = append(_RECTS_, rct)
         }
     }
 
     _WORDS_ := make([]string, 0)
-    for index := range all_lines[0:MAX_INDEX] {
+    for index := 0; index <= MAX_INDEX; index++ {
         for _, rct := range strings.Split(all_lines[index].text, " ") {
             _WORDS_ = append(_WORDS_, rct)
         }
-        //fmt.Printf("%#v\n", all_lines[index].text)
     }
 
     wrap_line := false
@@ -674,17 +672,11 @@ func reload_font(font *ttf.Font, name string, size int) (*ttf.Font) {
 func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color sdl.Color) (*sdl.Texture) {
     var surface *sdl.Surface
     var texture *sdl.Texture
-    var err error
 
 	assert_if(len(text) <= 0)
 
-    if surface, err = font.RenderUTF8Blended(text, color); err != nil {
-        panic(err)
-    }
-
-    if texture, err = renderer.CreateTextureFromSurface(surface); err != nil {
-        panic(err)
-    }
+    surface , _= font.RenderUTF8Blended(text, color)
+    texture , _= renderer.CreateTextureFromSurface(surface)
     surface.Free()
 
     return texture
@@ -692,17 +684,12 @@ func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color
 
 func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string, c sdl.Color) (*sdl.Texture) {
     var surface *sdl.Surface
-    var err error
 
     if tex != nil {
         tex.Destroy()
-        if surface, err = f.RenderUTF8Blended(s, c); err != nil {
-            panic(err)
-        }
+        surface, _ = f.RenderUTF8Blended(s, c)
 
-        if tex, err = r.CreateTextureFromSurface(surface); err != nil {
-            panic(err)
-        }
+        tex, _ = r.CreateTextureFromSurface(surface)
         surface.Free()
         return tex
     }
@@ -711,23 +698,23 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
 
 func generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, tokens *[]string, x int, y int, skipline int) (line []Line) {
     all_lines := make([]Line, len(*tokens))
-    for index, tk := range *tokens {
-        all_lines[index].text = tk //TODO: saving .text in unnecessary here. Need to find a better way...
+    for index := 0; index < len(*tokens); index++ {
+        all_lines[index].text = (*tokens)[index] //TODO: saving .text in unnecessary here. Need to find a better way...
         new_ttf_texture_line(r, font, &all_lines[index], int32(index), x, y, skipline)
     }
     return all_lines
 }
 
-// TODO: we are Spliting too much everywhere
 // @TEMPORARY: this is just a wrapper at the moment
 // NOTE: I'm not sure I like this function!!
 func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_nr int32, x int, y int, lineskip int) {
     // TODO: I also have to handle cases like '\r' and such with length of 1
 	assert_if(len(line.text) == 0)
+    // Use this in case we fail in our assert_if
     //if len(line.text) == 0 {
     //    return
     //}
-	assert_if(font == nil)
+	//assert_if(font == nil)
 
     line.texture = make_ttf_texture(rend, font, line.text, sdl.Color{0, 0, 0, 0})
 
@@ -742,25 +729,35 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
     } else {
         skipline = 0
     }
-    generate_new_line_rects(&line.word_rects, font, &text, skip_nr, x, y, lineskip)
+    //generate_new_line_rects(&line.word_rects, font, &text, skip_nr, x, y, lineskip)
+    move_x  := X_OFFSET
+    move_y  := skip_nr
+    ix := 0
+    for index := 0; index < len(text); index++ {
+        ix = x * len(text[index])
+        if index == 0 {
+            move_y *= int32(lineskip)
+        }
+        line.word_rects[index] = sdl.Rect{int32(move_x), int32(move_y), int32(ix), int32(y)}
+        move_x += (ix + x)
+    }
     line.bg_rect = sdl.Rect{int32(X_OFFSET), skipline, int32(tw), int32(y)}
     text = nil
 }
 
-func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string, skip_nr int32, x int, y int, lineskip int) {
-    move_x  := X_OFFSET
-    move_y  := skip_nr
-    space_x := x
-    ix := 0
-    for index, str := range *tokens {
-        ix = x * len(str)
-        if index == 0 {
-            move_y *= int32(lineskip)
-        }
-        (*rects)[index] = sdl.Rect{int32(move_x), int32(move_y), int32(ix), int32(y)}
-        move_x += (ix + space_x)
-    }
-}
+//func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string, skip_nr int32, space_x int, y int, lineskip int) {
+//    move_x  := X_OFFSET
+//    move_y  := skip_nr
+//    ix := 0
+//    for index := 0; index < len(*tokens); index++ {
+//        ix = space_x * len((*tokens)[index])
+//        if index == 0 {
+//            move_y *= int32(lineskip)
+//        }
+//        (*rects)[index] = sdl.Rect{int32(move_x), int32(move_y), int32(ix), int32(y)}
+//        move_x += (ix + space_x)
+//    }
+//}
 
 func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.Rect, mouse_over *[]bool) {
     for index := range *rects {
