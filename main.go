@@ -42,32 +42,6 @@ var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 var global_win_w int32
 var global_win_h int32
 
-//TODO: https://syslog.ravelin.com/bytes-buffer-i-thought-you-were-my-friend-4148fd001229 
-//TODO: https://syslog.ravelin.com/bytes-buffer-revisited-edee5a882030
-
-//TODO: https://www.ardanlabs.com/blog/2013/09/iterating-over-slices-in-go.html 
-//TODO: https://garbagecollected.org/2017/02/22/go-range-loop-internals/ 
-
-//TODO: https://stackoverflow.com/questions/28432658/does-go-garbage-collect-parts-of-slices
-//TODO: https://appliedgo.net/slices/ 
-
-//TODO: https://www.ardanlabs.com/blog/2017/05/language-mechanics-on-escape-analysis.html 
-//TODO: https://www.ardanlabs.com/blog/2017/05/language-mechanics-on-stacks-and-pointers.html 
-
-//TODO: https://divan.github.io/posts/avoid_gotchas/ 
-
-//TODO: http://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/index.html#slice_hidden_data 
-
-//TODO: https://golang.org/pkg/sync/#Pool
-// A Pool is a set of temporary objects that may be individually saved and retrieved.
-// Any item stored in the Pool may be removed automatically at any time without notification.
-// If the Pool holds the only reference when this happens, the item might be deallocated.
-// A Pool is safe for use by multiple goroutines simultaneously.
-// 
-// Pool's purpose is to cache allocated but unused items for later reuse, relieving pressure on 
-// the garbage collector. That is, it makes it easy to build efficient, thread-safe free lists. 
-// However, it is not suitable for all free lists. 
-
 type Font struct {
     size int
     name string
@@ -192,6 +166,7 @@ func main() {
 	// we should append(test_tokens, &element) that way we won't copy elements over and over again.
     start := time.Now()
     MAX_INDEX := 40
+    START_INDEX := 0
     test_tokens := do_wrap_lines(line_tokens[0], LINE_LENGTH, CHAR_W)
     for index := 1; index < len(line_tokens); index += 1 {
         if (len(line_tokens[index]) > 1) {
@@ -229,7 +204,7 @@ func main() {
 
     cmd_rand_color := sdl.Color{0, 0, 0, 255}
 
-    cmd_console_ttf_texture = make_ttf_texture(renderer, font, cmd_console_test_str, cmd_rand_color)
+    cmd_console_ttf_texture = make_ttf_texture(renderer, font, cmd_console_test_str, &cmd_rand_color)
 
     cmd_console_ttf_rect     := sdl.Rect{0, WIN_H-cmd_win_h, int32(CHAR_W * len(cmd_console_test_str)), int32(CHAR_H)}
     cmd_console_rect         := sdl.Rect{0, WIN_H-cmd_win_h, WIN_W, int32(CHAR_H)}
@@ -350,7 +325,7 @@ func main() {
                         cmd_text_buffer.WriteString(input_char)
 
                         cmd_console_ttf_texture.Destroy()
-                        cmd_console_ttf_texture = make_ttf_texture(renderer, font, cmd_text_buffer.String(), test_rand_color)
+                        cmd_console_ttf_texture = make_ttf_texture(renderer, font, cmd_text_buffer.String(), &test_rand_color)
 
                         curr_char_w = CHAR_W * len(input_char)
 
@@ -374,7 +349,7 @@ func main() {
                                     cmd_console_ttf_texture.Destroy()
 
                                     if len(cmd_text_buffer.String()) > 0 {
-                                        cmd_console_ttf_texture = make_ttf_texture(renderer, font, temp_string, cmd_rand_color)
+                                        cmd_console_ttf_texture = make_ttf_texture(renderer, font, temp_string, &cmd_rand_color)
                                     }
 
                                     if len(temp_string) != 0 {
@@ -420,7 +395,7 @@ func main() {
                                                 cmd_console_ttf_texture.Destroy()
 
                                                 if len(cmd_text_buffer.String()) > 0 {
-                                                    cmd_console_ttf_texture = make_ttf_texture(renderer, font, temp_string, cmd_rand_color)
+                                                    cmd_console_ttf_texture = make_ttf_texture(renderer, font, temp_string, &cmd_rand_color)
                                                 }
 
                                                 if len(temp_string) != 0 {
@@ -485,7 +460,7 @@ func main() {
 
         // @TEST RENDERING TTF LINE
         if first_pass {
-            for ln := range all_lines[0:MAX_INDEX] {
+            for ln := range all_lines[START_INDEX:MAX_INDEX] {
                 for index := range all_lines[ln].word_rects {
                     //renderer.SetDrawColor(100, 10, 100, uint8(cmd_console_anim_alpha))
                     renderer.SetDrawColor(0, 0, 0, 0)
@@ -496,7 +471,7 @@ func main() {
             }
             first_pass = false
         } else {
-            for i := range all_lines[0:MAX_INDEX] {
+            for i := range all_lines[START_INDEX:MAX_INDEX] {
                 renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
             }
         }
@@ -531,7 +506,7 @@ func main() {
 
         if move_text_down {
             move_text_down = false
-            for index := range all_lines[0:MAX_INDEX] {
+            for index := range all_lines[START_INDEX:MAX_INDEX] {
                 all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
             }
             for index := range _RECTS_ {
@@ -540,7 +515,7 @@ func main() {
         }
         if move_text_up {
             move_text_up = false
-            for index := range all_lines[0:MAX_INDEX] {
+            for index := range all_lines[START_INDEX:MAX_INDEX] {
                 all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
             }
             for index := range _RECTS_ {
@@ -549,7 +524,7 @@ func main() {
         }
 
         if wrap_line {
-            for index := range all_lines[0:MAX_INDEX] {
+            for index := range all_lines[START_INDEX:MAX_INDEX] {
                 renderer.SetDrawColor(100, 255, 255, 100)
                 renderer.FillRect(&all_lines[index].bg_rect)
                 renderer.DrawRect(&all_lines[index].bg_rect)
@@ -669,13 +644,13 @@ func reload_font(font *ttf.Font, name string, size int) (*ttf.Font) {
     return font
 }
 
-func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color sdl.Color) (*sdl.Texture) {
+func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color *sdl.Color) (*sdl.Texture) {
     var surface *sdl.Surface
     var texture *sdl.Texture
 
 	assert_if(len(text) <= 0)
 
-    surface , _= font.RenderUTF8Blended(text, color)
+    surface , _= font.RenderUTF8Blended(text, *color)
     texture , _= renderer.CreateTextureFromSurface(surface)
     surface.Free()
 
@@ -716,9 +691,12 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
     //}
 	//assert_if(font == nil)
 
-    line.texture = make_ttf_texture(rend, font, line.text, sdl.Color{0, 0, 0, 0})
+    line.texture = make_ttf_texture(rend, font, line.text, &sdl.Color{0, 0, 0, 0})
 
     text := strings.Split(line.text, " ")
+    // TODO: what about using func get_word_lengths(s *string) []int 
+    //       instead of Splitting?
+    //       The function prototype is in ..\goplay\main.go
     line.word_rects = make([]sdl.Rect, len(text))
 
     tw := x * len(line.text)
