@@ -165,8 +165,10 @@ func main() {
     // @TEMPORARY
 	// we should append(test_tokens, &element) that way we won't copy elements over and over again.
     start := time.Now()
-    MAX_INDEX := 40
-    START_INDEX := 0
+
+    MAX_INDEX := 40  // TODO: make MAX AND START INDEX scrollable
+    START_INDEX := 0 // TODO: make MAX AND START INDEX scrollable
+
     test_tokens := do_wrap_lines(line_tokens[0], LINE_LENGTH, CHAR_W)
     for index := 1; index < len(line_tokens); index += 1 {
         if (len(line_tokens[index]) > 1) {
@@ -693,10 +695,9 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
 
     line.texture = make_ttf_texture(rend, font, line.text, &sdl.Color{0, 0, 0, 0})
 
-    text := strings.Split(line.text, " ")
+    text := strings.Split(line.text, " ") // this line here!
     // TODO: what about using func get_word_lengths(s *string) []int 
     //       instead of Splitting?
-    //       The function prototype is in ..\goplay\main.go
     line.word_rects = make([]sdl.Rect, len(text))
 
     tw := x * len(line.text)
@@ -815,4 +816,29 @@ func is_alpha(schr string) bool {
 
 func is_space(s string) bool {
     return s == " "
+}
+
+func get_word_lengths(s *string) []int {
+    var result []int
+    curr := 0
+    for index := 0; index < len(*s); index++ {
+        if (string((*s)[index]) == "\n") {
+            break
+        }
+        if (string((*s)[index]) == "\r") {
+            break
+        }
+        if (!is_space(string((*s)[index]))) {
+            curr += 1
+        } else {
+            curr *= 7
+            result = append(result, curr)
+            curr = 0
+        }
+    }
+    if (curr > 0) {
+        curr *= 7
+        result = append(result, curr)
+    }
+    return result
 }
