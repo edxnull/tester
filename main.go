@@ -21,9 +21,9 @@ import (
 // TODO
 // https://gist.github.com/tetsuok/3025333
 // we have to turn off compiler optimizations in order to debug properly
-// TODO try to use: go tool vet 
-
-// https://www.integralist.co.uk/posts/profiling-go/ 
+// TODO  try to use: go tool vet 
+// TODO: https://appliedgo.net/big-o/ 
+// TODO: https://www.integralist.co.uk/posts/profiling-go/ 
 
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
@@ -41,6 +41,9 @@ var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 // @GLOBAL MUT VARS 
 var global_win_w int32
 var global_win_h int32
+var GLOBAL_WASTE_VAR int
+var MAX_INDEX int = 100  // TODO: make MAX AND START INDEX scrollable
+var START_INDEX int = 0 // TODO: make MAX AND START INDEX scrollable
 
 type Font struct {
     size int
@@ -49,7 +52,6 @@ type Font struct {
 }
 
 type Line struct {
-    text string // DELETE
     texture *sdl.Texture
     bg_rect sdl.Rect
     word_rects []sdl.Rect  //DELETE
@@ -58,7 +60,6 @@ type Line struct {
 type DebugWrapLine struct {
     x1, y1 int32
     x2, y2 int32
-    clicked bool
 }
 
 func main() {
@@ -166,9 +167,6 @@ func main() {
 	// we should append(test_tokens, &element) that way we won't copy elements over and over again.
     start := time.Now()
 
-    MAX_INDEX := 40  // TODO: make MAX AND START INDEX scrollable
-    START_INDEX := 0 // TODO: make MAX AND START INDEX scrollable
-
     test_tokens := do_wrap_lines(line_tokens[0], LINE_LENGTH, CHAR_W)
     for index := 1; index < len(line_tokens); index += 1 {
         if (len(line_tokens[index]) > 1) {
@@ -188,6 +186,10 @@ func main() {
     all_lines := generate_and_populate_lines(renderer, font, &test_tokens, CHAR_W, CHAR_H, SKIP_LINE)
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
+
+    println("test_tokens cap and len: ", cap(test_tokens), len(test_tokens))
+    println("ttf_font_list cap annd len: ", cap(ttf_font_list), len(ttf_font_list))
+    println("GLOBAL_WASTE_VAR from do_wrap_lines : ", GLOBAL_WASTE_VAR)
 
     //////////////////////////
     // CMD_CONSOLE_STUFF
@@ -223,26 +225,32 @@ func main() {
     print_word := false
     engage_loop := false
 
-    total := 0
+    // TODO: I have to be able to redraw all of these on demand
+
+    num_word_textures := 0
     for index := 0; index <= MAX_INDEX; index++ {
-        total += len(all_lines[index].word_rects)
+        num_word_textures += len(all_lines[index].word_rects)
     }
+    //println("num_word_textures : ", num_word_textures)
+    //println("all_lines : ", cap(all_lines), len(all_lines))
 
-    mouseover_word_texture := make([]bool, total)
+    mouseover_word_texture := make([]bool, num_word_textures)
 
-    _RECTS_ := make([]sdl.Rect, 0)
+    _RECTS_ := make([]sdl.Rect, num_word_textures)
     for index := 0; index <= MAX_INDEX; index++ {
-        for _, rct := range all_lines[index].word_rects {
-            _RECTS_ = append(_RECTS_, rct)
+        for pos := 0; pos < len(all_lines[index].word_rects); pos++ {
+            _RECTS_[pos] = all_lines[index].word_rects[pos]
         }
     }
+    //println("_RECTS_ cap and len: ", cap(_RECTS_), len(_RECTS_))
 
-    _WORDS_ := make([]string, 0)
+    _WORDS_ := make([]string, num_word_textures)
     for index := 0; index <= MAX_INDEX; index++ {
-        for _, rct := range strings.Split(all_lines[index].text, " ") {
-            _WORDS_ = append(_WORDS_, rct)
+        for pos, rct := range strings.Split(test_tokens[index], " ") {
+            _WORDS_[pos] = rct
         }
     }
+    //println("_WORDS_ cap and len: ", cap(_WORDS_), len(_WORDS_))
 
     wrap_line := false
 
@@ -251,7 +259,7 @@ func main() {
 
     test_rand_color := sdl.Color{uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255))}
 
-    wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H, false}
+    wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H}
 
     curr_char_w := 0
 
@@ -508,6 +516,7 @@ func main() {
 
         if move_text_down {
             move_text_down = false
+			//MAX_INDEX = MAX_INDEX + 1
             for index := range all_lines[START_INDEX:MAX_INDEX] {
                 all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
             }
@@ -594,7 +603,6 @@ func main() {
     destroy_lines(&all_lines) // @WIP
 
     if cmd_console_ttf_texture != nil {
-        println("The texture was not <nil>")
         cmd_console_ttf_texture.Destroy()
         cmd_console_ttf_texture = nil
     }
@@ -676,31 +684,20 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
 func generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, tokens *[]string, x int, y int, skipline int) (line []Line) {
     all_lines := make([]Line, len(*tokens))
     for index := 0; index < len(*tokens); index++ {
-        all_lines[index].text = (*tokens)[index] //TODO: saving .text in unnecessary here. Need to find a better way...
-        new_ttf_texture_line(r, font, &all_lines[index], int32(index), x, y, skipline)
+        new_ttf_texture_line(r, font, &all_lines[index], (*tokens)[index], int32(index), x, y, skipline)
     }
     return all_lines
 }
 
-// @TEMPORARY: this is just a wrapper at the moment
-// NOTE: I'm not sure I like this function!!
-func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_nr int32, x int, y int, lineskip int) {
-    // TODO: I also have to handle cases like '\r' and such with length of 1
-	assert_if(len(line.text) == 0)
-    // Use this in case we fail in our assert_if
-    //if len(line.text) == 0 {
-    //    return
-    //}
-	//assert_if(font == nil)
+func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_text string, skip_nr int32, x int, y int, lineskip int) {
+	assert_if(len(line_text) == 0)
 
-    line.texture = make_ttf_texture(rend, font, line.text, &sdl.Color{0, 0, 0, 0})
+    line.texture = make_ttf_texture(rend, font, line_text, &sdl.Color{0, 0, 0, 0})
 
-    text := strings.Split(line.text, " ") // this line here!
-    // TODO: what about using func get_word_lengths(s *string) []int 
-    //       instead of Splitting?
+    text := strings.Split(line_text, " ")
     line.word_rects = make([]sdl.Rect, len(text))
 
-    tw := x * len(line.text)
+    tw := x * len(line_text)
 
     skipline := int32(lineskip) // @TEMPORARY HACK
     if (skip_nr > 0) {
@@ -708,7 +705,6 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
     } else {
         skipline = 0
     }
-    //generate_new_line_rects(&line.word_rects, font, &text, skip_nr, x, y, lineskip)
     move_x  := X_OFFSET
     move_y  := skip_nr
     ix := 0
@@ -723,20 +719,6 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, skip_n
     line.bg_rect = sdl.Rect{int32(X_OFFSET), skipline, int32(tw), int32(y)}
     text = nil
 }
-
-//func generate_new_line_rects(rects *[]sdl.Rect, font *ttf.Font, tokens *[]string, skip_nr int32, space_x int, y int, lineskip int) {
-//    move_x  := X_OFFSET
-//    move_y  := skip_nr
-//    ix := 0
-//    for index := 0; index < len(*tokens); index++ {
-//        ix = space_x * len((*tokens)[index])
-//        if index == 0 {
-//            move_y *= int32(lineskip)
-//        }
-//        (*rects)[index] = sdl.Rect{int32(move_x), int32(move_y), int32(ix), int32(y)}
-//        move_x += (ix + space_x)
-//    }
-//}
 
 func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.Rect, mouse_over *[]bool) {
     for index := range *rects {
@@ -785,15 +767,12 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
                 break
             }
             slice = str[start:end]
-            //if end+mmax >= len(str) {
-            //    result = append(result, slice)
-            //    start = end
-            //    slice = str[start:len(str)]
-            //    result = append(result, slice)
-            //    break
-            //}
         }
     }
+    // TODO: test for memory leaks here
+    // print cap() and len() and diff()
+    GLOBAL_WASTE_VAR += (cap(result) - len(result))
+    //println("fn do_wrap_lines cap and len ", cap(result), len(result))
     return result
 }
 
