@@ -219,15 +219,13 @@ func main() {
     first_pass := true
     print_word := false
     engage_loop := false
-
-    // TODO: I have to be able to redraw all of these on demand
+    add_new_line := false
+    del_new_line := false
 
     num_word_textures := 0
     for index := 0; index <= MAX_INDEX; index++ {
         num_word_textures += len(all_lines[index].word_rects)
     }
-    //println("num_word_textures : ", num_word_textures)
-    //println("all_lines : ", cap(all_lines), len(all_lines))
 
     mouseover_word_texture := make([]bool, num_word_textures)
 
@@ -238,7 +236,6 @@ func main() {
             apos += 1
         }
     }
-    //println("_RECTS_ cap and len: ", cap(_RECTS_), len(_RECTS_))
 
     _WORDS_ := make([]string, num_word_textures)
     for index, apos := 0, 0; index <= MAX_INDEX; index++ {
@@ -247,7 +244,6 @@ func main() {
             apos += 1
         }
     }
-    //println("_WORDS_ cap and len: ", cap(_WORDS_), len(_WORDS_))
 
     wrap_line := false
 
@@ -488,6 +484,7 @@ func main() {
                 engage_loop = true
             }
         }
+
         if engage_loop {
             for index := range _RECTS_ {
                 if mouseover_word_texture[index] {
@@ -513,13 +510,13 @@ func main() {
 
         if move_text_down {
             move_text_down = false
-			//MAX_INDEX = MAX_INDEX + 1
             for index := range all_lines[START_INDEX:MAX_INDEX] {
                 all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
             }
             for index := range _RECTS_ {
                 _RECTS_[index].Y -= TEXT_SCROLL_SPEED
             }
+            add_new_line = true
         }
         if move_text_up {
             move_text_up = false
@@ -529,6 +526,20 @@ func main() {
             for index := range _RECTS_ {
                 _RECTS_[index].Y += TEXT_SCROLL_SPEED
             }
+            del_new_line = true
+        }
+
+        if add_new_line {
+            MAX_INDEX = MAX_INDEX + 1
+            all_lines[MAX_INDEX].bg_rect.Y = all_lines[MAX_INDEX-1].bg_rect.Y + (all_lines[MAX_INDEX].bg_rect.H - TEXT_SCROLL_SPEED)
+            println(all_lines[START_INDEX:MAX_INDEX])
+            add_new_line = false
+        }
+
+        if del_new_line {
+            MAX_INDEX = MAX_INDEX - 1
+            println(all_lines[START_INDEX:MAX_INDEX])
+            del_new_line = false
         }
 
         if wrap_line {
@@ -692,7 +703,8 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_t
     line.texture = make_ttf_texture(rend, font, line_text, &sdl.Color{0, 0, 0, 0})
 
     text := strings.Split(line_text, " ")
-    line.word_rects = make([]sdl.Rect, len(text))
+    text_len := len(text)
+    line.word_rects = make([]sdl.Rect, text_len)
 
     tw := x * len(line_text)
 
@@ -705,7 +717,7 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_t
     move_x  := X_OFFSET
     move_y  := skip_nr
     ix := 0
-    for index := 0; index < len(text); index++ {
+    for index := 0; index < text_len; index++ {
         ix = x * len(text[index])
         if index == 0 {
             move_y *= int32(lineskip)
@@ -836,6 +848,7 @@ func is_space(s string) bool {
     return s == " "
 }
 
+// TODO: not sure we need this
 func get_word_lengths(s *string) []int {
     var result []int
     curr := 0
