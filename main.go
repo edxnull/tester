@@ -42,7 +42,7 @@ var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 var global_win_w int32
 var global_win_h int32
 var GLOBAL_WASTE_VAR int
-var MAX_INDEX int = 100  // TODO: make MAX AND START INDEX scrollable
+var MAX_INDEX int = 40  // TODO: make MAX AND START INDEX scrollable
 var START_INDEX int = 0 // TODO: make MAX AND START INDEX scrollable
 
 type Font struct {
@@ -163,13 +163,8 @@ func main() {
     CHAR_W, CHAR_H, _ := font.SizeUTF8(" ")
     SKIP_LINE := font.LineSkip()
 
-    // @TEMPORARY
-	// we should append(test_tokens, &element) that way we won't copy elements over and over again.
     start := time.Now()
-
     test_tokens := make([]string, determine_nwrap_lines(line_tokens, LINE_LENGTH, CHAR_W))
-
-    //test_tokens[0] = do_wrap_lines(line_tokens[0], LINE_LENGTH, CHAR_W)[:]
     for apos, bpos := 0, 0; apos < len(line_tokens); apos += 1 {
         if (len(line_tokens[apos]) > 1) {
             current := do_wrap_lines(line_tokens[apos], LINE_LENGTH, CHAR_W)
@@ -190,10 +185,6 @@ func main() {
     all_lines := generate_and_populate_lines(renderer, font, &test_tokens, CHAR_W, CHAR_H, SKIP_LINE)
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
-
-    println("test_tokens cap and len: ", cap(test_tokens), len(test_tokens))
-    println("ttf_font_list cap annd len: ", cap(ttf_font_list), len(ttf_font_list))
-    println("GLOBAL_WASTE_VAR from do_wrap_lines : ", GLOBAL_WASTE_VAR)
 
     //////////////////////////
     // CMD_CONSOLE_STUFF
@@ -241,17 +232,19 @@ func main() {
     mouseover_word_texture := make([]bool, num_word_textures)
 
     _RECTS_ := make([]sdl.Rect, num_word_textures)
-    for index := 0; index <= MAX_INDEX; index++ {
+    for index, apos := 0, 0; index <= MAX_INDEX; index++ {
         for pos := 0; pos < len(all_lines[index].word_rects); pos++ {
-            _RECTS_[pos] = all_lines[index].word_rects[pos]
+            _RECTS_[apos] = all_lines[index].word_rects[pos]
+            apos += 1
         }
     }
     //println("_RECTS_ cap and len: ", cap(_RECTS_), len(_RECTS_))
 
     _WORDS_ := make([]string, num_word_textures)
-    for index := 0; index <= MAX_INDEX; index++ {
-        for pos, rct := range strings.Split(test_tokens[index], " ") {
-            _WORDS_[pos] = rct
+    for index, apos := 0, 0; index <= MAX_INDEX; index++ {
+        for _, rct := range strings.Split(test_tokens[index], " ") {
+            _WORDS_[apos] = rct
+            apos += 1
         }
     }
     //println("_WORDS_ cap and len: ", cap(_WORDS_), len(_WORDS_))
@@ -740,11 +733,15 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
 }
 
 func do_wrap_lines(str string, max_len int, xsize int) []string {
-    var result []string
+    //var result []string
     assert_if(len(str) <= 1)
 
+    result := make([]string, determine_nwrap_lines([]string{str}, max_len, xsize))
+
+    pos := 0
     if (len(str) * xsize) + X_OFFSET <= max_len {
-        result = append(result,  str)
+        //result = append(result,  str)
+        result[pos] = str
         return result
     } else {
         start := 0
@@ -762,21 +759,21 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
             }
             end = end - 1 // remove space
             slice = str[start:end]
-            result = append(result, slice)
+            //result = append(result, slice)
+            result[pos] = slice
+            pos += 1
             start = end+1
             end = (end + mmax)
             if (end > len(str)) {
                 slice = str[start:end-(end-len(str))]
-                result = append(result, slice)
+                //result = append(result, slice)
+                result[pos] = slice
+                pos += 1
                 break
             }
             slice = str[start:end]
         }
     }
-    // TODO: test for memory leaks here
-    // print cap() and len() and diff()
-    GLOBAL_WASTE_VAR += (cap(result) - len(result))
-    //println("fn do_wrap_lines cap and len ", cap(result), len(result))
     return result
 }
 
