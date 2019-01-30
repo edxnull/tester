@@ -167,15 +167,19 @@ func main() {
 	// we should append(test_tokens, &element) that way we won't copy elements over and over again.
     start := time.Now()
 
-    test_tokens := do_wrap_lines(line_tokens[0], LINE_LENGTH, CHAR_W)
-    for index := 1; index < len(line_tokens); index += 1 {
-        if (len(line_tokens[index]) > 1) {
-            current := do_wrap_lines(line_tokens[index], LINE_LENGTH, CHAR_W)
-            for index := range current {
-                test_tokens = append(test_tokens, current[index])
+    test_tokens := make([]string, determine_nwrap_lines(line_tokens, LINE_LENGTH, CHAR_W))
+
+    //test_tokens[0] = do_wrap_lines(line_tokens[0], LINE_LENGTH, CHAR_W)[:]
+    for apos, bpos := 0, 0; apos < len(line_tokens); apos += 1 {
+        if (len(line_tokens[apos]) > 1) {
+            current := do_wrap_lines(line_tokens[apos], LINE_LENGTH, CHAR_W)
+            for pos := range current {
+                test_tokens[bpos] = current[pos]
+                bpos += 1
             }
         } else {
-            test_tokens = append(test_tokens, "\n")
+            test_tokens[bpos] = "\n"
+            bpos += 1
         }
     }
     end_start := time.Now().Sub(start)
@@ -773,6 +777,44 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
     // print cap() and len() and diff()
     GLOBAL_WASTE_VAR += (cap(result) - len(result))
     //println("fn do_wrap_lines cap and len ", cap(result), len(result))
+    return result
+}
+
+func determine_nwrap_lines(str []string, max_len int, xsize int) int32 {
+    var result int32
+
+    for index := 0; index < len(str); index++ {
+        if (len(str[index]) * xsize) + X_OFFSET <= max_len {
+            result += 1
+            //return result
+        } else {
+            start := 0
+            mmax := int(math.RoundToEven(float64(max_len / xsize))) // use math.Round instead?
+            slice := str[index][start:mmax]
+            end := mmax
+            slice_len := 0
+            for end < len(str[index]) {
+                slice_len = len(slice)
+                if !is_space(string(slice[slice_len-1])) {
+                    for !is_space(string(slice[slice_len-1])) {
+                        end = end-1
+                        slice_len = slice_len - 1
+                    }
+                }
+                end = end - 1 // remove space
+                slice = str[index][start:end]
+                result += 1
+                start = end+1
+                end = (end + mmax)
+                if (end > len(str[index])) {
+                    slice = str[index][start:end-(end-len(str[index]))]
+                    result += 1
+                    break
+                }
+                slice = str[index][start:end]
+            }
+        }
+    }
     return result
 }
 
