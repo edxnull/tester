@@ -73,18 +73,22 @@ type CmdConsole struct {
     input_buffer bytes.Buffer
 }
 
-type FontSelector struct { // struct FontInfo: W? H? SKIP? Flags?
+// should we have current_font *ttf.Font?
+// struct FontInfo: W? H? SKIP? Flags?
+type FontSelector struct {
     fonts []Font
     show bool
     move_up bool
     move_down bool
-    current int
+    current_font *ttf.Font
     alpha_value int
     bg_rect sdl.Rect
     ttf_rect []sdl.Rect
     cursor_rect sdl.Rect
     ttf_texture []*sdl.Texture
 }
+
+var global_font_selector FontSelector = FontSelector{}
 
 //NOTE
 //I would like to benchmark sdl.Rect vs MyRect. The reason for it is that
@@ -174,9 +178,10 @@ func main() {
 
     allfonts := make([]Font, len(ttf_font_list))
 
+    global_font_selector.fonts = make([]Font, len(ttf_font_list))
     //fmt.Println(ttf_font_list)
 
-    font = load_font("Inconsolata-Regular.ttf", TTF_FONT_SIZE)
+    //font = load_font("Inconsolata-Regular.ttf", TTF_FONT_SIZE)
 
 	// NOTE: maybe I should font = all_fonts[...]
 	// and just interate over font = all_fonts[...]
@@ -188,6 +193,14 @@ func main() {
 		allfonts[index].name = element
 		allfonts[index].size = TTF_FONT_SIZE
 	}
+
+	for index, element := range ttf_font_list {
+		global_font_selector.fonts[index].data = load_font(element, TTF_FONT_SIZE)
+		global_font_selector.fonts[index].name = element
+		global_font_selector.fonts[index].size = TTF_FONT_SIZE
+	}
+
+    font = global_font_selector.fonts[1].data
 
     CHAR_W, CHAR_H, _ := font.SizeUTF8(" ")
     SKIP_LINE := font.LineSkip()
@@ -645,6 +658,9 @@ func main() {
 	for index := range ttf_font_list {
 		allfonts[index].data.Close() // @TEMPORARY HACK @SLOW
         allfonts[index].data = nil
+
+        global_font_selector.fonts[index].data.Close()
+        global_font_selector.fonts[index].data = nil
 	}
     font.Close()
 
