@@ -62,6 +62,36 @@ type DebugWrapLine struct {
     x2, y2 int32
 }
 
+type CmdConsole struct {
+    show bool
+    move_left bool
+    alpha_value int //anim_alpha
+    bg_rect sdl.Rect
+    ttf_rect sdl.Rect
+    cursor_block sdl.Rect
+    ttf_texture *sdl.Texture
+    input_buffer bytes.Buffer
+}
+
+type FontSelector struct { // struct FontInfo: W? H? SKIP? Flags?
+    fonts []Font
+    show bool
+    move_up bool
+    move_down bool
+    current int
+    alpha_value int
+    bg_rect sdl.Rect
+    ttf_rect []sdl.Rect
+    cursor_rect sdl.Rect
+    ttf_texture []*sdl.Texture
+}
+
+//NOTE
+//I would like to benchmark sdl.Rect vs MyRect. The reason for it is that
+//I have a suspicion that sdl.Rect might have a calling overhead. If that's the case
+//this means that I could perhaps store a single pointer to an sdl.Rect
+//and just pass arbitrary X, Y, W, H values to that pointer on demand.
+
 func main() {
     // PROFILING SNIPPET
     flag.Parse()
@@ -77,7 +107,6 @@ func main() {
     }
     // PROFILING SNIPPET
 
-	// Shouldn't init everything!
     if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
         panic(err)
     }
@@ -532,13 +561,11 @@ func main() {
         if add_new_line {
             MAX_INDEX = MAX_INDEX + 1
             all_lines[MAX_INDEX].bg_rect.Y = all_lines[MAX_INDEX-1].bg_rect.Y + (all_lines[MAX_INDEX].bg_rect.H - TEXT_SCROLL_SPEED)
-            println(all_lines[START_INDEX:MAX_INDEX])
             add_new_line = false
         }
 
         if del_new_line {
             MAX_INDEX = MAX_INDEX - 1
-            println(all_lines[START_INDEX:MAX_INDEX])
             del_new_line = false
         }
 
