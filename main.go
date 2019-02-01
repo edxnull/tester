@@ -31,7 +31,7 @@ const WIN_W int32 = 800
 const WIN_H int32 = 600
 
 const X_OFFSET int = 7
-const TTF_FONT_SIZE int = 16
+const TTF_FONT_SIZE int = 17
 const TEXT_SCROLL_SPEED int32 = 14
 const LINE_LENGTH int = 730
 
@@ -534,6 +534,7 @@ func main() {
                         renderer.SetDrawColor(255, 100, 200, 100)
                         renderer.FillRect(&_RECTS_[index])
                         renderer.DrawRect(&_RECTS_[index])
+
                         if print_word {
                             if _WORDS_[index] != "\n" {
                                 fmt.Printf("%s\n", _WORDS_[index])
@@ -574,6 +575,7 @@ func main() {
         if add_new_line {
             MAX_INDEX = MAX_INDEX + 1
             all_lines[MAX_INDEX].bg_rect.Y = all_lines[MAX_INDEX-1].bg_rect.Y + (all_lines[MAX_INDEX].bg_rect.H - TEXT_SCROLL_SPEED)
+            all_lines[MAX_INDEX-1].bg_rect.Y -= TEXT_SCROLL_SPEED
             add_new_line = false
         }
 
@@ -587,7 +589,7 @@ func main() {
                 renderer.SetDrawColor(100, 255, 255, 100)
                 renderer.FillRect(&all_lines[index].bg_rect)
                 renderer.DrawRect(&all_lines[index].bg_rect)
-                renderer.Copy(all_lines[index].texture, nil, &all_lines[index].bg_rect)
+                //renderer.Copy(all_lines[index].texture, nil, &all_lines[index].bg_rect) // Do we need this?
             }
         }
         // @TEST RENDERING TTF LINE
