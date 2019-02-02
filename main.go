@@ -133,14 +133,16 @@ func main() {
         panic(err)
     }
 
-    file_stat, err := os.Stat("HP01.txt")
+    filename := "text/HP01.txt"
+
+    file_stat, err := os.Stat(filename)
     if err != nil {
         panic(err)
     }
 
     file_size := file_stat.Size()
 
-    file, err := os.Open("HP01.txt")
+    file, err := os.Open(filename)
     if err != nil {
         panic(err)
     }
@@ -162,7 +164,7 @@ func main() {
 
     var font *ttf.Font
 
-    file_names, err := ioutil.ReadDir("./")
+    file_names, err := ioutil.ReadDir("./fonts/")
     if err != nil {
         panic(err)
     }
@@ -181,21 +183,17 @@ func main() {
     global_font_selector.fonts = make([]Font, len(ttf_font_list))
     //fmt.Println(ttf_font_list)
 
-    //font = load_font("Inconsolata-Regular.ttf", TTF_FONT_SIZE)
-
 	// NOTE: maybe I should font = all_fonts[...]
 	// and just interate over font = all_fonts[...]
 	// so that I don't have to do extra allocations
 	// basically we would keep them all in memory at all times
 
 	for index, element := range ttf_font_list {
-		allfonts[index].data = load_font(element, TTF_FONT_SIZE)
+		allfonts[index].data = load_font("./fonts/" + element, TTF_FONT_SIZE)
 		allfonts[index].name = element
 		allfonts[index].size = TTF_FONT_SIZE
-	}
 
-	for index, element := range ttf_font_list {
-		global_font_selector.fonts[index].data = load_font(element, TTF_FONT_SIZE)
+		global_font_selector.fonts[index].data = load_font("./fonts/" + element, TTF_FONT_SIZE)
 		global_font_selector.fonts[index].name = element
 		global_font_selector.fonts[index].size = TTF_FONT_SIZE
 	}
@@ -589,7 +587,6 @@ func main() {
                 renderer.SetDrawColor(100, 255, 255, 100)
                 renderer.FillRect(&all_lines[index].bg_rect)
                 renderer.DrawRect(&all_lines[index].bg_rect)
-                //renderer.Copy(all_lines[index].texture, nil, &all_lines[index].bg_rect) // Do we need this?
             }
         }
         // @TEST RENDERING TTF LINE
@@ -797,7 +794,6 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
 
     pos := 0
     if (len(str) * xsize) + X_OFFSET <= max_len {
-        //result = append(result,  str)
         result[pos] = str
         return result
     } else {
@@ -816,14 +812,12 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
             }
             end = end - 1 // remove space
             slice = str[start:end]
-            //result = append(result, slice)
             result[pos] = slice
             pos += 1
             start = end+1
             end = (end + mmax)
             if (end > len(str)) {
                 slice = str[start:end-(end-len(str))]
-                //result = append(result, slice)
                 result[pos] = slice
                 pos += 1
                 break
@@ -834,6 +828,9 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
     return result
 }
 
+// [NOTE]
+// This function will fail if MAX_LEN 
+// is small enough to trigger is_space ifinite loop!
 func determine_nwrap_lines(str []string, max_len int, xsize int) int32 {
     var result int32
 
