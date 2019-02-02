@@ -302,6 +302,7 @@ func main() {
     }
 
     mouseover_word_texture := make([]bool, num_word_textures)
+    mouseover_word_texture_FONT := make([]bool, len(ttf_font_list))
 
     _RECTS_ := make([]sdl.Rect, num_word_textures)
     for index, apos := 0, 0; index <= MAX_INDEX; index++ {
@@ -374,6 +375,7 @@ func main() {
                 case *sdl.MouseMotionEvent:
                     //fmt.Printf("~> %d %d\n", t.X, t.Y)
                     check_collision_mouse_over_words(t, &_RECTS_, &mouseover_word_texture)
+                    check_collision_mouse_over_words(t, &global_font_selector.ttf_rects, &mouseover_word_texture_FONT)
                     //check_collision_mouse_over_words(t, &line.word_rects, &test_mouse_over)
                     break
                 case *sdl.MouseWheelEvent:
@@ -648,6 +650,18 @@ func main() {
             for i := 0; i < len(global_font_selector.textures); i++ {
                 // why nil?
                 renderer.Copy(global_font_selector.textures[i], nil, &global_font_selector.ttf_rects[i])
+            }
+
+            for index := 0; index < len(global_font_selector.ttf_rects); index++ {
+                if (mouseover_word_texture_FONT[index] == true) {
+                    renderer.SetDrawColor(0, 220, 100, 100)
+                    renderer.FillRect(&global_font_selector.ttf_rects[index])
+                    renderer.DrawRect(&global_font_selector.ttf_rects[index])
+                } else {
+                    renderer.SetDrawColor(0, 0, 0, 0)
+                    renderer.FillRect(&global_font_selector.ttf_rects[index])
+                    renderer.DrawRect(&global_font_selector.ttf_rects[index])
+                }
             }
         }
         // DRAWING_CMD_CONSOLE
