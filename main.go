@@ -33,7 +33,7 @@ const WIN_W int32 = 800
 const WIN_H int32 = 600
 
 const X_OFFSET int = 7
-const TTF_FONT_SIZE int = 17
+const TTF_FONT_SIZE int = 18
 const TEXT_SCROLL_SPEED int32 = 14
 const LINE_LENGTH int = 730
 
@@ -202,15 +202,10 @@ func main() {
 
 		global_font_selector.fonts[index].data = load_font("./fonts/" + element, TTF_FONT_SIZE)
 		global_font_selector.fonts[index].name = element
-		global_font_selector.fonts[index].size = TTF_FONT_SIZE
-        global_font_selector.textures[index] = make_ttf_texture(renderer,
-                                                                global_font_selector.fonts[index].data,
-                                                                global_font_selector.fonts[index].name,
-                                                                &sdl.Color{0, 0, 0, 0})
 	}
 
     args := os.Args
-    DEBUG_INDEX := 1
+    DEBUG_INDEX := 6
     if len(args) > 1 {
         DEBUG_INDEX, _ = strconv.Atoi(args[1])
     }
@@ -227,12 +222,19 @@ func main() {
     global_font_selector.bg_rect = sdl.Rect{}
     adder_y := 0
 	for index, element := range global_font_selector.fonts {
-        global_font_selector.ttf_rects[index] = sdl.Rect{0, int32(adder_y), int32(CHAR_W*len(element.name)), int32(CHAR_H)}
+        gx, gy, _ := global_font_selector.fonts[index].data.SizeUTF8(" ")
+        gskip := global_font_selector.fonts[index].data.LineSkip()
+		global_font_selector.fonts[index].size = gx * len(element.name)
+        global_font_selector.textures[index] = make_ttf_texture(renderer,
+                                                                global_font_selector.fonts[index].data,
+                                                                global_font_selector.fonts[index].name,
+                                                                &sdl.Color{0, 0, 0, 0})
+        global_font_selector.ttf_rects[index] = sdl.Rect{0, int32(adder_y), int32(gx*len(element.name)), int32(gy)}
         if global_font_selector.bg_rect.W < global_font_selector.ttf_rects[index].W {
             global_font_selector.bg_rect.W = global_font_selector.ttf_rects[index].W
         }
         global_font_selector.bg_rect.H += global_font_selector.ttf_rects[index].H
-        adder_y += CHAR_H
+        adder_y += gskip
     }
 
     start := time.Now()
