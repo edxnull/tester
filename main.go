@@ -25,6 +25,8 @@ import (
 // TODO: https://appliedgo.net/big-o/ 
 // TODO: https://www.integralist.co.uk/posts/profiling-go/ 
 
+// TODO: how to handle non-monospaced fonts?
+
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
 const WIN_W int32 = 800
@@ -83,9 +85,9 @@ type FontSelector struct {
     current_font *ttf.Font
     alpha_value int
     bg_rect sdl.Rect
-    ttf_rect []sdl.Rect
+    ttf_rects []sdl.Rect
     cursor_rect sdl.Rect
-    ttf_texture []*sdl.Texture
+    textures []*sdl.Texture
 }
 
 var global_font_selector FontSelector = FontSelector{}
@@ -174,6 +176,9 @@ func main() {
         if strings.Contains(f.Name(), ".ttf") {
             ttf_font_list = append(ttf_font_list, f.Name())
         }
+        if strings.Contains(f.Name(), ".otf") {
+            ttf_font_list = append(ttf_font_list, f.Name())
+        }
     }
 
     file_names = nil
@@ -181,7 +186,9 @@ func main() {
     allfonts := make([]Font, len(ttf_font_list))
 
     global_font_selector.fonts = make([]Font, len(ttf_font_list))
-    //fmt.Println(ttf_font_list)
+    global_font_selector.textures = make([]*sdl.Texture, len(ttf_font_list))
+    global_font_selector.ttf_rects = make([]sdl.Rect, len(ttf_font_list))
+    fmt.Println(ttf_font_list)
 
 	// NOTE: maybe I should font = all_fonts[...]
 	// and just interate over font = all_fonts[...]
@@ -196,12 +203,37 @@ func main() {
 		global_font_selector.fonts[index].data = load_font("./fonts/" + element, TTF_FONT_SIZE)
 		global_font_selector.fonts[index].name = element
 		global_font_selector.fonts[index].size = TTF_FONT_SIZE
+        global_font_selector.textures[index] = make_ttf_texture(renderer,
+                                                                global_font_selector.fonts[index].data,
+                                                                global_font_selector.fonts[index].name,
+                                                                &sdl.Color{0, 0, 0, 0})
 	}
 
-    font = global_font_selector.fonts[1].data
+    args := os.Args
+    DEBUG_INDEX := 1
+    if len(args) > 1 {
+        DEBUG_INDEX, _ = strconv.Atoi(args[1])
+    }
+
+    font = global_font_selector.fonts[DEBUG_INDEX].data
 
     CHAR_W, CHAR_H, _ := font.SizeUTF8(" ")
     SKIP_LINE := font.LineSkip()
+    println(global_font_selector.fonts[DEBUG_INDEX].name)
+    println("CHAR_W", CHAR_W)
+    println("CHAR_H", CHAR_H)
+    println("SKIP_LINE", SKIP_LINE)
+
+    global_font_selector.bg_rect = sdl.Rect{}
+    adder_y := 0
+	for index, element := range global_font_selector.fonts {
+        global_font_selector.ttf_rects[index] = sdl.Rect{0, int32(adder_y), int32(CHAR_W*len(element.name)), int32(CHAR_H)}
+        if global_font_selector.bg_rect.W < global_font_selector.ttf_rects[index].W {
+            global_font_selector.bg_rect.W = global_font_selector.ttf_rects[index].W
+        }
+        global_font_selector.bg_rect.H += global_font_selector.ttf_rects[index].H
+        adder_y += CHAR_H
+    }
 
     start := time.Now()
     test_tokens := make([]string, determine_nwrap_lines(line_tokens, LINE_LENGTH, CHAR_W))
@@ -607,6 +639,14 @@ func main() {
             renderer.SetDrawColor(0, 0, 0, uint8(cmd_console_anim_alpha))
             renderer.FillRect(&cmd_console_cursor_block)
             renderer.DrawRect(&cmd_console_cursor_block)
+
+            renderer.SetDrawColor(255, 0, 255, 255)
+            renderer.FillRect(&global_font_selector.bg_rect)
+            renderer.DrawRect(&global_font_selector.bg_rect)
+            for i := 0; i < len(global_font_selector.textures); i++ {
+                // why nil?
+                renderer.Copy(global_font_selector.textures[i], nil, &global_font_selector.ttf_rects[i])
+            }
         }
         // DRAWING_CMD_CONSOLE
 
@@ -660,6 +700,7 @@ func main() {
 
         global_font_selector.fonts[index].data.Close()
         global_font_selector.fonts[index].data = nil
+        global_font_selector.textures[index].Destroy()
 	}
     font.Close()
 
@@ -798,7 +839,7 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
         return result
     } else {
         start := 0
-        mmax := int(math.RoundToEven(float64(max_len / xsize))) // use math.Round instead?
+        mmax := int(math.RoundToEven(float64(max_len / xsize)))-1 // use math.Round instead?
         slice := str[start:mmax]
         end := mmax
         slice_len := 0
@@ -834,13 +875,16 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
 func determine_nwrap_lines(str []string, max_len int, xsize int) int32 {
     var result int32
 
+    //println(len(str))
     for index := 0; index < len(str); index++ {
         if (len(str[index]) * xsize) + X_OFFSET <= max_len {
             result += 1
             //return result
         } else {
             start := 0
-            mmax := int(math.RoundToEven(float64(max_len / xsize))) // use math.Round instead?
+            mmax := int(math.RoundToEven(float64(max_len / xsize)))-1 // use math.Round instead?
+            //println(mmax > len(str[index]), "index", index, "strlen", len(str[index]), "mmax", mmax)
+            //assert_if(mmax > len(str[index]))
             slice := str[index][start:mmax]
             end := mmax
             slice_len := 0
