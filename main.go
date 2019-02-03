@@ -34,6 +34,7 @@ const WIN_H int32 = 600
 
 const X_OFFSET int = 7
 const TTF_FONT_SIZE int = 18
+const TTF_FONT_SIZE_FOR_FONT_LIST int = 14
 const TEXT_SCROLL_SPEED int32 = 14
 const LINE_LENGTH int = 730
 
@@ -195,29 +196,28 @@ func main() {
 	// so that I don't have to do extra allocations
 	// basically we would keep them all in memory at all times
 
-	for index, element := range ttf_font_list {
-		allfonts[index].data = load_font("./fonts/" + element, TTF_FONT_SIZE)
-		allfonts[index].name = element
-		allfonts[index].size = TTF_FONT_SIZE
-
-		global_font_selector.fonts[index].data = load_font("./fonts/" + element, TTF_FONT_SIZE)
-		global_font_selector.fonts[index].name = element
-	}
-
     args := os.Args
     DEBUG_INDEX := 6
     if len(args) > 1 {
         DEBUG_INDEX, _ = strconv.Atoi(args[1])
     }
 
-    font = global_font_selector.fonts[DEBUG_INDEX].data
+	for index, element := range ttf_font_list {
+		allfonts[index].data = load_font("./fonts/" + element, TTF_FONT_SIZE)
+		allfonts[index].name = element
+		allfonts[index].size = TTF_FONT_SIZE
+
+        if DEBUG_INDEX == index {
+            global_font_selector.current_font = load_font("./fonts/" + element, TTF_FONT_SIZE)
+        }
+        global_font_selector.fonts[index].data = load_font("./fonts/" + element, TTF_FONT_SIZE_FOR_FONT_LIST)
+		global_font_selector.fonts[index].name = element
+	}
+
+    font = global_font_selector.current_font
 
     CHAR_W, CHAR_H, _ := font.SizeUTF8(" ")
     SKIP_LINE := font.LineSkip()
-    println(global_font_selector.fonts[DEBUG_INDEX].name)
-    println("CHAR_W", CHAR_W)
-    println("CHAR_H", CHAR_H)
-    println("SKIP_LINE", SKIP_LINE)
 
     global_font_selector.bg_rect = sdl.Rect{}
     adder_y := 0
@@ -236,6 +236,8 @@ func main() {
         global_font_selector.bg_rect.H += global_font_selector.ttf_rects[index].H
         adder_y += gskip
     }
+
+    // TODO: should we keep fonts in memory? or free them instead?
 
     start := time.Now()
     test_tokens := make([]string, determine_nwrap_lines(line_tokens, LINE_LENGTH, CHAR_W))
@@ -256,7 +258,8 @@ func main() {
 
 	//@PERFORMANCE SLOW
     now_gen := time.Now()
-    all_lines := generate_and_populate_lines(renderer, font, &test_tokens, CHAR_W, CHAR_H, SKIP_LINE)
+    slice := test_tokens[0:100] // NOTE: TEST
+    all_lines := generate_and_populate_lines(renderer, font, &slice, CHAR_W, CHAR_H, SKIP_LINE)
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
 
@@ -561,7 +564,7 @@ func main() {
             }
         }
 
-        if engage_loop {
+        if engage_loop  && !show_cmd_console_rect {
             for index := range _RECTS_ {
                 if mouseover_word_texture[index] {
                     if _WORDS_[index] != "\n" {
@@ -644,17 +647,18 @@ func main() {
             renderer.FillRect(&cmd_console_cursor_block)
             renderer.DrawRect(&cmd_console_cursor_block)
 
+            // ...............
             renderer.SetDrawColor(255, 0, 255, 255)
             renderer.FillRect(&global_font_selector.bg_rect)
             renderer.DrawRect(&global_font_selector.bg_rect)
+
             for i := 0; i < len(global_font_selector.textures); i++ {
-                // why nil?
-                renderer.Copy(global_font_selector.textures[i], nil, &global_font_selector.ttf_rects[i])
+                renderer.Copy(global_font_selector.textures[i], nil, &global_font_selector.ttf_rects[i]) // why nil?
             }
 
             for index := 0; index < len(global_font_selector.ttf_rects); index++ {
                 if (mouseover_word_texture_FONT[index] == true) {
-                    renderer.SetDrawColor(0, 220, 100, 100)
+                    renderer.SetDrawColor(255, 0, 255, 100)
                     renderer.FillRect(&global_font_selector.ttf_rects[index])
                     renderer.DrawRect(&global_font_selector.ttf_rects[index])
                 } else {
@@ -664,6 +668,7 @@ func main() {
                 }
             }
         }
+        // ...............
         // DRAWING_CMD_CONSOLE
 
         // WRAPLINE
@@ -715,6 +720,7 @@ func main() {
         allfonts[index].data = nil
 
         global_font_selector.fonts[index].data.Close()
+        global_font_selector.current_font.Close()
         global_font_selector.fonts[index].data = nil
         global_font_selector.textures[index].Destroy()
 	}
