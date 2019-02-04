@@ -48,8 +48,9 @@ var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 var global_win_w int32
 var global_win_h int32
 var GLOBAL_WASTE_VAR int
-var MAX_INDEX int = 40  // TODO: make MAX AND START INDEX scrollable
-var START_INDEX int = 0 // TODO: make MAX AND START INDEX scrollable
+
+var MAX_INDEX int = 40
+var START_INDEX int = 0
 
 type Font struct {
     size int
@@ -73,7 +74,7 @@ type DebugWrapLine struct {
 type CmdConsole struct {
     show bool
     move_left bool
-    alpha_value uint8 //anim_alpha
+    alpha_value uint8
     bg_rect sdl.Rect
     ttf_rect sdl.Rect
     cursor_rect sdl.Rect
@@ -81,8 +82,6 @@ type CmdConsole struct {
     input_buffer bytes.Buffer
 }
 
-// should we have current_font *ttf.Font?
-// struct FontInfo: W? H? SKIP? Flags?
 type FontSelector struct {
     fonts []Font
     show bool
@@ -100,12 +99,6 @@ type FontSelector struct {
 }
 
 var gfonts FontSelector = FontSelector{}
-
-//NOTE
-//I would like to benchmark sdl.Rect vs MyRect. The reason for it is that
-//I have a suspicion that sdl.Rect might have a calling overhead. If that's the case
-//this means that I could perhaps store a single pointer to an sdl.Rect
-//and just pass arbitrary X, Y, W, H values to that pointer on demand.
 
 func main() {
     // PROFILING SNIPPET
@@ -175,10 +168,6 @@ func main() {
 
     ticker := time.NewTicker(time.Second / 60)
 
-    //////////////////////////
-    // ------ CREATE_FONTS
-    //////////////////////////
-
     var font *ttf.Font
 
     file_names, err := ioutil.ReadDir("./fonts/")
@@ -198,28 +187,13 @@ func main() {
 
     file_names = nil
 
-    allfonts := make([]Font, len(ttf_font_list))
-
     gfonts.fonts = make([]Font, len(ttf_font_list))
     gfonts.textures = make([]*sdl.Texture, len(ttf_font_list))
     gfonts.ttf_rects = make([]sdl.Rect, len(ttf_font_list))
 
-	// NOTE: maybe I should font = all_fonts[...]
-	// and just interate over font = all_fonts[...]
-	// so that I don't have to do extra allocations
-	// basically we would keep them all in memory at all times
-
-    //args := os.Args
     DEBUG_INDEX := 6
-    ////if len(args) > 1 {
-    //    DEBUG_INDEX, _ = strconv.Atoi(args[1])
-    //}
 
 	for index, element := range ttf_font_list {
-		allfonts[index].data = load_font("./fonts/" + element, TTF_FONT_SIZE)
-		allfonts[index].name = element
-		allfonts[index].size = TTF_FONT_SIZE
-
         if DEBUG_INDEX == index {
             gfonts.current_font = load_font("./fonts/" + element, TTF_FONT_SIZE)
             w, h, _ := gfonts.current_font.SizeUTF8(" ")
@@ -254,7 +228,7 @@ func main() {
         adder_y += gy
     }
 
-    // TODO: should we keep fonts in memory? or free them instead?
+    // NOTE: should we keep fonts in memory? or free them instead?
 
     start := time.Now()
     test_tokens := make([]string, determine_nwrap_lines(line_tokens, LINE_LENGTH, gfonts.current_font_w))
@@ -494,7 +468,7 @@ func main() {
         renderer.Clear()
 
         // RENDERING TTF LINES
-        for i := range all_lines {
+        for i := range all_lines[START_INDEX:MAX_INDEX] {
             renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
         }
 
@@ -504,7 +478,7 @@ func main() {
             }
         }
 
-        if engage_loop  && !cmd.show {
+        if engage_loop && !cmd.show {
             for index := range _RECTS_ {
                 if mouseover_word_texture[index] {
                     if _WORDS_[index] != "\n" {
@@ -516,8 +490,6 @@ func main() {
                             }
                         }
                     }
-                } else {
-                    renderer.SetDrawColor(0, 0, 0, 0)
                 }
             }
             engage_loop = false
@@ -533,6 +505,7 @@ func main() {
             }
             add_new_line = true
         }
+
         if move_text_up {
             move_text_up = false
             for index := range all_lines[START_INDEX:MAX_INDEX] {
@@ -609,9 +582,6 @@ func main() {
     }
 
 	for index := range ttf_font_list {
-		allfonts[index].data.Close() // @TEMPORARY HACK @SLOW
-        allfonts[index].data = nil
-
         gfonts.fonts[index].data.Close()
         gfonts.current_font.Close()
         gfonts.fonts[index].data = nil
