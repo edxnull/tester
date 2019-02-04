@@ -71,7 +71,7 @@ type DebugWrapLine struct {
 type CmdConsole struct {
     show bool
     move_left bool
-    alpha_value int //anim_alpha
+    alpha_value uint8 //anim_alpha
     bg_rect sdl.Rect
     ttf_rect sdl.Rect
     cursor_rect sdl.Rect
@@ -89,7 +89,7 @@ type FontSelector struct {
     move_up bool
     move_down bool
     current_font *ttf.Font
-    alpha_value int
+    alpha_value uint8
     bg_rect sdl.Rect
     ttf_rects []sdl.Rect
     cursor_rect sdl.Rect
@@ -281,13 +281,8 @@ func main() {
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
 
-    //////////////////////////
-    // CMD_CONSOLE_STUFF
-    //////////////////////////
-
     cmd_console_test_str := strings.Join([]string{"LINE COUNT: ", strconv.Itoa(len(test_tokens))}, "")
 
-    //TODO: get rid of (18) magic value
     cmd_win_h := int32(18)
     cmd := CmdConsole{}
     cmd.alpha_value = 100
@@ -297,17 +292,12 @@ func main() {
     cmd.cursor_rect = sdl.Rect{0, WIN_H-cmd_win_h, int32(CHAR_W), int32(CHAR_H)}
     cmd.input_buffer.Grow(128)
 
-    //////////////////////////
-    // END_CMD_CONSOLE_STUFF
-    //////////////////////////
-
     sdl.SetHint(sdl.HINT_FRAMEBUFFER_ACCELERATION, "1")
     sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "1")
 
     renderer.SetDrawBlendMode(sdl.BLENDMODE_BLEND)
 
     running := true
-    first_pass := true
     print_word := false
     engage_loop := false
     add_new_line := false
@@ -547,22 +537,9 @@ func main() {
         renderer.SetDrawColor(255, 255, 255, 0)
         renderer.Clear()
 
-        // @TEST RENDERING TTF LINE
-        if first_pass {
-            for ln := range all_lines[START_INDEX:MAX_INDEX] {
-                for index := range all_lines[ln].word_rects {
-                    //renderer.SetDrawColor(100, 10, 100, uint8(cmd_console_anim_alpha))
-                    renderer.SetDrawColor(0, 0, 0, 0)
-                    renderer.FillRect(&all_lines[ln].word_rects[index])
-                    renderer.DrawRect(&all_lines[ln].word_rects[index])
-                }
-                renderer.Copy(all_lines[ln].texture, nil, &all_lines[ln].bg_rect)
-            }
-            first_pass = false
-        } else {
-            for i := range all_lines[START_INDEX:MAX_INDEX] {
-                renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
-            }
+        // RENDERING TTF LINES
+        for i := range all_lines[START_INDEX:MAX_INDEX] {
+            renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
         }
 
         for i := range mouseover_word_texture {
@@ -575,10 +552,7 @@ func main() {
             for index := range _RECTS_ {
                 if mouseover_word_texture[index] {
                     if _WORDS_[index] != "\n" {
-                        renderer.SetDrawColor(255, 100, 200, 100)
-                        renderer.FillRect(&_RECTS_[index])
-                        renderer.DrawRect(&_RECTS_[index])
-
+                        draw_rect_without_border(renderer, &_RECTS_[index], &sdl.Color{255, 100, 200, 100})
                         if print_word {
                             if _WORDS_[index] != "\n" {
                                 fmt.Printf("%s\n", _WORDS_[index])
@@ -588,8 +562,6 @@ func main() {
                     }
                 } else {
                     renderer.SetDrawColor(0, 0, 0, 0)
-                    renderer.FillRect(&_RECTS_[index])
-                    renderer.DrawRect(&_RECTS_[index])
                 }
             }
             engage_loop = false
@@ -630,31 +602,18 @@ func main() {
 
         if wrap_line {
             for index := range all_lines[START_INDEX:MAX_INDEX] {
-                renderer.SetDrawColor(100, 255, 255, 100)
-                renderer.FillRect(&all_lines[index].bg_rect)
-                renderer.DrawRect(&all_lines[index].bg_rect)
+                draw_rect_without_border(renderer, &all_lines[index].bg_rect, &sdl.Color{100, 255, 255, 100})
             }
         }
-        // @TEST RENDERING TTF LINE
 
-        // DRAWING_CMD_CONSOLE
         if cmd.show {
-            renderer.SetDrawColor(255, 10, 100, uint8(cmd.alpha_value))
-            //renderer.SetDrawColor(255, 255, 255, 255)
-            renderer.FillRect(&cmd.bg_rect)
-            renderer.DrawRect(&cmd.bg_rect)
+            draw_rect_with_border_filled(renderer, &cmd.bg_rect, &sdl.Color{255, 10, 100, cmd.alpha_value})
+            draw_rect_with_border(renderer, &cmd.ttf_rect, &sdl.Color{255, 255, 255, 0})
 
-            // renderer.SetDrawColor(100, 25, 90, 255)  // @TEMPORARY
-            renderer.SetDrawColor(255, 255, 255, 0)
-            renderer.DrawRect(&cmd.ttf_rect)
-            //renderer.FillRect(&cmd_console_ttf_rect)
             renderer.Copy(cmd.ttf_texture, nil, &cmd.ttf_rect)
 
-            renderer.SetDrawColor(0, 0, 0, uint8(cmd.alpha_value))
-            renderer.FillRect(&cmd.cursor_rect)
-            renderer.DrawRect(&cmd.cursor_rect)
+            draw_rect_with_border_filled(renderer, &cmd.cursor_rect, &sdl.Color{0, 0, 0, cmd.alpha_value})
 
-        // ...............
             draw_rect_without_border(renderer, &global_font_selector.bg_rect, &sdl.Color{255, 0, 255, 255})
 
             for i := 0; i < len(global_font_selector.textures); i++ {
@@ -666,39 +625,13 @@ func main() {
                 if (mouseover_word_texture_FONT[index] == true) {
                     draw_rect_without_border(renderer, &global_font_selector.ttf_rects[index], &clr)
                 } else {
-                    // debug
-                    draw_rect_without_border(renderer, &global_font_selector.ttf_rects[index], &sdl.Color{255, 255, 255, 200})
+                    draw_rect_without_border(renderer, &global_font_selector.ttf_rects[index], &sdl.Color{255, 255, 255, 200}) // debug
                 }
             }
         }
 
-        // ...............
-        // DRAWING_CMD_CONSOLE
-
-        // WRAPLINE
         renderer.SetDrawColor(255, 100, 0, 100)
         renderer.DrawLine(wrapline.x1+int32(X_OFFSET), wrapline.y1, wrapline.x2+int32(X_OFFSET), wrapline.y2)
-        // WRAPLINE
-
-        // -----------------
-        // ANIMATIONS
-        // -----------------
-
-        //if !cmd_move_left {
-        //    cmd_console_anim_alpha += 4
-        //    if cmd_console_anim_alpha >= 80 {
-        //        cmd_move_left = true
-        //    }
-        //} else {
-        //    cmd_console_anim_alpha -= 4
-        //    if cmd_console_anim_alpha == 0 {
-        //        cmd_move_left = false
-        //    }
-        //}
-
-        // -----------------
-        // ANIMATIONS
-        // -----------------
 
         renderer.Present()
 
@@ -785,12 +718,10 @@ func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color
 }
 
 func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string, c sdl.Color) (*sdl.Texture) {
-    var surface *sdl.Surface
-
     if tex != nil {
         tex.Destroy()
+        var surface *sdl.Surface
         surface, _ = f.RenderUTF8Blended(s, c)
-
         tex, _ = r.CreateTextureFromSurface(surface)
         surface.Free()
         return tex
@@ -817,7 +748,7 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_t
 
     tw := x * len(line_text)
 
-    skipline := int32(lineskip) // @TEMPORARY HACK
+    skipline := int32(lineskip)
     if (skip_nr > 0) {
         skipline *= skip_nr
     } else {
@@ -854,7 +785,6 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
 }
 
 func do_wrap_lines(str string, max_len int, xsize int) []string {
-    //var result []string
     assert_if(len(str) <= 1)
 
     result := make([]string, determine_nwrap_lines([]string{str}, max_len, xsize))
@@ -895,17 +825,15 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
     return result
 }
 
-// [NOTE]
+// TODO
 // This function will fail if MAX_LEN 
 // is small enough to trigger is_space ifinite loop!
 func determine_nwrap_lines(str []string, max_len int, xsize int) int32 {
     var result int32
 
-    //println(len(str))
     for index := 0; index < len(str); index++ {
         if (len(str[index]) * xsize) + X_OFFSET <= max_len {
             result += 1
-            //return result
         } else {
             start := 0
             mmax := int(math.RoundToEven(float64(max_len / xsize)))-1 // use math.Round instead?
@@ -960,7 +888,6 @@ func is_space(s string) bool {
     return s == " "
 }
 
-// TODO: not sure we need this
 func get_word_lengths(s *string) []int {
     var result []int
     curr := 0
