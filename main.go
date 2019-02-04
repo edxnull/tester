@@ -209,11 +209,11 @@ func main() {
 	// so that I don't have to do extra allocations
 	// basically we would keep them all in memory at all times
 
-    args := os.Args
+    //args := os.Args
     DEBUG_INDEX := 6
-    if len(args) > 1 {
-        DEBUG_INDEX, _ = strconv.Atoi(args[1])
-    }
+    ////if len(args) > 1 {
+    //    DEBUG_INDEX, _ = strconv.Atoi(args[1])
+    //}
 
 	for index, element := range ttf_font_list {
 		allfonts[index].data = load_font("./fonts/" + element, TTF_FONT_SIZE)
@@ -277,9 +277,10 @@ func main() {
     now_gen := time.Now()
 
     all_lines := make([]Line, len(test_tokens))
+    _generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
 
-    generate_lines(renderer, font, &all_lines, &test_tokens, 0, MAX_INDEX+1)
-    generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1, (MAX_INDEX+1)*2)
+    //generate_lines(renderer, font, &all_lines, &test_tokens, 0, MAX_INDEX+1)
+    //generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1, (MAX_INDEX+1)*2)
 
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
@@ -421,34 +422,10 @@ func main() {
                     }
                     break
                 case *sdl.KeyboardEvent:
-                    if cmd.show { // TODO: @REFACTOR into a func
+                    if cmd.show {
                         if t.Keysym.Sym == sdl.K_BACKSPACE {
                             if t.Repeat > 0 {
-                                if cmd.cursor_rect.X <= 0 {
-                                    cmd.cursor_rect.X = 0
-                                } else {
-                                    temp_string := cmd.input_buffer.String()[0:len(cmd.input_buffer.String())-1]
-                                    cmd.input_buffer.Reset()
-                                    cmd.input_buffer.WriteString(temp_string)
-
-                                    cmd.ttf_texture.Destroy()
-
-                                    if len(cmd.input_buffer.String()) > 0 {
-                                        cmd.ttf_texture = make_ttf_texture(renderer, font, temp_string, &sdl.Color{0, 0, 0, 255})
-                                    }
-
-                                    if len(temp_string) != 0 {
-                                        curr_char_w = gfonts.current_font_w * len(string(temp_string[len(temp_string)-1]))
-
-                                        cmd.cursor_rect.X -= int32(curr_char_w)
-
-                                        cmd.ttf_rect.W = int32(gfonts.current_font_w * len(cmd.input_buffer.String()))
-                                        cmd.ttf_rect.H = int32(gfonts.current_font_h)
-                                        println(temp_string)
-                                    } else {
-                                        cmd.cursor_rect.X = 0
-                                    }
-                                }
+                                execute_cmd_write_to_buffer(renderer, &cmd, curr_char_w, &gfonts)
                             }
                         }
                     }
@@ -467,32 +444,8 @@ func main() {
                                                 cmd.show = false
                                             }
                                             break
-                                    case sdl.K_BACKSPACE: // TODO: @REFACTOR into a func
-                                        if cmd.cursor_rect.X <= 0 {
-                                            cmd.cursor_rect.X = 0
-                                        } else {
-                                            temp_string := cmd.input_buffer.String()[0:len(cmd.input_buffer.String())-1]
-                                            cmd.input_buffer.Reset()
-                                            cmd.input_buffer.WriteString(temp_string)
-
-                                            cmd.ttf_texture.Destroy()
-
-                                            if len(cmd.input_buffer.String()) > 0 {
-                                                cmd.ttf_texture = make_ttf_texture(renderer, font, temp_string, &sdl.Color{0, 0, 0, 255})
-                                            }
-
-                                            if len(temp_string) != 0 {
-                                                curr_char_w = gfonts.current_font_w * len(string(temp_string[len(temp_string)-1]))
-
-                                                cmd.cursor_rect.X -= int32(curr_char_w)
-
-                                                cmd.ttf_rect.W = int32(gfonts.current_font_w * len(cmd.input_buffer.String()))
-                                                cmd.ttf_rect.H = int32(gfonts.current_font_h)
-                                                println(temp_string)
-                                            } else {
-                                                cmd.cursor_rect.X = 0
-                                            }
-                                        }
+                                    case sdl.K_BACKSPACE:
+                                        execute_cmd_write_to_buffer(renderer, &cmd, curr_char_w, &gfonts)
                                         break
                                     case sdl.K_RETURN: // TODO: @REFACTOR into a func
                                         // TODO: I need to add a command_history and a command_buffer here!
@@ -541,7 +494,7 @@ func main() {
         renderer.Clear()
 
         // RENDERING TTF LINES
-        for i := range all_lines[START_INDEX:MAX_INDEX] {
+        for i := range all_lines {
             renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
         }
 
@@ -937,4 +890,32 @@ func draw_rect_with_border_filled(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl
 func draw_rect_without_border(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl.Color) {
     renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
     renderer.FillRect(rect)
+}
+
+func execute_cmd_write_to_buffer(renderer *sdl.Renderer, cmd *CmdConsole, curr_char_w int, gfonts *FontSelector) {
+    if cmd.cursor_rect.X <= 0 {
+        cmd.cursor_rect.X = 0
+    } else {
+        temp_string := cmd.input_buffer.String()[0:len(cmd.input_buffer.String())-1]
+        cmd.input_buffer.Reset()
+        cmd.input_buffer.WriteString(temp_string)
+
+        cmd.ttf_texture.Destroy()
+
+        if len(cmd.input_buffer.String()) > 0 {
+            cmd.ttf_texture = make_ttf_texture(renderer, gfonts.current_font, temp_string, &sdl.Color{0, 0, 0, 255})
+        }
+
+        if len(temp_string) != 0 {
+            curr_char_w = gfonts.current_font_w * len(string(temp_string[len(temp_string)-1]))
+
+            cmd.cursor_rect.X -= int32(curr_char_w)
+
+            cmd.ttf_rect.W = int32(gfonts.current_font_w * len(cmd.input_buffer.String()))
+            cmd.ttf_rect.H = int32(gfonts.current_font_h)
+            println(temp_string)
+        } else {
+            cmd.cursor_rect.X = 0
+        }
+    }
 }
