@@ -281,24 +281,21 @@ func main() {
     add_new_line := false
     del_new_line := false
 
-    num_word_textures := 0
-    for index := 0; index <= MAX_INDEX; index++ {
-        num_word_textures += len(all_lines[index].word_rects)
-    }
+    total_number_of_lines := len(all_lines)
 
-    mouseover_word_texture := make([]bool, num_word_textures)
+    mouseover_word_texture := make([]bool, total_number_of_lines)
     mouseover_word_texture_FONT := make([]bool, len(ttf_font_list))
 
-    _RECTS_ := make([]sdl.Rect, num_word_textures)
-    for index, apos := 0, 0; index <= MAX_INDEX; index++ {
+    _RECTS_ := make([]sdl.Rect, total_number_of_lines)
+    for index, apos := 0, 0; index <= total_number_of_lines; index++ {
         for pos := 0; pos < len(all_lines[index].word_rects); pos++ {
             _RECTS_[apos] = all_lines[index].word_rects[pos]
             apos += 1
         }
     }
 
-    _WORDS_ := make([]string, num_word_textures)
-    for index, apos := 0, 0; index <= MAX_INDEX; index++ {
+    _WORDS_ := make([]string, len(test_tokens))
+    for index, apos := 0, 0; index <= len(test_tokens); index++ {
         for _, rct := range strings.Split(test_tokens[index], " ") {
             _WORDS_[apos] = rct
             apos += 1
@@ -358,10 +355,13 @@ func main() {
                     }
                     break
                 case *sdl.MouseMotionEvent:
+                    //fmt.Printf("~> %d %d\n", t.X, t.Y)
                     check_collision_mouse_over_words(t, &_RECTS_, &mouseover_word_texture)
                     check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
+                    //check_collision_mouse_over_words(t, &line.word_rects, &test_mouse_over)
                     break
                 case *sdl.MouseWheelEvent:
+                    //fmt.Printf("%#v\n", t)
 					if t.Y == 1 {
 						move_text_up = true
 					}
@@ -476,7 +476,7 @@ func main() {
         }
 
         if engage_loop && !cmd.show {
-            for index := range _RECTS_ {
+            for index := range _RECTS_[START_INDEX:MAX_INDEX] {
                 if mouseover_word_texture[index] {
                     if _WORDS_[index] != "\n" {
                         draw_rect_without_border(renderer, &_RECTS_[index], &sdl.Color{255, 100, 200, 100})
@@ -497,7 +497,7 @@ func main() {
             for index := range all_lines[START_INDEX:MAX_INDEX] {
                 all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
             }
-            for index := range _RECTS_ {
+            for index := range _RECTS_[START_INDEX:MAX_INDEX] {
                 _RECTS_[index].Y -= TEXT_SCROLL_SPEED
             }
             add_new_line = true
@@ -507,7 +507,7 @@ func main() {
             for index := range all_lines[START_INDEX:MAX_INDEX] {
                 all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
             }
-            for index := range _RECTS_ {
+            for index := range _RECTS_[START_INDEX:MAX_INDEX] {
                 _RECTS_[index].Y += TEXT_SCROLL_SPEED
             }
             del_new_line = true
