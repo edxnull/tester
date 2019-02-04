@@ -26,6 +26,10 @@ import (
 
 // TODO: USE sdl.WINDOWEVENT_EXPOSED for proper redrawing
 
+// TODO: add notification icon (please use WINDOWS docs for that, as SDL doesn't support it for now)
+// https://stackoverflow.com/questions/41441807/minimize-window-to-system-tray
+// https://gamedev.stackexchange.com/questions/136473/sdl2-taskbar-icon-notification-blinking-flashing-orange
+
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
 const WIN_W int32 = 800
@@ -115,10 +119,7 @@ func main() {
 
     runtime.LockOSThread()
 
-    if err := sdl.Init(sdl.INIT_TIMER |
-                       sdl.INIT_VIDEO |
-                       sdl.INIT_AUDIO |
-                       sdl.INIT_EVENTS); err != nil {
+    if err := sdl.Init(sdl.INIT_TIMER|sdl.INIT_VIDEO|sdl.INIT_AUDIO); err != nil {
         panic(err)
     }
 
@@ -139,6 +140,10 @@ func main() {
     if err != nil {
         panic(err)
     }
+
+    // NOTE: important!
+    // SetLogicalSize is important for device independant rendering!
+    // renderer.SetLogicalSize(WIN_W, WIN_H)
 
     filename := "text/HP01.txt"
 
@@ -226,18 +231,21 @@ func main() {
     adder_y := 0
 	for index, element := range global_font_selector.fonts {
         gx, gy, _ := global_font_selector.fonts[index].data.SizeUTF8(" ")
-        gskip := global_font_selector.fonts[index].data.LineSkip()
+        //gskip := global_font_selector.fonts[index].data.LineSkip()
 		global_font_selector.fonts[index].size = gx * len(element.name)
-        global_font_selector.textures[index] = make_ttf_texture(renderer,
-                                                                global_font_selector.fonts[index].data,
-                                                                global_font_selector.fonts[index].name,
-                                                                &sdl.Color{0, 0, 0, 0})
+
+        global_font_selector.textures[index] = make_ttf_texture(renderer, global_font_selector.fonts[index].data,
+                                                                          global_font_selector.fonts[index].name,
+                                                                          &sdl.Color{0, 0, 0, 0})
+
         global_font_selector.ttf_rects[index] = sdl.Rect{0, int32(adder_y), int32(gx*len(element.name)), int32(gy)}
+
         if global_font_selector.bg_rect.W < global_font_selector.ttf_rects[index].W {
             global_font_selector.bg_rect.W = global_font_selector.ttf_rects[index].W
         }
+
         global_font_selector.bg_rect.H += global_font_selector.ttf_rects[index].H
-        adder_y += gskip
+        adder_y += gy
     }
 
     // TODO: should we keep fonts in memory? or free them instead?
@@ -298,8 +306,10 @@ func main() {
     //////////////////////////
     // END_CMD_CONSOLE_STUFF
     //////////////////////////
+
     sdl.SetHint(sdl.HINT_FRAMEBUFFER_ACCELERATION, "1")
-    sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "1") // 1 or 2 ???
+    sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "1")
+
     renderer.SetDrawBlendMode(sdl.BLENDMODE_BLEND)
 
     running := true
@@ -341,8 +351,6 @@ func main() {
     test_rand_color := sdl.Color{uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255))}
 
     wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H}
-
-    rect_t := sdl.Rect{0, 0, WIN_W, 30}
 
     curr_char_w := 0
 
@@ -659,39 +667,23 @@ func main() {
             renderer.FillRect(&cmd_console_cursor_block)
             renderer.DrawRect(&cmd_console_cursor_block)
 
-            // ...............
-            renderer.SetDrawColor(255, 0, 255, 255)
-            renderer.FillRect(&global_font_selector.bg_rect)
-            renderer.DrawRect(&global_font_selector.bg_rect)
+        // ...............
+            draw_rect_without_border(renderer, &global_font_selector.bg_rect, &sdl.Color{255, 0, 255, 255})
 
             for i := 0; i < len(global_font_selector.textures); i++ {
                 renderer.Copy(global_font_selector.textures[i], nil, &global_font_selector.ttf_rects[i]) // why nil?
             }
 
+            clr := sdl.Color{255, 0, 255, 100}
             for index := 0; index < len(global_font_selector.ttf_rects); index++ {
                 if (mouseover_word_texture_FONT[index] == true) {
-                    renderer.SetDrawColor(255, 0, 255, 100)
-                    renderer.FillRect(&global_font_selector.ttf_rects[index])
-                    renderer.DrawRect(&global_font_selector.ttf_rects[index])
+                    draw_rect_without_border(renderer, &global_font_selector.ttf_rects[index], &clr)
                 } else {
-                    renderer.SetDrawColor(0, 0, 0, 0)
-                    renderer.FillRect(&global_font_selector.ttf_rects[index])
-                    renderer.DrawRect(&global_font_selector.ttf_rects[index])
+                    // debug
+                    draw_rect_without_border(renderer, &global_font_selector.ttf_rects[index], &sdl.Color{255, 255, 255, 200})
                 }
             }
         }
-
-        // func draw_rect_with_border()
-        //  - renderer.SetDrawColor(255, 100, 0, 100)
-        //  - renderer.DrawRect(&rect_t)
-
-        // func draw_rect_without_border()
-        //  - renderer.SetDrawColor(255, 100, 0, 100)
-        //  - renderer.FillRect(&rect_t)
-
-        renderer.SetDrawColor(255, 100, 0, 100)
-        renderer.FillRect(&rect_t)
-        //renderer.DrawRect(&rect_t)
 
         // ...............
         // DRAWING_CMD_CONSOLE
@@ -1005,4 +997,20 @@ func get_word_lengths(s *string) []int {
         result = append(result, curr)
     }
     return result
+}
+
+func draw_rect_with_border(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl.Color) {
+    renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
+    renderer.DrawRect(rect)
+}
+
+func draw_rect_with_border_filled(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl.Color) {
+    renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
+    renderer.FillRect(rect)
+    renderer.DrawRect(rect)
+}
+
+func draw_rect_without_border(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl.Color) {
+    renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
+    renderer.FillRect(rect)
 }
