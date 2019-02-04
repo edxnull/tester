@@ -732,7 +732,7 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
     return tex
 }
 
-func generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, dest *[]Line, tokens *[]string) {
+func _generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, dest *[]Line, tokens *[]string) {
     for index := 0; index < len(*tokens); index++ {
         new_ttf_texture_line(r, font, &(*dest)[index], (*tokens)[index], int32(index))
     }
@@ -741,7 +741,7 @@ func generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, dest *[]Line, 
 func generate_lines(renderer *sdl.Renderer, font *ttf.Font, lines *[]Line, str *[]string, min int, max int) {
     ptr := (*lines)[min:max]
     slice := (*str)[min:max]
-    generate_and_populate_lines(renderer, font, &ptr, &slice)
+    _generate_and_populate_lines(renderer, font, &ptr, &slice)
 }
 
 func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_text string, skip_nr int32) {
