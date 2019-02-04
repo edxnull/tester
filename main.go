@@ -397,10 +397,10 @@ func main() {
                     break
                 case *sdl.MouseWheelEvent:
                     //fmt.Printf("%#v\n", t)
-					if t.Y == -1 {
+					if t.Y == 1 {
 						move_text_up = true
 					}
-					if t.Y == 1 {
+					if t.Y == -1 {
 						move_text_down = true
 					}
 					break
