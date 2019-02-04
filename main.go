@@ -23,9 +23,8 @@ import (
 // we have to turn off compiler optimizations in order to debug properly
 // TODO  try to use: go tool vet 
 // TODO: https://appliedgo.net/big-o/ 
-// TODO: https://www.integralist.co.uk/posts/profiling-go/ 
 
-// TODO: how to handle non-monospaced fonts?
+// TODO: USE sdl.WINDOWEVENT_EXPOSED for proper redrawing
 
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
@@ -114,7 +113,12 @@ func main() {
     }
     // PROFILING SNIPPET
 
-    if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
+    runtime.LockOSThread()
+
+    if err := sdl.Init(sdl.INIT_TIMER |
+                       sdl.INIT_VIDEO |
+                       sdl.INIT_AUDIO |
+                       sdl.INIT_EVENTS); err != nil {
         panic(err)
     }
 
@@ -189,7 +193,6 @@ func main() {
     global_font_selector.fonts = make([]Font, len(ttf_font_list))
     global_font_selector.textures = make([]*sdl.Texture, len(ttf_font_list))
     global_font_selector.ttf_rects = make([]sdl.Rect, len(ttf_font_list))
-    fmt.Println(ttf_font_list)
 
 	// NOTE: maybe I should font = all_fonts[...]
 	// and just interate over font = all_fonts[...]
@@ -259,6 +262,12 @@ func main() {
 	//@PERFORMANCE SLOW
     now_gen := time.Now()
     slice := test_tokens[0:100] // NOTE: TEST
+    // nlines_to_render := math.RoundToEven(float32(SCREEN_H/SKIP_LINE))
+    //nlines := 100
+    //func get_lines_to_render(renderer, font, all_lines, curr_nlines, max_lines) []Line {
+    //    // ...
+    //}
+    //println(SKIP_LINE, CHAR_H)
     all_lines := generate_and_populate_lines(renderer, font, &slice, CHAR_W, CHAR_H, SKIP_LINE)
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
@@ -289,7 +298,8 @@ func main() {
     //////////////////////////
     // END_CMD_CONSOLE_STUFF
     //////////////////////////
-
+    sdl.SetHint(sdl.HINT_FRAMEBUFFER_ACCELERATION, "1")
+    sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "1") // 1 or 2 ???
     renderer.SetDrawBlendMode(sdl.BLENDMODE_BLEND)
 
     running := true
@@ -331,6 +341,8 @@ func main() {
     test_rand_color := sdl.Color{uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255))}
 
     wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H}
+
+    rect_t := sdl.Rect{0, 0, WIN_W, 30}
 
     curr_char_w := 0
 
@@ -668,6 +680,19 @@ func main() {
                 }
             }
         }
+
+        // func draw_rect_with_border()
+        //  - renderer.SetDrawColor(255, 100, 0, 100)
+        //  - renderer.DrawRect(&rect_t)
+
+        // func draw_rect_without_border()
+        //  - renderer.SetDrawColor(255, 100, 0, 100)
+        //  - renderer.FillRect(&rect_t)
+
+        renderer.SetDrawColor(255, 100, 0, 100)
+        renderer.FillRect(&rect_t)
+        //renderer.DrawRect(&rect_t)
+
         // ...............
         // DRAWING_CMD_CONSOLE
 
