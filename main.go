@@ -74,10 +74,12 @@ type CmdConsole struct {
     alpha_value int //anim_alpha
     bg_rect sdl.Rect
     ttf_rect sdl.Rect
-    cursor_block sdl.Rect
+    cursor_rect sdl.Rect
     ttf_texture *sdl.Texture
     input_buffer bytes.Buffer
 }
+
+
 
 // should we have current_font *ttf.Font?
 // struct FontInfo: W? H? SKIP? Flags?
@@ -283,24 +285,17 @@ func main() {
     // CMD_CONSOLE_STUFF
     //////////////////////////
 
-    cmd_win_h := int32(18)
-    show_cmd_console_rect := false
     cmd_console_test_str := strings.Join([]string{"LINE COUNT: ", strconv.Itoa(len(test_tokens))}, "")
-    cmd_console_anim_alpha := 0
-    cmd_move_left := false
 
-    //@SPEED this is slow. Use strings.Builder{} instead, or something else.
-    var cmd_text_buffer bytes.Buffer
-    // TODO: we need to save our commands in a bytes.Buffer. We also need a command_list.
-    var cmd_console_ttf_texture *sdl.Texture
-
-    cmd_rand_color := sdl.Color{0, 0, 0, 255}
-
-    cmd_console_ttf_texture = make_ttf_texture(renderer, font, cmd_console_test_str, &cmd_rand_color)
-
-    cmd_console_ttf_rect     := sdl.Rect{0, WIN_H-cmd_win_h, int32(CHAR_W * len(cmd_console_test_str)), int32(CHAR_H)}
-    cmd_console_rect         := sdl.Rect{0, WIN_H-cmd_win_h, WIN_W, int32(CHAR_H)}
-    cmd_console_cursor_block := sdl.Rect{0, WIN_H-cmd_win_h, int32(CHAR_W), int32(CHAR_H)}
+    //TODO: get rid of (18) magic value
+    cmd_win_h := int32(18)
+    cmd := CmdConsole{}
+    cmd.alpha_value = 100
+    cmd.ttf_texture = make_ttf_texture(renderer, font, cmd_console_test_str, &sdl.Color{0, 0, 0, 255})
+    cmd.ttf_rect    = sdl.Rect{0, WIN_H-cmd_win_h, int32(CHAR_W * len(cmd_console_test_str)), int32(CHAR_H)}
+    cmd.bg_rect     = sdl.Rect{0, WIN_H-cmd_win_h, WIN_W, int32(CHAR_H)}
+    cmd.cursor_rect = sdl.Rect{0, WIN_H-cmd_win_h, int32(CHAR_W), int32(CHAR_H)}
+    cmd.input_buffer.Grow(128)
 
     //////////////////////////
     // END_CMD_CONSOLE_STUFF
@@ -373,18 +368,18 @@ func main() {
                             }
 
                             if global_win_w > WIN_W && global_win_h > WIN_H {
-                                cmd_console_rect.W = global_win_w
-                                cmd_console_rect.Y = global_win_h-cmd_win_h
-                                cmd_console_ttf_rect.Y = global_win_h-cmd_win_h
-                                cmd_console_cursor_block.Y = global_win_h-cmd_win_h
+                                cmd.bg_rect.W = global_win_w
+                                cmd.bg_rect.Y = global_win_h-cmd_win_h
+                                cmd.ttf_rect.Y = global_win_h-cmd_win_h
+                                cmd.cursor_rect.Y = global_win_h-cmd_win_h
 
                                 wrapline.y2 = global_win_h
 								//renderer.SetViewport(&viewport_rect)
                             } else {
-                                cmd_console_rect.W = global_win_w
-                                cmd_console_rect.Y = global_win_h-cmd_win_h
-                                cmd_console_ttf_rect.Y = global_win_h-cmd_win_h
-                                cmd_console_cursor_block.Y = global_win_h-cmd_win_h
+                                cmd.bg_rect.W = global_win_w
+                                cmd.bg_rect.Y = global_win_h-cmd_win_h
+                                cmd.ttf_rect.Y = global_win_h-cmd_win_h
+                                cmd.cursor_rect.Y = global_win_h-cmd_win_h
 
                                 wrapline.y2 = global_win_h
 								//renderer.SetViewport(&viewport_rect)
@@ -420,50 +415,45 @@ func main() {
                     }
                     break
                 case *sdl.TextInputEvent:
-                    if show_cmd_console_rect {
-                        fmt.Printf("keyinput: %c\n", t.Text[0])
+                    if cmd.show {
+                        fmt.Printf("[debug] keyinput: %c\n", t.Text[0])
                         input_char := string(t.Text[0])
-                        cmd_text_buffer.WriteString(input_char)
-
-                        cmd_console_ttf_texture.Destroy()
-                        cmd_console_ttf_texture = make_ttf_texture(renderer, font, cmd_text_buffer.String(), &test_rand_color)
-
+                        cmd.input_buffer.WriteString(input_char)
+                        cmd.ttf_texture.Destroy()
+                        cmd.ttf_texture = make_ttf_texture(renderer, font, cmd.input_buffer.String(), &test_rand_color)
                         curr_char_w = CHAR_W * len(input_char)
-
-                        cmd_console_ttf_rect.W = int32(CHAR_W * len(cmd_text_buffer.String()))
-                        cmd_console_ttf_rect.H = int32(CHAR_H)
-
-                        cmd_console_cursor_block.X += int32(curr_char_w)
+                        cmd.ttf_rect.W = int32(CHAR_W * len(cmd.input_buffer.String()))
+                        cmd.ttf_rect.H = int32(CHAR_H)
+                        cmd.cursor_rect.X += int32(curr_char_w)
                     }
                     break
                 case *sdl.KeyboardEvent:
-                    if show_cmd_console_rect { // TODO: @REFACTOR into a func
+                    if cmd.show { // TODO: @REFACTOR into a func
                         if t.Keysym.Sym == sdl.K_BACKSPACE {
                             if t.Repeat > 0 {
-                                if cmd_console_cursor_block.X <= 0 {
-                                    cmd_console_cursor_block.X = 0
+                                if cmd.cursor_rect.X <= 0 {
+                                    cmd.cursor_rect.X = 0
                                 } else {
-                                    temp_string := cmd_text_buffer.String()[0:len(cmd_text_buffer.String())-1]
-                                    cmd_text_buffer.Reset()
-                                    cmd_text_buffer.WriteString(temp_string)
+                                    temp_string := cmd.input_buffer.String()[0:len(cmd.input_buffer.String())-1]
+                                    cmd.input_buffer.Reset()
+                                    cmd.input_buffer.WriteString(temp_string)
 
-                                    cmd_console_ttf_texture.Destroy()
+                                    cmd.ttf_texture.Destroy()
 
-                                    if len(cmd_text_buffer.String()) > 0 {
-                                        cmd_console_ttf_texture = make_ttf_texture(renderer, font, temp_string, &cmd_rand_color)
+                                    if len(cmd.input_buffer.String()) > 0 {
+                                        cmd.ttf_texture = make_ttf_texture(renderer, font, temp_string, &sdl.Color{0, 0, 0, 255})
                                     }
 
                                     if len(temp_string) != 0 {
                                         curr_char_w = CHAR_W * len(string(temp_string[len(temp_string)-1]))
 
-                                        cmd_console_cursor_block.X -= int32(curr_char_w)
+                                        cmd.cursor_rect.X -= int32(curr_char_w)
 
-                                        cmd_console_ttf_rect.W = int32(CHAR_W * len(cmd_text_buffer.String()))
-                                        cmd_console_ttf_rect.H = int32(CHAR_H)
-
+                                        cmd.ttf_rect.W = int32(CHAR_W * len(cmd.input_buffer.String()))
+                                        cmd.ttf_rect.H = int32(CHAR_H)
                                         println(temp_string)
                                     } else {
-                                        cmd_console_cursor_block.X = 0
+                                        cmd.cursor_rect.X = 0
                                     }
                                 }
                             }
@@ -473,57 +463,55 @@ func main() {
                         case sdl.KEYDOWN:
                         case sdl.KEYUP:
                             if t.Keysym.Sym == sdl.K_SPACE {
-                                if !show_cmd_console_rect {
-                                    show_cmd_console_rect = true
+                                if !cmd.show {
+                                    cmd.show = true
                                 }
                             } else {
                                 switch t.Keysym.Sym {
                                     case sdl.KEYDOWN:
                                     case sdl.K_TAB: // TEMPORARY
-                                            if show_cmd_console_rect {
-                                                show_cmd_console_rect = false
+                                            if cmd.show {
+                                                cmd.show = false
                                             }
                                             break
                                     case sdl.K_BACKSPACE: // TODO: @REFACTOR into a func
-                                        if show_cmd_console_rect {
-                                            if cmd_console_cursor_block.X <= 0 {
-                                                cmd_console_cursor_block.X = 0
+                                        if cmd.cursor_rect.X <= 0 {
+                                            cmd.cursor_rect.X = 0
+                                        } else {
+                                            temp_string := cmd.input_buffer.String()[0:len(cmd.input_buffer.String())-1]
+                                            cmd.input_buffer.Reset()
+                                            cmd.input_buffer.WriteString(temp_string)
+
+                                            cmd.ttf_texture.Destroy()
+
+                                            if len(cmd.input_buffer.String()) > 0 {
+                                                cmd.ttf_texture = make_ttf_texture(renderer, font, temp_string, &sdl.Color{0, 0, 0, 255})
+                                            }
+
+                                            if len(temp_string) != 0 {
+                                                curr_char_w = CHAR_W * len(string(temp_string[len(temp_string)-1]))
+
+                                                cmd.cursor_rect.X -= int32(curr_char_w)
+
+                                                cmd.ttf_rect.W = int32(CHAR_W * len(cmd.input_buffer.String()))
+                                                cmd.ttf_rect.H = int32(CHAR_H)
+                                                println(temp_string)
                                             } else {
-                                                temp_string := cmd_text_buffer.String()[0:len(cmd_text_buffer.String())-1]
-                                                cmd_text_buffer.Reset()
-                                                cmd_text_buffer.WriteString(temp_string)
-
-                                                cmd_console_ttf_texture.Destroy()
-
-                                                if len(cmd_text_buffer.String()) > 0 {
-                                                    cmd_console_ttf_texture = make_ttf_texture(renderer, font, temp_string, &cmd_rand_color)
-                                                }
-
-                                                if len(temp_string) != 0 {
-                                                    curr_char_w = CHAR_W * len(string(temp_string[len(temp_string)-1]))
-
-                                                    cmd_console_cursor_block.X -= int32(curr_char_w)
-
-                                                    cmd_console_ttf_rect.W = int32(CHAR_W *len(cmd_text_buffer.String()))
-                                                    cmd_console_ttf_rect.H = int32(CHAR_H)
-
-                                                    println(temp_string)
-                                                } else {
-                                                    cmd_console_cursor_block.X = 0
-                                                }
+                                                cmd.cursor_rect.X = 0
                                             }
                                         }
                                         break
                                     case sdl.K_RETURN: // TODO: @REFACTOR into a func
                                         // TODO: I need to add a command_history and a command_buffer here!
                                         //       I'm just not sure which data structure to use, at the moment.
-                                        if show_cmd_console_rect {
-                                            if len(cmd_text_buffer.String()) > 0 {
-                                                fmt.Printf("[debug] PRE-Reset Buffer len %d \n", len(cmd_text_buffer.String()))
-                                                cmd_text_buffer.Reset()
-                                                cmd_console_ttf_texture.Destroy()
-                                                cmd_console_cursor_block.X = 0
-                                                fmt.Printf("[debug] Reset Buffer len %d \n", len(cmd_text_buffer.String()))
+                                        if cmd.show {
+                                            if len(cmd.input_buffer.String()) > 0 {
+                                                fmt.Printf("[debug] PRE-Reset Buffer len %d \n", len(cmd.input_buffer.String()))
+                                                cmd.input_buffer.Reset()
+                                                cmd.ttf_texture.Destroy()
+                                                cmd.cursor_rect.X = 0
+                                                fmt.Printf("[debug] Reset Buffer len %d \n", len(cmd.input_buffer.String()))
+                                                fmt.Printf("[debug] cmd_text_buffer (cap): %d\n", cmd.input_buffer.Cap())
                                             }
                                         }
                                         break
@@ -583,7 +571,7 @@ func main() {
             }
         }
 
-        if engage_loop  && !show_cmd_console_rect {
+        if engage_loop  && !cmd.show {
             for index := range _RECTS_ {
                 if mouseover_word_texture[index] {
                     if _WORDS_[index] != "\n" {
@@ -650,21 +638,21 @@ func main() {
         // @TEST RENDERING TTF LINE
 
         // DRAWING_CMD_CONSOLE
-        if show_cmd_console_rect {
-            renderer.SetDrawColor(255, 10, 100, uint8(cmd_console_anim_alpha))
+        if cmd.show {
+            renderer.SetDrawColor(255, 10, 100, uint8(cmd.alpha_value))
             //renderer.SetDrawColor(255, 255, 255, 255)
-            renderer.FillRect(&cmd_console_rect)
-            renderer.DrawRect(&cmd_console_rect)
+            renderer.FillRect(&cmd.bg_rect)
+            renderer.DrawRect(&cmd.bg_rect)
 
             // renderer.SetDrawColor(100, 25, 90, 255)  // @TEMPORARY
             renderer.SetDrawColor(255, 255, 255, 0)
-            renderer.DrawRect(&cmd_console_ttf_rect)
+            renderer.DrawRect(&cmd.ttf_rect)
             //renderer.FillRect(&cmd_console_ttf_rect)
-            renderer.Copy(cmd_console_ttf_texture, nil, &cmd_console_ttf_rect)
+            renderer.Copy(cmd.ttf_texture, nil, &cmd.ttf_rect)
 
-            renderer.SetDrawColor(0, 0, 0, uint8(cmd_console_anim_alpha))
-            renderer.FillRect(&cmd_console_cursor_block)
-            renderer.DrawRect(&cmd_console_cursor_block)
+            renderer.SetDrawColor(0, 0, 0, uint8(cmd.alpha_value))
+            renderer.FillRect(&cmd.cursor_rect)
+            renderer.DrawRect(&cmd.cursor_rect)
 
         // ...............
             draw_rect_without_border(renderer, &global_font_selector.bg_rect, &sdl.Color{255, 0, 255, 255})
@@ -688,7 +676,7 @@ func main() {
         // DRAWING_CMD_CONSOLE
 
         // WRAPLINE
-        renderer.SetDrawColor(255, 100, 0, uint8(cmd_console_anim_alpha))
+        renderer.SetDrawColor(255, 100, 0, 100)
         renderer.DrawLine(wrapline.x1+int32(X_OFFSET), wrapline.y1, wrapline.x2+int32(X_OFFSET), wrapline.y2)
         // WRAPLINE
 
@@ -696,17 +684,17 @@ func main() {
         // ANIMATIONS
         // -----------------
 
-        if !cmd_move_left {
-            cmd_console_anim_alpha += 4
-            if cmd_console_anim_alpha >= 80 {
-                cmd_move_left = true
-            }
-        } else {
-            cmd_console_anim_alpha -= 4
-            if cmd_console_anim_alpha == 0 {
-                cmd_move_left = false
-            }
-        }
+        //if !cmd_move_left {
+        //    cmd_console_anim_alpha += 4
+        //    if cmd_console_anim_alpha >= 80 {
+        //        cmd_move_left = true
+        //    }
+        //} else {
+        //    cmd_console_anim_alpha -= 4
+        //    if cmd_console_anim_alpha == 0 {
+        //        cmd_move_left = false
+        //    }
+        //}
 
         // -----------------
         // ANIMATIONS
@@ -726,9 +714,9 @@ func main() {
 
     destroy_lines(&all_lines) // @WIP
 
-    if cmd_console_ttf_texture != nil {
-        cmd_console_ttf_texture.Destroy()
-        cmd_console_ttf_texture = nil
+    if cmd.ttf_texture != nil {
+        cmd.ttf_texture.Destroy()
+        cmd.ttf_texture = nil
     }
 
 	for index := range ttf_font_list {
