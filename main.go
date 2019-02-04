@@ -231,7 +231,6 @@ func main() {
     adder_y := 0
 	for index, element := range global_font_selector.fonts {
         gx, gy, _ := global_font_selector.fonts[index].data.SizeUTF8(" ")
-        //gskip := global_font_selector.fonts[index].data.LineSkip()
 		global_font_selector.fonts[index].size = gx * len(element.name)
 
         global_font_selector.textures[index] = make_ttf_texture(renderer, global_font_selector.fonts[index].data,
