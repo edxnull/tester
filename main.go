@@ -277,7 +277,9 @@ func main() {
     now_gen := time.Now()
 
     all_lines := make([]Line, len(test_tokens))
-    generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
+
+    generate_lines(renderer, font, &all_lines, &test_tokens, 0, MAX_INDEX+1)
+    generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1, (MAX_INDEX+1)*2)
 
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
@@ -734,6 +736,12 @@ func generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, dest *[]Line, 
     for index := 0; index < len(*tokens); index++ {
         new_ttf_texture_line(r, font, &(*dest)[index], (*tokens)[index], int32(index))
     }
+}
+
+func generate_lines(renderer *sdl.Renderer, font *ttf.Font, lines *[]Line, str *[]string, min int, max int) {
+    ptr := (*lines)[min:max]
+    slice := (*str)[min:max]
+    generate_and_populate_lines(renderer, font, &ptr, &slice)
 }
 
 func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_text string, skip_nr int32) {
