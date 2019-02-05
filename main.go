@@ -252,6 +252,11 @@ func main() {
     all_lines := make([]Line, len(test_tokens))
     _generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
 
+    LESS := START_INDEX
+    MORE := MAX_INDEX
+
+    __SLICE__ := all_lines[LESS:MORE]
+
     //generate_lines(renderer, font, &all_lines, &test_tokens, 0, MAX_INDEX+1)
     //generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1, (MAX_INDEX+1)*2)
 
@@ -476,8 +481,12 @@ func main() {
         renderer.Clear()
 
         // RENDERING TTF LINES
-        for i := range all_lines[START_INDEX:MAX_INDEX] {
-            renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
+        //for i := range all_lines[START_INDEX:MAX_INDEX] {
+        //    renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
+        //}
+
+        for i := range __SLICE__ {
+            renderer.Copy(__SLICE__[i].texture, nil, &__SLICE__[i].bg_rect)
         }
 
         for i := range mouseover_word_texture {
@@ -531,6 +540,9 @@ func main() {
         }
 
         if add_new_line {
+            LESS += 1
+            MORE += 1
+            __SLICE__ = all_lines[LESS:MORE]
             MAX_INDEX = MAX_INDEX + 1
             all_lines[MAX_INDEX].bg_rect.Y = all_lines[MAX_INDEX-1].bg_rect.Y + (all_lines[MAX_INDEX].bg_rect.H - TEXT_SCROLL_SPEED)
             all_lines[MAX_INDEX-1].bg_rect.Y -= TEXT_SCROLL_SPEED
@@ -546,6 +558,9 @@ func main() {
         }
 
         if del_new_line {
+            LESS -= 1
+            MORE -= 1
+            __SLICE__ = all_lines[LESS:MORE]
             MAX_INDEX = MAX_INDEX - 1
             del_new_line = false
         }
