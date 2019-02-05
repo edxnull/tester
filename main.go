@@ -263,16 +263,19 @@ func main() {
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
 
-    cmd_console_test_str := make_console_text(0, len(test_tokens))
 
     cmd_win_h := int32(18)
     cmd := CmdConsole{}
     cmd.alpha_value = 100
-    cmd.ttf_texture = make_ttf_texture(renderer, font, cmd_console_test_str, &sdl.Color{0, 0, 0, 255})
-    cmd.ttf_rect    = sdl.Rect{0, WIN_H-cmd_win_h, int32(gfonts.current_font_w * len(cmd_console_test_str)), int32(gfonts.current_font_h)}
+    cmd.ttf_texture = make_ttf_texture(renderer, font, " ", &sdl.Color{0, 0, 0, 255})
+    cmd.ttf_rect    = sdl.Rect{0, WIN_H-cmd_win_h, int32(gfonts.current_font_w * len(" ")), int32(gfonts.current_font_h)}
     cmd.bg_rect     = sdl.Rect{0, WIN_H-cmd_win_h, WIN_W, int32(gfonts.current_font_h)}
     cmd.cursor_rect = sdl.Rect{0, WIN_H-cmd_win_h, int32(gfonts.current_font_w), int32(gfonts.current_font_h)}
     cmd.input_buffer.Grow(128) // we need to make sure we never write past this value?
+
+    dbg_str := make_console_text(0, len(test_tokens))
+    dbg_rect := sdl.Rect{0, WIN_H-cmd_win_h-cmd_win_h, int32(gfonts.current_font_w * len(dbg_str)), int32(gfonts.current_font_h)}
+    dbg_ttf := make_ttf_texture(renderer, font, dbg_str, &sdl.Color{0, 0, 0, 255})
 
     sdl.SetHint(sdl.HINT_FRAMEBUFFER_ACCELERATION, "1")
     sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "1")
@@ -485,6 +488,8 @@ func main() {
         //    renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
         //}
 
+
+
         for i := range __SLICE__ {
             renderer.Copy(__SLICE__[i].texture, nil, &__SLICE__[i].bg_rect)
         }
@@ -560,8 +565,8 @@ func main() {
             }
 
             // TEMP HACK
-            cmd_console_test_str := make_console_text(MAX_INDEX, len(test_tokens))
-            cmd.ttf_texture = reload_ttf_texture(renderer, cmd.ttf_texture, font, cmd_console_test_str, &sdl.Color{0, 0, 0, 255})
+            dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
+            dbg_ttf = reload_ttf_texture(renderer, cmd.ttf_texture, font, dbg_str, &sdl.Color{0, 0, 0, 255})
 
             add_new_line = false
         }
@@ -573,8 +578,8 @@ func main() {
             MAX_INDEX = MAX_INDEX - 1
 
             // TEMP HACK
-            cmd_console_test_str := make_console_text(MAX_INDEX, len(test_tokens))
-            cmd.ttf_texture = reload_ttf_texture(renderer, cmd.ttf_texture, font, cmd_console_test_str, &sdl.Color{0, 0, 0, 255})
+            dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
+            dbg_ttf = reload_ttf_texture(renderer, cmd.ttf_texture, font, dbg_str, &sdl.Color{0, 0, 0, 255})
 
             del_new_line = false
         }
@@ -598,6 +603,8 @@ func main() {
             for i := 0; i < len(gfonts.textures); i++ {
                 renderer.Copy(gfonts.textures[i], nil, &gfonts.ttf_rects[i]) // why nil?
             }
+
+            renderer.Copy(dbg_ttf, nil, &dbg_rect)
 
             clr := sdl.Color{255, 0, 255, 100}
             for index := 0; index < len(gfonts.ttf_rects); index++ {
@@ -631,12 +638,14 @@ func main() {
         cmd.ttf_texture = nil
     }
 
-for index := range ttf_font_list {
+    dbg_ttf.Destroy()
+
+    for index := range ttf_font_list {
         gfonts.fonts[index].data.Close()
         gfonts.current_font.Close()
         gfonts.fonts[index].data = nil
         gfonts.textures[index].Destroy()
-}
+    }
     font.Close()
 
     ttf.Quit()
