@@ -263,7 +263,7 @@ func main() {
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
 
-    cmd_console_test_str := strings.Join([]string{"LINE COUNT: ", strconv.Itoa(len(test_tokens))}, "")
+    cmd_console_test_str := make_console_text(0, len(test_tokens))
 
     cmd_win_h := int32(18)
     cmd := CmdConsole{}
@@ -520,6 +520,7 @@ func main() {
 
         if move_text_down {
             move_text_down = false
+
             for index := range all_lines[START_INDEX:MAX_INDEX] {
                 all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
             }
@@ -528,14 +529,17 @@ func main() {
             }
             add_new_line = true
         }
+
         if move_text_up {
             move_text_up = false
+
             for index := range all_lines[START_INDEX:MAX_INDEX] {
                 all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
             }
             for index := range _RECTS_ {
                 _RECTS_[index].Y += TEXT_SCROLL_SPEED
             }
+
             del_new_line = true
         }
 
@@ -554,6 +558,11 @@ func main() {
             for i := rect_count; i < len(_RECTS_); i++ {
                 _RECTS_[i].Y += 1
             }
+
+            // TEMP HACK
+            cmd_console_test_str := make_console_text(MAX_INDEX, len(test_tokens))
+            cmd.ttf_texture = reload_ttf_texture(renderer, cmd.ttf_texture, font, cmd_console_test_str, &sdl.Color{0, 0, 0, 255})
+
             add_new_line = false
         }
 
@@ -562,6 +571,11 @@ func main() {
             MORE -= 1
             __SLICE__ = all_lines[LESS:MORE]
             MAX_INDEX = MAX_INDEX - 1
+
+            // TEMP HACK
+            cmd_console_test_str := make_console_text(MAX_INDEX, len(test_tokens))
+            cmd.ttf_texture = reload_ttf_texture(renderer, cmd.ttf_texture, font, cmd_console_test_str, &sdl.Color{0, 0, 0, 255})
+
             del_new_line = false
         }
 
@@ -679,11 +693,11 @@ func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color
     return texture
 }
 
-func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string, c sdl.Color) (*sdl.Texture) {
+func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string, c *sdl.Color) (*sdl.Texture) {
     if tex != nil {
         tex.Destroy()
         var surface *sdl.Surface
-        surface, _ = f.RenderUTF8Blended(s, c)
+        surface, _ = f.RenderUTF8Blended(s, *c)
         tex, _ = r.CreateTextureFromSurface(surface)
         surface.Free()
         return tex
@@ -923,4 +937,12 @@ func execute_cmd_write_to_buffer(renderer *sdl.Renderer, cmd *CmdConsole, curr_c
             cmd.cursor_rect.X = 0
         }
     }
+}
+
+func number_as_string(n int) string {
+    return strconv.Itoa(n)
+}
+
+func make_console_text(current int, total int) string {
+    return strings.Join([]string{"LINE: ", strconv.Itoa(current), "/", strconv.Itoa(total), " [", strconv.FormatFloat(float64((float32(current)/float32(total))*100), 'f', 1, 32), "%]"}, "")
 }
