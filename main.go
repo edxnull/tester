@@ -30,7 +30,9 @@ import (
 // https://stackoverflow.com/questions/41441807/minimize-window-to-system-tray
 // https://gamedev.stackexchange.com/questions/136473/sdl2-taskbar-icon-notification-blinking-flashing-orange
 
-// [ ] need to use a slice instead of all_lines[START_INDEX:MAX_INDEX]
+// TODO: rendering glyphs https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_38.html
+// 		 should we just render some glyps onto a texture and just write them to a texture instead of rendering 1 texture per line?
+//       https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_46.html#SEC46
 
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
@@ -333,6 +335,10 @@ func main() {
     //viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
     //renderer.SetViewport(&viewport_rect)
     TEXT_SCROLL_SPEED := int32(all_lines[0].bg_rect.H)
+
+	glyph_metrics, _ := font.GlyphMetrics(rune('g'))
+	fmt.Printf("%c, %#v\n", 'g', glyph_metrics)
+
 
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
