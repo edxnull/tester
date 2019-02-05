@@ -21,8 +21,8 @@ import (
 // TODO
 // https://gist.github.com/tetsuok/3025333
 // we have to turn off compiler optimizations in order to debug properly
-// TODO  try to use: go tool vet 
-// TODO: https://appliedgo.net/big-o/ 
+// TODO  try to use: go tool vet
+// TODO: https://appliedgo.net/big-o/
 
 // TODO: USE sdl.WINDOWEVENT_EXPOSED for proper redrawing
 
@@ -44,7 +44,7 @@ const LINE_LENGTH int = 730
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to 'file'")
 var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 
-// @GLOBAL MUT VARS 
+// @GLOBAL MUT VARS
 var global_win_w int32
 var global_win_h int32
 var GLOBAL_WASTE_VAR int
@@ -282,7 +282,7 @@ func main() {
     del_new_line := false
 
     num_word_textures := 0
-    for index := 0; index <= MAX_INDEX; index++ {
+    for index := 0; index < len(all_lines); index++ {
         num_word_textures += len(all_lines[index].word_rects)
     }
 
@@ -290,7 +290,8 @@ func main() {
     mouseover_word_texture_FONT := make([]bool, len(ttf_font_list))
 
     _RECTS_ := make([]sdl.Rect, num_word_textures)
-    for index, apos := 0, 0; index <= MAX_INDEX; index++ {
+    println(len(all_lines), num_word_textures)
+    for index, apos := 0, 0; index < len(all_lines); index++ {
         for pos := 0; pos < len(all_lines[index].word_rects); pos++ {
             _RECTS_[apos] = all_lines[index].word_rects[pos]
             apos += 1
@@ -298,7 +299,7 @@ func main() {
     }
 
     _WORDS_ := make([]string, num_word_textures)
-    for index, apos := 0, 0; index <= MAX_INDEX; index++ {
+    for index, apos := 0, 0; index < len(test_tokens); index++ {
         for _, rct := range strings.Split(test_tokens[index], " ") {
             _WORDS_[apos] = rct
             apos += 1
@@ -316,8 +317,8 @@ func main() {
 
     curr_char_w := 0
 
-	//viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
-	//renderer.SetViewport(&viewport_rect)
+    viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
+    renderer.SetViewport(&viewport_rect)
 
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -342,7 +343,8 @@ func main() {
                                 cmd.cursor_rect.Y = global_win_h-cmd_win_h
 
                                 wrapline.y2 = global_win_h
-								//renderer.SetViewport(&viewport_rect)
+                                viewport_rect.H = global_win_h
+                                renderer.SetViewport(&viewport_rect)
                             } else {
                                 cmd.bg_rect.W = global_win_w
                                 cmd.bg_rect.Y = global_win_h-cmd_win_h
@@ -350,7 +352,8 @@ func main() {
                                 cmd.cursor_rect.Y = global_win_h-cmd_win_h
 
                                 wrapline.y2 = global_win_h
-								//renderer.SetViewport(&viewport_rect)
+                                viewport_rect.H = global_win_h
+                                renderer.SetViewport(&viewport_rect)
                             }
                             break
                         default:
@@ -362,13 +365,13 @@ func main() {
                     check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
                     break
                 case *sdl.MouseWheelEvent:
-					if t.Y == 1 {
-						move_text_up = true
-					}
-					if t.Y == -1 {
-						move_text_down = true
-					}
-					break
+                    if t.Y == 1 {
+                        move_text_up = true
+                    }
+                    if t.Y == -1 {
+                        move_text_down = true
+                    }
+                    break
                 case *sdl.MouseButtonEvent:
                     switch t.Type {
                         case sdl.MOUSEBUTTONDOWN:
@@ -517,6 +520,14 @@ func main() {
             MAX_INDEX = MAX_INDEX + 1
             all_lines[MAX_INDEX].bg_rect.Y = all_lines[MAX_INDEX-1].bg_rect.Y + (all_lines[MAX_INDEX].bg_rect.H - TEXT_SCROLL_SPEED)
             all_lines[MAX_INDEX-1].bg_rect.Y -= TEXT_SCROLL_SPEED
+
+            rect_count := 0 // This is a dirty hack
+            for i := range all_lines[START_INDEX:MAX_INDEX] {
+                rect_count += len(all_lines[i].word_rects)
+            }
+            for i := rect_count; i < len(_RECTS_); i++ {
+                _RECTS_[i].Y += 1
+            }
             add_new_line = false
         }
 
@@ -562,11 +573,11 @@ func main() {
 
         //NOTE: this is not for framerate independance
         //NOTE: it's probably also slower than calling SDL_Timer/SDL_Delay functions
-		//NOTE: OR try using sdl2_gfx package functions like: FramerateDelay...
+        //NOTE: OR try using sdl2_gfx package functions like: FramerateDelay...
         <-ticker.C
     }
 
-	ticker.Stop()
+    ticker.Stop()
     renderer.Destroy()
     window.Destroy()
 
@@ -577,12 +588,12 @@ func main() {
         cmd.ttf_texture = nil
     }
 
-	for index := range ttf_font_list {
+for index := range ttf_font_list {
         gfonts.fonts[index].data.Close()
         gfonts.current_font.Close()
         gfonts.fonts[index].data = nil
         gfonts.textures[index].Destroy()
-	}
+}
     font.Close()
 
     ttf.Quit()
@@ -664,7 +675,7 @@ func generate_lines(renderer *sdl.Renderer, font *ttf.Font, lines *[]Line, str *
 }
 
 func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_text string, skip_nr int32) {
-	assert_if(len(line_text) == 0)
+    assert_if(len(line_text) == 0)
 
     line.texture = make_ttf_texture(rend, font, line_text, &sdl.Color{0, 0, 0, 0})
 
@@ -755,11 +766,10 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
 }
 
 // TODO
-// This function will fail if MAX_LEN 
+// This function will fail if MAX_LEN
 // is small enough to trigger is_space ifinite loop!
 func determine_nwrap_lines(str []string, max_len int, xsize int) int32 {
     var result int32
-
     for index := 0; index < len(str); index++ {
         if (len(str[index]) * xsize) + X_OFFSET <= max_len {
             result += 1
@@ -804,9 +814,9 @@ func destroy_lines(lines *[]Line) {
 }
 
 func assert_if(cond bool) {
-	if (cond) {
-		panic("assertion failed")
-	}
+    if (cond) {
+        panic("assertion failed")
+    }
 }
 
 func is_alpha(schr string) bool {
