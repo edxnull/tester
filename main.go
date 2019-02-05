@@ -30,6 +30,8 @@ import (
 // https://stackoverflow.com/questions/41441807/minimize-window-to-system-tray
 // https://gamedev.stackexchange.com/questions/136473/sdl2-taskbar-icon-notification-blinking-flashing-orange
 
+// [ ] need to use a slice instead of all_lines[START_INDEX:MAX_INDEX]
+
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
 const WIN_W int32 = 800
@@ -38,15 +40,12 @@ const WIN_H int32 = 600
 const X_OFFSET int = 7
 const TTF_FONT_SIZE int = 18
 const TTF_FONT_SIZE_FOR_FONT_LIST int = 14
-const TEXT_SCROLL_SPEED int32 = 14
 const LINE_LENGTH int = 730
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to 'file'")
 var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 
 // @GLOBAL MUT VARS
-var global_win_w int32
-var global_win_h int32
 var GLOBAL_WASTE_VAR int
 
 var MAX_INDEX int = 40
@@ -286,8 +285,14 @@ func main() {
         num_word_textures += len(all_lines[index].word_rects)
     }
 
+    mouseover_line := make([]bool, len(all_lines))
     mouseover_word_texture := make([]bool, num_word_textures)
     mouseover_word_texture_FONT := make([]bool, len(ttf_font_list))
+
+    _LINES_ := make([]sdl.Rect, len(all_lines))
+    for i := 0; i < len(all_lines); i++ {
+        _LINES_[i] = all_lines[i].bg_rect
+    }
 
     _RECTS_ := make([]sdl.Rect, num_word_textures)
     println(len(all_lines), num_word_textures)
@@ -317,8 +322,9 @@ func main() {
 
     curr_char_w := 0
 
-    viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
-    renderer.SetViewport(&viewport_rect)
+    //viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
+    //renderer.SetViewport(&viewport_rect)
+    TEXT_SCROLL_SPEED := int32(all_lines[0].bg_rect.H)
 
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -329,31 +335,35 @@ func main() {
                 case *sdl.WindowEvent:
                     switch t.Event {
                         case sdl.WINDOWEVENT_SIZE_CHANGED:
-                            global_win_w, global_win_h = t.Data1, t.Data2
-                            if global_win_w <= int32(LINE_LENGTH) {
+                            new_win_w, new_win_h := t.Data1, t.Data2
+                            if new_win_w <= int32(LINE_LENGTH) {
                                 wrap_line = true
                             } else {
                                 wrap_line = false
                             }
 
-                            if global_win_w > WIN_W && global_win_h > WIN_H {
-                                cmd.bg_rect.W = global_win_w
-                                cmd.bg_rect.Y = global_win_h-cmd_win_h
-                                cmd.ttf_rect.Y = global_win_h-cmd_win_h
-                                cmd.cursor_rect.Y = global_win_h-cmd_win_h
+                            if new_win_w > WIN_W && new_win_h > WIN_H {
+                                //viewport_rect.H = new_win_h
+                                //viewport_rect.W = WIN_W
 
-                                wrapline.y2 = global_win_h
-                                viewport_rect.H = global_win_h
-                                renderer.SetViewport(&viewport_rect)
+                                cmd.bg_rect.W = new_win_w
+                                cmd.bg_rect.Y = new_win_h-cmd_win_h
+                                cmd.ttf_rect.Y = new_win_h-cmd_win_h
+                                cmd.cursor_rect.Y = new_win_h-cmd_win_h
+
+                                wrapline.y2 = new_win_h
+                                //renderer.SetViewport(&viewport_rect)
                             } else {
-                                cmd.bg_rect.W = global_win_w
-                                cmd.bg_rect.Y = global_win_h-cmd_win_h
-                                cmd.ttf_rect.Y = global_win_h-cmd_win_h
-                                cmd.cursor_rect.Y = global_win_h-cmd_win_h
+                                //viewport_rect.W = WIN_W
+                                //viewport_rect.H = WIN_H
 
-                                wrapline.y2 = global_win_h
-                                viewport_rect.H = global_win_h
-                                renderer.SetViewport(&viewport_rect)
+                                cmd.bg_rect.W = WIN_W
+                                cmd.bg_rect.Y = new_win_h-cmd_win_h
+                                cmd.ttf_rect.Y = new_win_h-cmd_win_h
+                                cmd.cursor_rect.Y = new_win_h-cmd_win_h
+
+                                wrapline.y2 = new_win_h
+                                //renderer.SetViewport(&viewport_rect)
                             }
                             break
                         default:
@@ -361,6 +371,7 @@ func main() {
                     }
                     break
                 case *sdl.MouseMotionEvent:
+                    check_collision_mouse_over_words(t, &_LINES_, &mouseover_line)
                     check_collision_mouse_over_words(t, &_RECTS_, &mouseover_word_texture)
                     check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
                     break
@@ -413,7 +424,7 @@ func main() {
                             } else {
                                 switch t.Keysym.Sym {
                                     case sdl.KEYDOWN:
-                                    case sdl.K_TAB: // TEMPORARY
+                                    case sdl.K_TAB:
                                             if cmd.show {
                                                 cmd.show = false
                                             }
@@ -421,9 +432,7 @@ func main() {
                                     case sdl.K_BACKSPACE:
                                         execute_cmd_write_to_buffer(renderer, &cmd, curr_char_w, &gfonts)
                                         break
-                                    case sdl.K_RETURN: // TODO: @REFACTOR into a func
-                                        // TODO: I need to add a command_history and a command_buffer here!
-                                        //       I'm just not sure which data structure to use, at the moment.
+                                    case sdl.K_RETURN:
                                         if cmd.show {
                                             if len(cmd.input_buffer.String()) > 0 {
                                                 fmt.Printf("[debug] PRE-Reset Buffer len %d \n", len(cmd.input_buffer.String()))
@@ -434,6 +443,11 @@ func main() {
                                                 fmt.Printf("[debug] cmd_text_buffer (cap): %d\n", cmd.input_buffer.Cap())
                                             }
                                         }
+                                    case sdl.K_UP:
+                                        move_text_up = true
+                                        break
+                                    case sdl.K_DOWN:
+                                        move_text_down = true
                                         break
                                     default:
                                         break
@@ -446,12 +460,6 @@ func main() {
                     if t.Keysym.Sym == sdl.K_ESCAPE {
                         running = false
                         break
-                    }
-                    if t.Keysym.Sym == sdl.K_UP {
-                        move_text_up = true
-                    }
-                    if t.Keysym.Sym == sdl.K_DOWN {
-                        move_text_down = true
                     }
                     if t.Keysym.Sym == sdl.K_LEFT {
                         println("SHOULD SCROLL FONT back")
@@ -477,6 +485,12 @@ func main() {
                 engage_loop = true
             }
         }
+
+        //for i := range mouseover_line {
+        //    if mouseover_line[i] == true {
+        //        println("LINE :", i)
+        //    }
+        //}
 
         if engage_loop && !cmd.show {
             for index := range _RECTS_ {
@@ -521,7 +535,7 @@ func main() {
             all_lines[MAX_INDEX].bg_rect.Y = all_lines[MAX_INDEX-1].bg_rect.Y + (all_lines[MAX_INDEX].bg_rect.H - TEXT_SCROLL_SPEED)
             all_lines[MAX_INDEX-1].bg_rect.Y -= TEXT_SCROLL_SPEED
 
-            rect_count := 0 // This is a dirty hack
+            rect_count := 0 // NOTE: This is a dirty hack
             for i := range all_lines[START_INDEX:MAX_INDEX] {
                 rect_count += len(all_lines[i].word_rects)
             }
@@ -537,8 +551,8 @@ func main() {
         }
 
         if wrap_line {
-            for index := range all_lines[START_INDEX:MAX_INDEX] {
-                draw_rect_without_border(renderer, &all_lines[index].bg_rect, &sdl.Color{100, 255, 255, 100})
+            for i := 0 ; i < len(all_lines[START_INDEX:MAX_INDEX]); i++ {
+                draw_rect_without_border(renderer, &all_lines[i].bg_rect, &sdl.Color{100, 255, 255, 100})
             }
         }
 
