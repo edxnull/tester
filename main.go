@@ -132,7 +132,7 @@ func main() {
     window, err := sdl.CreateWindow(WIN_TITLE, sdl.WINDOWPOS_CENTERED,
                                                sdl.WINDOWPOS_CENTERED,
                                                WIN_W, WIN_H,
-                                               sdl.WINDOW_SHOWN | sdl.WINDOW_RESIZABLE | sdl.WINDOW_OPENGL)
+                                               sdl.WINDOW_SHOWN | sdl.WINDOW_RESIZABLE)
     if err != nil {
         panic(err)
     }
