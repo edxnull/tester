@@ -34,6 +34,10 @@ import (
 // 		 should we just render some glyps onto a texture and just write them to a texture instead of rendering 1 texture per line?
 //       https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_46.html#SEC46
 
+// TODO: compare: rendering multiple lines per texture
+// TODO: compare: rendering lines with glyphs
+// TODO: compare: rendering lines like we do right now
+
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
 const WIN_W int32 = 800
@@ -84,10 +88,8 @@ type CmdConsole struct {
 }
 
 type FontSelector struct {
-    fonts []Font
     show bool
-    move_up bool
-    move_down bool
+    fonts []Font
     current_font *ttf.Font
     current_font_w int
     current_font_h int
@@ -95,6 +97,7 @@ type FontSelector struct {
     alpha_value uint8
     bg_rect sdl.Rect
     ttf_rects []sdl.Rect
+    highlight_rect []sdl.Rect
     cursor_rect sdl.Rect
     textures []*sdl.Texture
 }
@@ -191,6 +194,7 @@ func main() {
     gfonts.fonts = make([]Font, len(ttf_font_list))
     gfonts.textures = make([]*sdl.Texture, len(ttf_font_list))
     gfonts.ttf_rects = make([]sdl.Rect, len(ttf_font_list))
+    gfonts.highlight_rect = make([]sdl.Rect, len(ttf_font_list))
 
     DEBUG_INDEX := 6
 
@@ -216,8 +220,8 @@ func main() {
 		gfonts.fonts[index].size = gx * len(element.name)
 
         gfonts.textures[index] = make_ttf_texture(renderer, gfonts.fonts[index].data,
-                                                                          gfonts.fonts[index].name,
-                                                                          &sdl.Color{0, 0, 0, 0})
+                                                            gfonts.fonts[index].name,
+                                                            &sdl.Color{0, 0, 0, 0})
 
         gfonts.ttf_rects[index] = sdl.Rect{0, int32(adder_y), int32(gx*len(element.name)), int32(gy)}
 
@@ -225,8 +229,16 @@ func main() {
             gfonts.bg_rect.W = gfonts.ttf_rects[index].W
         }
 
+        gfonts.highlight_rect[index] = gfonts.ttf_rects[index]
+
         gfonts.bg_rect.H += gfonts.ttf_rects[index].H
         adder_y += gy
+
+        if index == len(gfonts.fonts)-1 {
+            for i := 0; i < len(gfonts.ttf_rects); i++ {
+                gfonts.highlight_rect[i].W = gfonts.bg_rect.W
+            }
+        }
     }
 
     // NOTE: should we keep fonts in memory? or free them instead?
@@ -264,7 +276,6 @@ func main() {
 
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
-
 
     cmd_win_h := int32(18)
     cmd := CmdConsole{}
@@ -494,8 +505,6 @@ func main() {
         //    renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
         //}
 
-
-
         for i := range __SLICE__ {
             renderer.Copy(__SLICE__[i].texture, nil, &__SLICE__[i].bg_rect)
         }
@@ -562,7 +571,7 @@ func main() {
             all_lines[MAX_INDEX].bg_rect.Y = all_lines[MAX_INDEX-1].bg_rect.Y + (all_lines[MAX_INDEX].bg_rect.H - TEXT_SCROLL_SPEED)
             all_lines[MAX_INDEX-1].bg_rect.Y -= TEXT_SCROLL_SPEED
 
-            rect_count := 0 // NOTE: This is a dirty hack
+            rect_count := 0 // NOTE: This is a dirty HACK
             for i := range all_lines[START_INDEX:MAX_INDEX] {
                 rect_count += len(all_lines[i].word_rects)
             }
@@ -612,12 +621,9 @@ func main() {
 
             renderer.Copy(dbg_ttf, nil, &dbg_rect)
 
-            clr := sdl.Color{255, 0, 255, 100}
             for index := 0; index < len(gfonts.ttf_rects); index++ {
                 if (mouseover_word_texture_FONT[index] == true) {
-                    draw_rect_without_border(renderer, &gfonts.ttf_rects[index], &clr)
-                } else {
-                    draw_rect_without_border(renderer, &gfonts.ttf_rects[index], &sdl.Color{255, 255, 255, 200}) // debug
+                    draw_rect_without_border(renderer, &gfonts.highlight_rect[index], &sdl.Color{0, 0, 0, 100})
                 }
             }
         }
