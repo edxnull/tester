@@ -51,9 +51,6 @@ const LINE_LENGTH int = 730
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to 'file'")
 var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 
-// @GLOBAL MUT VARS
-var GLOBAL_WASTE_VAR int
-
 var MAX_INDEX int = 40
 var START_INDEX int = 0
 
@@ -538,7 +535,8 @@ func main() {
             engage_loop = false
         }
 
-        // TODO: add EnumType for rendering.
+        // TODO: add EnumType for rendering to _RECT_
+        // this way we will save interation execution for _RECT_, etc.
         // if EnumType == SHOW (ewww)
         // pass
         // else if EnumType == HIDE (ewww)
@@ -587,7 +585,7 @@ func main() {
 
             // TEMP HACK
             dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
-            dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{200, 0, 0, 255})
+            dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{0, 0, 0, 255})
 
             add_new_line = false
         }
@@ -627,9 +625,10 @@ func main() {
 
             if dbg_first_pass { // A DIRTY HACK
                 dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
-                dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{200, 0, 0, 255})
+                dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{0, 0, 0, 255})
                 dbg_first_pass = false
             }
+
             draw_rect_with_border_filled(renderer, &dbg_rect, &sdl.Color{180, 123, 55, 255})
             renderer.Copy(dbg_ttf, nil, &dbg_rect)
 
