@@ -287,7 +287,7 @@ func main() {
     cmd.input_buffer.Grow(128) // we need to make sure we never write past this value?
 
     dbg_str := make_console_text(0, len(test_tokens))
-    dbg_rect := sdl.Rect{0, WIN_H-cmd_win_h-cmd_win_h, int32(gfonts.current_font_w * len(dbg_str)), int32(gfonts.current_font_h)}
+    dbg_rect := sdl.Rect{0, WIN_H-cmd_win_h-cmd_win_h-2, int32(gfonts.current_font_w * len(dbg_str)), int32(gfonts.current_font_h)}
     dbg_ttf := make_ttf_texture(renderer, font, dbg_str, &sdl.Color{0, 0, 0, 255})
 
     sdl.SetHint(sdl.HINT_FRAMEBUFFER_ACCELERATION, "1")
@@ -538,6 +538,12 @@ func main() {
             engage_loop = false
         }
 
+        // TODO: add EnumType for rendering.
+        // if EnumType == SHOW (ewww)
+        // pass
+        // else if EnumType == HIDE (ewww)
+        // render
+
         if move_text_down {
             move_text_down = false
 
@@ -581,7 +587,7 @@ func main() {
 
             // TEMP HACK
             dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
-            dbg_ttf = reload_ttf_texture(renderer, cmd.ttf_texture, font, dbg_str, &sdl.Color{0, 0, 0, 255})
+            dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{0, 0, 0, 255})
 
             add_new_line = false
         }
@@ -594,7 +600,7 @@ func main() {
 
             // TEMP HACK
             dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
-            dbg_ttf = reload_ttf_texture(renderer, cmd.ttf_texture, font, dbg_str, &sdl.Color{0, 0, 0, 255})
+            dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{0, 0, 0, 255})
 
             del_new_line = false
         }
@@ -619,6 +625,7 @@ func main() {
                 renderer.Copy(gfonts.textures[i], nil, &gfonts.ttf_rects[i]) // why nil?
             }
 
+            draw_rect_with_border_filled(renderer, &dbg_rect, &sdl.Color{180, 123, 55, 255})
             renderer.Copy(dbg_ttf, nil, &dbg_rect)
 
             for index := 0; index < len(gfonts.ttf_rects); index++ {
