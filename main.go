@@ -345,6 +345,11 @@ func main() {
     //renderer.SetViewport(&viewport_rect)
     TEXT_SCROLL_SPEED := int32(all_lines[0].bg_rect.H)
 
+    test_str := "one two three four"
+
+    fmt.Printf("%#v\n", get_word_lengths(&test_str))
+    println(sum_word_lengths(get_word_lengths(&test_str)))
+
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
             switch t := event.(type) {
@@ -927,6 +932,14 @@ func get_word_lengths(s *string) []int {
         result = append(result, curr)
     }
     return result
+}
+
+func sum_word_lengths(n []int) int {
+    sum := 0
+    for i := 0; i < len(n); i++ {
+        sum += n[i]
+    }
+    return sum
 }
 
 func draw_rect_with_border(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl.Color) {
