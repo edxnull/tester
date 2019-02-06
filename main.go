@@ -102,7 +102,6 @@ type FontSelector struct {
     textures []*sdl.Texture
 }
 
-var gfonts FontSelector = FontSelector{}
 
 func main() {
     // PROFILING SNIPPET
@@ -173,6 +172,7 @@ func main() {
     ticker := time.NewTicker(time.Second / 60)
 
     var font *ttf.Font
+    var gfonts FontSelector = FontSelector{}
 
     file_names, err := ioutil.ReadDir("./fonts/")
     if err != nil {
@@ -288,7 +288,7 @@ func main() {
 
     dbg_str := make_console_text(0, len(test_tokens))
     dbg_rect := sdl.Rect{0, WIN_H-cmd_win_h-cmd_win_h-2, int32(gfonts.current_font_w * len(dbg_str)), int32(gfonts.current_font_h)}
-    dbg_ttf := make_ttf_texture(renderer, font, dbg_str, &sdl.Color{0, 0, 0, 255})
+    dbg_ttf := make_ttf_texture(renderer, gfonts.current_font, dbg_str, &sdl.Color{0, 0, 0, 255})
 
     sdl.SetHint(sdl.HINT_FRAMEBUFFER_ACCELERATION, "1")
     sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "1")
@@ -300,6 +300,7 @@ func main() {
     engage_loop := false
     add_new_line := false
     del_new_line := false
+    dbg_first_pass := true
 
     num_word_textures := 0
     for index := 0; index < len(all_lines); index++ {
@@ -346,10 +347,6 @@ func main() {
     //viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
     //renderer.SetViewport(&viewport_rect)
     TEXT_SCROLL_SPEED := int32(all_lines[0].bg_rect.H)
-
-	glyph_metrics, _ := font.GlyphMetrics(rune('g'))
-	fmt.Printf("%c, %#v\n", 'g', glyph_metrics)
-
 
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -435,7 +432,8 @@ func main() {
                     if cmd.show {
                         if t.Keysym.Sym == sdl.K_BACKSPACE {
                             if t.Repeat > 0 {
-                                execute_cmd_write_to_buffer(renderer, &cmd, curr_char_w, &gfonts)
+                                execute_cmd_write_to_buffer(renderer, &cmd, curr_char_w, gfonts.current_font, gfonts.current_font_w,
+                                                                                                              gfonts.current_font_h)
                             }
                         }
                     }
@@ -455,7 +453,8 @@ func main() {
                                             }
                                             break
                                     case sdl.K_BACKSPACE:
-                                        execute_cmd_write_to_buffer(renderer, &cmd, curr_char_w, &gfonts)
+                                        execute_cmd_write_to_buffer(renderer, &cmd, curr_char_w, gfonts.current_font, gfonts.current_font_w,
+                                                                                                                      gfonts.current_font_h)
                                         break
                                     case sdl.K_RETURN:
                                         if cmd.show {
@@ -468,6 +467,7 @@ func main() {
                                                 fmt.Printf("[debug] cmd_text_buffer (cap): %d\n", cmd.input_buffer.Cap())
                                             }
                                         }
+                                        break
                                     case sdl.K_UP:
                                         move_text_up = true
                                         break
@@ -587,7 +587,7 @@ func main() {
 
             // TEMP HACK
             dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
-            dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{0, 0, 0, 255})
+            dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{200, 0, 0, 255})
 
             add_new_line = false
         }
@@ -625,6 +625,11 @@ func main() {
                 renderer.Copy(gfonts.textures[i], nil, &gfonts.ttf_rects[i]) // why nil?
             }
 
+            if dbg_first_pass { // A DIRTY HACK
+                dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
+                dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{200, 0, 0, 255})
+                dbg_first_pass = false
+            }
             draw_rect_with_border_filled(renderer, &dbg_rect, &sdl.Color{180, 123, 55, 255})
             renderer.Copy(dbg_ttf, nil, &dbg_rect)
 
@@ -633,7 +638,9 @@ func main() {
                     draw_rect_without_border(renderer, &gfonts.highlight_rect[index], &sdl.Color{0, 0, 0, 100})
                 }
             }
+
         }
+
 
         renderer.SetDrawColor(255, 100, 0, 100)
         renderer.DrawLine(wrapline.x1+int32(X_OFFSET), wrapline.y1, wrapline.x2+int32(X_OFFSET), wrapline.y2)
@@ -939,7 +946,7 @@ func draw_rect_without_border(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl.Col
     renderer.FillRect(rect)
 }
 
-func execute_cmd_write_to_buffer(renderer *sdl.Renderer, cmd *CmdConsole, curr_char_w int, gfonts *FontSelector) {
+func execute_cmd_write_to_buffer(renderer *sdl.Renderer, cmd *CmdConsole, curr_char_w int, font *ttf.Font, fontw int, fonth int) {
     if cmd.cursor_rect.X <= 0 {
         cmd.cursor_rect.X = 0
     } else {
@@ -950,16 +957,16 @@ func execute_cmd_write_to_buffer(renderer *sdl.Renderer, cmd *CmdConsole, curr_c
         cmd.ttf_texture.Destroy()
 
         if len(cmd.input_buffer.String()) > 0 {
-            cmd.ttf_texture = make_ttf_texture(renderer, gfonts.current_font, temp_string, &sdl.Color{0, 0, 0, 255})
+            cmd.ttf_texture = make_ttf_texture(renderer, font, temp_string, &sdl.Color{0, 0, 0, 255})
         }
 
         if len(temp_string) != 0 {
-            curr_char_w = gfonts.current_font_w * len(string(temp_string[len(temp_string)-1]))
+            curr_char_w = fontw * len(string(temp_string[len(temp_string)-1]))
 
             cmd.cursor_rect.X -= int32(curr_char_w)
 
-            cmd.ttf_rect.W = int32(gfonts.current_font_w * len(cmd.input_buffer.String()))
-            cmd.ttf_rect.H = int32(gfonts.current_font_h)
+            cmd.ttf_rect.W = int32(fontw * len(cmd.input_buffer.String()))
+            cmd.ttf_rect.H = int32(fonth)
             println(temp_string)
         } else {
             cmd.cursor_rect.X = 0
