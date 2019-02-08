@@ -40,8 +40,8 @@ import (
 
 // [ ] try to optimize strings.split calls with sum_word_lengths
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
-// [ ] add 2d vectors
-// [ ] add equations of motion for nice animation effects
+// [ ] add equations of motion for nice animation effects https://easings.net/ 
+// [ ] bezier curve easing functions
 
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
@@ -59,17 +59,12 @@ var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 var MAX_INDEX int = 40
 var START_INDEX int = 0
 
-// TODO: add EnumType for rendering to _RECT_
-// this way we will save interation execution for _RECT_, etc.
-// if EnumType == SHOW (ewww)
-// pass
-// else if EnumType == HIDE (ewww)
-// render
+type RectStatus uint8
 
-type EnumStatus uint8
 const (
-    SHOW EnumStatus = 1
-    HIDE EnumStatus = 0
+    TypeActive RectStatus = 0
+    TypePending RectStatus = 1
+    TypeInactive RectStatus = 2
 )
 
 type v2 struct {
@@ -372,21 +367,9 @@ func main() {
     fmt.Printf("%#v\n", get_word_lengths(&test_str))
     println(sum_word_lengths(get_word_lengths(&test_str)))
 
-
     location := v2{0, 0}
     velocity := v2{0, 0}
-    //direction := float32(1.0)
-
     test_rectq := sdl.Rect{int32(location.x), int32(location.y), 100, 100}
-
-    fmt.Println(location)
-    fmt.Println(velocity)
-
-    fmt.Println(v2_to_int32(&location))
-    fmt.Println(v2_to_int32(&velocity))
-    fmt.Println(lerp(1.0, 100.0, 0.5))
-    fmt.Println(lerp(1.0, 100.0, 2))
-    fmt.Println(lerp(1.0, 100.0, 0.9))
 
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -551,7 +534,6 @@ func main() {
         draw_rect_without_border(renderer, &test_rectq, &sdl.Color{255, 0, 255, 255})
 
         location.x = lerp(location.x, 300.0, 0.08)
-        fmt.Println(location.x)
 
         for i := range __SLICE__ {
             renderer.Copy(__SLICE__[i].texture, nil, &__SLICE__[i].bg_rect)
