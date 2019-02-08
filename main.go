@@ -34,9 +34,14 @@ import (
 // 		 should we just render some glyps onto a texture and just write them to a texture instead of rendering 1 texture per line?
 //       https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_46.html#SEC46
 
-// TODO: compare: rendering multiple lines per texture
-// TODO: compare: rendering lines with glyphs
-// TODO: compare: rendering lines like we do right now
+// TODO(maybe): compare: rendering multiple lines per texture
+// TODO(maybe): compare: rendering lines with glyphs
+// TODO(maybe): compare: rendering lines like we do right now
+
+// [ ] try to optimize strings.split calls with sum_word_lengths
+// [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
+// [ ] add 2d vectors
+// [ ] add equations of motion for nice animation effects
 
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
@@ -53,6 +58,24 @@ var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 
 var MAX_INDEX int = 40
 var START_INDEX int = 0
+
+// TODO: add EnumType for rendering to _RECT_
+// this way we will save interation execution for _RECT_, etc.
+// if EnumType == SHOW (ewww)
+// pass
+// else if EnumType == HIDE (ewww)
+// render
+
+type EnumStatus uint8
+const (
+    SHOW EnumStatus = 1
+    HIDE EnumStatus = 0
+)
+
+type v2 struct {
+    x float32
+    y float32
+}
 
 type Font struct {
     size int
@@ -98,7 +121,6 @@ type FontSelector struct {
     cursor_rect sdl.Rect
     textures []*sdl.Texture
 }
-
 
 func main() {
     // PROFILING SNIPPET
@@ -350,6 +372,22 @@ func main() {
     fmt.Printf("%#v\n", get_word_lengths(&test_str))
     println(sum_word_lengths(get_word_lengths(&test_str)))
 
+
+    location := v2{0, 0}
+    velocity := v2{0, 0}
+    //direction := float32(1.0)
+
+    test_rectq := sdl.Rect{int32(location.x), int32(location.y), 100, 100}
+
+    fmt.Println(location)
+    fmt.Println(velocity)
+
+    fmt.Println(v2_to_int32(&location))
+    fmt.Println(v2_to_int32(&velocity))
+    fmt.Println(lerp(1.0, 100.0, 0.5))
+    fmt.Println(lerp(1.0, 100.0, 2))
+    fmt.Println(lerp(1.0, 100.0, 0.9))
+
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
             switch t := event.(type) {
@@ -507,6 +545,14 @@ func main() {
         //    renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
         //}
 
+        test_rectq.X = int32(location.x)
+        test_rectq.Y = int32(location.y)
+
+        draw_rect_without_border(renderer, &test_rectq, &sdl.Color{255, 0, 255, 255})
+
+        location.x = lerp(location.x, 300.0, 0.08)
+        fmt.Println(location.x)
+
         for i := range __SLICE__ {
             renderer.Copy(__SLICE__[i].texture, nil, &__SLICE__[i].bg_rect)
         }
@@ -539,13 +585,6 @@ func main() {
             }
             engage_loop = false
         }
-
-        // TODO: add EnumType for rendering to _RECT_
-        // this way we will save interation execution for _RECT_, etc.
-        // if EnumType == SHOW (ewww)
-        // pass
-        // else if EnumType == HIDE (ewww)
-        // render
 
         if move_text_down {
             move_text_down = false
@@ -806,6 +845,19 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
     }
 }
 
+func check_collision(event *sdl.MouseMotionEvent, rect *sdl.Rect) bool {
+    result := false
+    mx_gt_rx :=    event.X > (*rect).X
+    mx_lt_rx_rw := event.X < (*rect).X + (*rect).W
+    my_gt_ry :=    event.Y > (*rect).Y
+    my_lt_ry_rh := event.Y < (*rect).Y + (*rect).H
+
+    if ((mx_gt_rx && mx_lt_rx_rw) && (my_gt_ry && my_lt_ry_rh)) {
+        result = true
+    }
+    return result
+}
+
 func do_wrap_lines(str string, max_len int, xsize int) []string {
     assert_if(len(str) <= 1)
 
@@ -992,4 +1044,39 @@ func number_as_string(n int) string {
 
 func make_console_text(current int, total int) string {
     return strings.Join([]string{"LINE: ", strconv.Itoa(current), "/", strconv.Itoa(total), " [", strconv.FormatFloat(float64((float32(current)/float32(total))*100), 'f', 1, 32), "%]"}, "")
+}
+
+func v2_to_int32(v *v2) (int32, int32) {
+    return int32((*v).x), int32((*v).y)
+}
+
+func v2_add(a *v2, b *v2) v2 {
+    return v2{(*a).x + (*b).x, (*a).y + (*b).y}
+}
+
+func v2_sub(a *v2, b *v2) v2 {
+    return v2{(*a).x - (*b).x, (*a).y - (*b).y}
+}
+
+func v2_mult(a *v2, scalar float32) v2 {
+    return v2{(*a).x * scalar, (*a).y * scalar}
+}
+
+func v2_div(a *v2, scalar float32) v2 {
+    return v2{(*a).x / scalar, (*a).y / scalar}
+}
+
+func v2_mag(v *v2) float32 {
+    return float32(math.Sqrt(float64((*v).x * (*v).x) + float64((*v).y * (*v).y)))
+}
+
+func lerp(a float32, b float32, t float32) float32 {
+    if t > 1 || t < 0 {
+        return 0.0
+    }
+    return (1-t) * a + t * b
+}
+
+func normalize(n float32, max float32) float32{
+    return n / max
 }
