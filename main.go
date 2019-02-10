@@ -1043,7 +1043,10 @@ func normalize(n float32, max float32) float32{
 
 func get_filenames(path string, format []string) []string {
     var result []string
-    list, _ := ioutil.ReadDir(path)
+    list, err := ioutil.ReadDir(path)
+    if err != nil {
+        panic(err)
+    }
 
     for _, f := range list {
         for i := 0 ; i < len(format); i++ {
