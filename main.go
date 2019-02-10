@@ -59,12 +59,11 @@ var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 var MAX_INDEX int = 40
 var START_INDEX int = 0
 
-type RectStatus uint8
-
+type RctStat uint8
 const (
-    TypeActive RectStatus = 0
-    TypePending RectStatus = 1
-    TypeInactive RectStatus = 2
+    TypeActive RctStat = 0
+    TypePending RctStat = 1
+    TypeInactive RctStat = 2
 )
 
 type v2 struct {
@@ -1021,7 +1020,7 @@ func number_as_string(n int) string {
 
 func make_console_text(current int, total int) string {
     return strings.Join([]string{"LINE: ", strconv.Itoa(current), "/", strconv.Itoa(total), " [",
-                                           strconv.FormatFloat(float64((float32(current)/float32(total))*100), 'f', 1, 32), "%]"}, "")
+                                           strconv.FormatFloat(float64((float64(current)/float64(total))*100), 'f', 1, 32), "%]"}, "")
 }
 
 func v2_to_int32(v *v2) (int32, int32) {
