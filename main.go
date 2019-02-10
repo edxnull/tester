@@ -82,7 +82,7 @@ type Font struct {
 type Line struct {
     texture *sdl.Texture
     bg_rect sdl.Rect
-    word_rects []sdl.Rect  //DELETE
+    word_rects []sdl.Rect
 }
 
 type DebugWrapLine struct {
@@ -187,22 +187,7 @@ func main() {
     var font *ttf.Font
     var gfonts FontSelector = FontSelector{}
 
-    file_names, err := ioutil.ReadDir("./fonts/")
-    if err != nil {
-        panic(err)
-    }
-
-    var ttf_font_list []string
-    for _, f := range file_names {
-        if strings.Contains(f.Name(), ".ttf") {
-            ttf_font_list = append(ttf_font_list, f.Name())
-        }
-        if strings.Contains(f.Name(), ".otf") {
-            ttf_font_list = append(ttf_font_list, f.Name())
-        }
-    }
-
-    file_names = nil
+    ttf_font_list := get_filenames("./fonts/", []string{"ttf", "otf"})
 
     gfonts.fonts = make([]Font, len(ttf_font_list))
     gfonts.textures = make([]*sdl.Texture, len(ttf_font_list))
@@ -368,7 +353,7 @@ func main() {
 
     location := v2{0, 0}
     //velocity := v2{0, 0}
-    test_rectq := sdl.Rect{int32(location.x), int32(location.y), 100, 100}
+    test_rectq := sdl.Rect{int32(location.x), int32(location.y), 10, 10}
 
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -527,13 +512,6 @@ func main() {
         //    renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
         //}
 
-        test_rectq.X = int32(location.x)
-        test_rectq.Y = int32(location.y)
-
-        draw_rect_without_border(renderer, &test_rectq, &sdl.Color{255, 0, 255, 255})
-
-        location.x = lerp(location.x, 300.0, 0.08)
-
         for i := range __SLICE__ {
             renderer.Copy(__SLICE__[i].texture, nil, &__SLICE__[i].bg_rect)
         }
@@ -659,6 +637,11 @@ func main() {
 
             draw_rect_with_border_filled(renderer, &dbg_rect, &sdl.Color{180, 123, 55, 255})
             renderer.Copy(dbg_ttf, nil, &dbg_rect)
+
+            test_rectq.X = int32(location.x)
+            test_rectq.Y = int32(location.y)
+            draw_rect_without_border(renderer, &test_rectq, &sdl.Color{55, 100, 155, 255})
+            location.x = lerp(location.x, 100.0, 0.05)
         }
 
         renderer.SetDrawColor(255, 100, 0, 100)
@@ -1056,4 +1039,20 @@ func lerp(a float32, b float32, t float32) float32 {
 
 func normalize(n float32, max float32) float32{
     return n / max
+}
+
+func get_filenames(path string, format []string) []string {
+    var result []string
+    list, _ := ioutil.ReadDir(path)
+
+    for _, f := range list {
+        for i := 0 ; i < len(format); i++ {
+            if strings.Contains(f.Name(), format[i]) {
+                result = append(result, f.Name())
+                break
+            }
+        }
+    }
+    list = nil
+    return result
 }
