@@ -160,6 +160,8 @@ func main() {
     // renderer.SetLogicalSize(WIN_W, WIN_H)
 
     filename := "text/HP01.txt"
+    font_dir := "./fonts/"
+    text_dir := "./fonts/"
     line_tokens := strings.Split(string(get_filedata(filename)), "\n")
 
     ticker := time.NewTicker(time.Second / 60)
@@ -167,8 +169,8 @@ func main() {
     var font *ttf.Font
     var gfonts FontSelector = FontSelector{}
 
-    ttf_font_list := get_filenames("./fonts/", []string{"ttf", "otf"})
-    txt_list := get_filenames("./text/", []string{".txt"})
+    ttf_font_list := get_filenames(font_dir, []string{"ttf", "otf"})
+    txt_list := get_filenames(text_dir, []string{".txt"})
     fmt.Println(txt_list)
 
     gfonts.fonts = make([]Font, len(ttf_font_list))
@@ -180,14 +182,14 @@ func main() {
 
 	for index, element := range ttf_font_list {
         if DEBUG_INDEX == index {
-            gfonts.current_font = load_font("./fonts/" + element, TTF_FONT_SIZE)
+            gfonts.current_font = load_font(font_dir + element, TTF_FONT_SIZE)
             w, h, _ := gfonts.current_font.SizeUTF8(" ")
             skp := gfonts.current_font.LineSkip()
             gfonts.current_font_w = w
             gfonts.current_font_h = h
             gfonts.current_font_skip = skp
         }
-        gfonts.fonts[index].data = load_font("./fonts/" + element, TTF_FONT_SIZE_FOR_FONT_LIST)
+        gfonts.fonts[index].data = load_font(font_dir + element, TTF_FONT_SIZE_FOR_FONT_LIST)
 		gfonts.fonts[index].name = element
 	}
 
