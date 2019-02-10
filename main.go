@@ -160,27 +160,7 @@ func main() {
     // renderer.SetLogicalSize(WIN_W, WIN_H)
 
     filename := "text/HP01.txt"
-
-    file_stat, err := os.Stat(filename)
-    if err != nil {
-        panic(err)
-    }
-
-    file_size := file_stat.Size()
-
-    file, err := os.Open(filename)
-    if err != nil {
-        panic(err)
-    }
-
-    file_data := make([]byte, file_size)
-
-    file.Read(file_data)
-    file.Close()
-
-    line_tokens := strings.Split(string(file_data), "\n")
-
-    file_data = nil
+    line_tokens := strings.Split(string(get_filedata(filename)), "\n")
 
     ticker := time.NewTicker(time.Second / 60)
 
@@ -188,6 +168,8 @@ func main() {
     var gfonts FontSelector = FontSelector{}
 
     ttf_font_list := get_filenames("./fonts/", []string{"ttf", "otf"})
+    txt_list := get_filenames("./text/", []string{".txt"})
+    fmt.Println(txt_list)
 
     gfonts.fonts = make([]Font, len(ttf_font_list))
     gfonts.textures = make([]*sdl.Texture, len(ttf_font_list))
@@ -1043,6 +1025,7 @@ func normalize(n float32, max float32) float32{
 
 func get_filenames(path string, format []string) []string {
     var result []string
+
     list, err := ioutil.ReadDir(path)
     if err != nil {
         panic(err)
@@ -1057,5 +1040,24 @@ func get_filenames(path string, format []string) []string {
         }
     }
     list = nil
+    return result
+}
+
+func get_filedata(filename string) []byte {
+    file_stat, err := os.Stat(filename)
+    if err != nil {
+        panic(err)
+    }
+
+    result := make([]byte, file_stat.Size())
+
+    file, err := os.Open(filename)
+    if err != nil {
+        panic(err)
+    }
+
+    file.Read(result)
+    file.Close()
+
     return result
 }
