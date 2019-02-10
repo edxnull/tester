@@ -44,6 +44,7 @@ import (
 // [ ] bezier curve easing functions
 // [ ] grapical popup error messages like: error => your command is too long, etc...
 // [ ] fix wrapping text
+// [ ] make sure we handle utf8
 
 // NOTE: both of these would be easier if we wouldn't have to render the whole text at a time
 // ---------------------------------------
@@ -256,15 +257,16 @@ func main() {
     now_gen := time.Now()
 
     all_lines := make([]Line, len(test_tokens))
-    _generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
+    //_generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
 
     LESS := START_INDEX
     MORE := MAX_INDEX
+    INC := 2
+
+    generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
+    generate_lines(renderer, font, &all_lines, &test_tokens, (MAX_INDEX+1)*INC)
 
     __SLICE__ := all_lines[LESS:MORE]
-
-    //generate_lines(renderer, font, &all_lines, &test_tokens, 0, MAX_INDEX+2)
-    //generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+2, (MAX_INDEX+1)*2)
 
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
@@ -294,9 +296,15 @@ func main() {
     del_new_line := false
     dbg_first_pass := true
 
+    nlines := 0
     num_word_textures := 0
     for index := 0; index < len(all_lines); index++ {
-        num_word_textures += len(all_lines[index].word_rects)
+        if all_lines[index].texture != nil {
+            num_word_textures += len(all_lines[index].word_rects)
+            nlines += 1
+        } else {
+            break
+        }
     }
 
     mouseover_line := make([]bool, len(all_lines))
@@ -304,13 +312,13 @@ func main() {
     mouseover_word_texture_FONT := make([]bool, len(ttf_font_list))
 
     _LINES_ := make([]sdl.Rect, len(all_lines))
-    for i := 0; i < len(all_lines); i++ {
+    for i := 0; i < nlines; i++ {
         _LINES_[i] = all_lines[i].bg_rect
     }
 
     _RECTS_ := make([]sdl.Rect, num_word_textures)
     println(len(all_lines), num_word_textures)
-    for index, apos := 0, 0; index < len(all_lines); index++ {
+    for index, apos := 0, 0; index < nlines; index++ {
         for pos := 0; pos < len(all_lines[index].word_rects); pos++ {
             _RECTS_[apos] = all_lines[index].word_rects[pos]
             apos += 1
@@ -318,7 +326,7 @@ func main() {
     }
 
     _WORDS_ := make([]string, num_word_textures)
-    for index, apos := 0, 0; index < len(test_tokens); index++ {
+    for index, apos := 0, 0; index < nlines; index++ {
         for _, rct := range strings.Split(test_tokens[index], " ") {
             _WORDS_[apos] = rct
             apos += 1
@@ -741,16 +749,24 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
     return tex
 }
 
-func _generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, dest *[]Line, tokens *[]string) {
+func _generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, dest *[]Line, tokens *[]string, end int) {
     for index := 0; index < len(*tokens); index++ {
-        new_ttf_texture_line(r, font, &(*dest)[index], (*tokens)[index], int32(index))
+        new_ttf_texture_line(r, font, &(*dest)[index], (*tokens)[index], int32(end+index))
     }
 }
 
-func generate_lines(renderer *sdl.Renderer, font *ttf.Font, lines *[]Line, str *[]string, min int, max int) {
-    ptr := (*lines)[min:max]
-    slice := (*str)[min:max]
-    _generate_and_populate_lines(renderer, font, &ptr, &slice)
+func generate_lines(renderer *sdl.Renderer, font *ttf.Font, lines *[]Line, str *[]string, max int) {
+    end := 0
+    for index := 0; index < len((*lines)); index++ {
+        if (*lines)[index].texture != nil {
+            end += 1
+        } else {
+            break
+        }
+    }
+    ptr := (*lines)[end:max]
+    slice := (*str)[end:max]
+    _generate_and_populate_lines(renderer, font, &ptr, &slice, end)
 }
 
 func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_text string, skip_nr int32) {
