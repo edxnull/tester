@@ -368,7 +368,7 @@ func main() {
     println(sum_word_lengths(get_word_lengths(&test_str)))
 
     location := v2{0, 0}
-    velocity := v2{0, 0}
+    //velocity := v2{0, 0}
     test_rectq := sdl.Rect{int32(location.x), int32(location.y), 100, 100}
 
     for running {
@@ -646,7 +646,10 @@ func main() {
             draw_rect_without_border(renderer, &gfonts.bg_rect, &sdl.Color{255, 0, 255, 255})
 
             for i := 0; i < len(gfonts.textures); i++ {
-                renderer.Copy(gfonts.textures[i], nil, &gfonts.ttf_rects[i]) // why nil?
+                renderer.Copy(gfonts.textures[i], nil, &gfonts.ttf_rects[i])
+                if (mouseover_word_texture_FONT[i] == true) {
+                    draw_rect_without_border(renderer, &gfonts.highlight_rect[i], &sdl.Color{0, 0, 0, 100})
+                }
             }
 
             if dbg_first_pass { // A DIRTY HACK
@@ -657,15 +660,7 @@ func main() {
 
             draw_rect_with_border_filled(renderer, &dbg_rect, &sdl.Color{180, 123, 55, 255})
             renderer.Copy(dbg_ttf, nil, &dbg_rect)
-
-            for index := 0; index < len(gfonts.ttf_rects); index++ {
-                if (mouseover_word_texture_FONT[index] == true) {
-                    draw_rect_without_border(renderer, &gfonts.highlight_rect[index], &sdl.Color{0, 0, 0, 100})
-                }
-            }
-
         }
-
 
         renderer.SetDrawColor(255, 100, 0, 100)
         renderer.DrawLine(wrapline.x1+int32(X_OFFSET), wrapline.y1, wrapline.x2+int32(X_OFFSET), wrapline.y2)
