@@ -42,6 +42,7 @@ import (
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
 // [ ] bezier curve easing functions
+// [ ] grapical popup error messages like: error => your command is too long, etc...
 
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
@@ -109,6 +110,7 @@ type FontSelector struct {
     current_font_h int
     current_font_skip int
     alpha_value uint8
+    alpha_f32 float32
     bg_rect sdl.Rect
     ttf_rects []sdl.Rect
     highlight_rect []sdl.Rect
@@ -254,8 +256,8 @@ func main() {
 
     __SLICE__ := all_lines[LESS:MORE]
 
-    //generate_lines(renderer, font, &all_lines, &test_tokens, 0, MAX_INDEX+1)
-    //generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1, (MAX_INDEX+1)*2)
+    //generate_lines(renderer, font, &all_lines, &test_tokens, 0, MAX_INDEX+2)
+    //generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+2, (MAX_INDEX+1)*2)
 
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
@@ -605,7 +607,7 @@ func main() {
 
             draw_rect_with_border_filled(renderer, &cmd.cursor_rect, &sdl.Color{0, 0, 0, cmd.alpha_value})
 
-            draw_rect_without_border(renderer, &gfonts.bg_rect, &sdl.Color{255, 0, 255, 255})
+            draw_rect_without_border(renderer, &gfonts.bg_rect, &sdl.Color{255, 0, 255, uint8(gfonts.alpha_f32)})
 
             for i := 0; i < len(gfonts.textures); i++ {
                 renderer.Copy(gfonts.textures[i], nil, &gfonts.ttf_rects[i])
@@ -626,7 +628,12 @@ func main() {
             test_rectq.X = int32(location.x)
             test_rectq.Y = int32(location.y)
             draw_rect_without_border(renderer, &test_rectq, &sdl.Color{55, 100, 155, 255})
-            location.x = lerp(location.x, 100.0, 0.05)
+            if location.x < 100-1 {
+                location.x = lerp(location.x, 100.0, 0.05)
+            }
+            if gfonts.alpha_f32 < 255-1 {
+                gfonts.alpha_f32 = lerp(gfonts.alpha_f32, 255.0, 0.123)
+            }
         }
 
         renderer.SetDrawColor(255, 100, 0, 100)
