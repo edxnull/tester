@@ -1020,7 +1020,8 @@ func number_as_string(n int) string {
 }
 
 func make_console_text(current int, total int) string {
-    return strings.Join([]string{"LINE: ", strconv.Itoa(current), "/", strconv.Itoa(total), " [", strconv.FormatFloat(float64((float32(current)/float32(total))*100), 'f', 1, 32), "%]"}, "")
+    return strings.Join([]string{"LINE: ", strconv.Itoa(current), "/", strconv.Itoa(total), " [",
+                                           strconv.FormatFloat(float64((float32(current)/float32(total))*100), 'f', 1, 32), "%]"}, "")
 }
 
 func v2_to_int32(v *v2) (int32, int32) {
