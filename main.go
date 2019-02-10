@@ -159,10 +159,11 @@ func main() {
     // SetLogicalSize is important for device independant rendering!
     // renderer.SetLogicalSize(WIN_W, WIN_H)
 
-    filename := "text/HP01.txt"
+    filename := "HP01.txt"
     font_dir := "./fonts/"
-    text_dir := "./fonts/"
-    line_tokens := strings.Split(string(get_filedata(filename)), "\n")
+    text_dir := "./text/"
+
+    line_tokens := strings.Split(string(get_filedata(text_dir, filename)), "\n")
 
     ticker := time.NewTicker(time.Second / 60)
 
@@ -1045,15 +1046,15 @@ func get_filenames(path string, format []string) []string {
     return result
 }
 
-func get_filedata(filename string) []byte {
-    file_stat, err := os.Stat(filename)
+func get_filedata(path string, filename string) []byte {
+    file_stat, err := os.Stat(path + filename)
     if err != nil {
         panic(err)
     }
 
     result := make([]byte, file_stat.Size())
 
-    file, err := os.Open(filename)
+    file, err := os.Open(path + filename)
     if err != nil {
         panic(err)
     }
