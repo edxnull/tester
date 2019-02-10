@@ -43,6 +43,13 @@ import (
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
 // [ ] bezier curve easing functions
 // [ ] grapical popup error messages like: error => your command is too long, etc...
+// [ ] fix wrapping text
+
+// NOTE: both of these would be easier if we wouldn't have to render the whole text at a time
+// ---------------------------------------
+// [ ] selecting and reloading text
+// [ ] selecting and reloading fonts
+// ---------------------------------------
 
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
