@@ -38,7 +38,6 @@ import (
 // TODO(maybe): compare: rendering lines with glyphs
 // TODO(maybe): compare: rendering lines like we do right now
 
-// [ ] bug: when using a scroll wheel: word_rects are shifing down sometimes
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
 // [ ] bezier curve easing functions
