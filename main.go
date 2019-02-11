@@ -313,13 +313,7 @@ func main() {
     //renderer.SetViewport(&viewport_rect)
     TEXT_SCROLL_SPEED := int32(all_lines[0].bg_rect.H)
 
-    test_str := "one two three four "
-
-    fmt.Printf("%#v\n", get_word_lengths(&test_str))
-    println(sum_word_lengths(get_word_lengths(&test_str)))
-
     location := v2{0, 0}
-    //velocity := v2{0, 0}
     test_rectq := sdl.Rect{int32(location.x), int32(location.y), 10, 10}
 
     for running {
