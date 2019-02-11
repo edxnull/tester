@@ -38,17 +38,30 @@ import (
 // TODO(maybe): compare: rendering lines with glyphs
 // TODO(maybe): compare: rendering lines like we do right now
 
+// [ ] cleanup the code!
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
 // [ ] bezier curve easing functions
+// [ ] imgui menu
+// [ ] searching
+// [ ] fuzzy search
+// [ ] copy & pasting text
+// [ ] copy & pasting commands
+// [ ] save words to a trie tree?
+// [ ] figure out what to do about languages like left to right and asian languages
+// [ ] export/import csv
+// [ ] smooth scrolling
+// [ ] experiment with imgui
 // [ ] grapical popup error messages like: error => your command is too long, etc...
 // [ ] fix wrapping text
 // [ ] make sure we handle utf8
 // [ ] compare method call vs. function call overhead in golang: asm?
+// [ ] cmd input commands + parsing
 
 // NOTE: both of these would be easier if we wouldn't have to render the whole text at a time
 // ---------------------------------------
 // [ ] selecting and reloading text
+// [ ] changing font size
 // [ ] selecting and reloading fonts
 // ---------------------------------------
 
