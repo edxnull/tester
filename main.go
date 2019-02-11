@@ -38,8 +38,7 @@ import (
 // TODO(maybe): compare: rendering lines with glyphs
 // TODO(maybe): compare: rendering lines like we do right now
 
-// [ ] bug: when using a scroll wheel: word_rects are shifting down
-
+// [ ] bug: when using a scroll wheel: word_rects are shifing down sometimes
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
 // [ ] bezier curve easing functions
@@ -216,14 +215,14 @@ func main() {
     now_gen := time.Now()
 
     all_lines := make([]Line, len(test_tokens))
-    generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
+    //generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
 
     LESS := START_INDEX
     MORE := MAX_INDEX
 
-    //INC := 2
-    //generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
-    //generate_lines(renderer, font, &all_lines, &test_tokens, (MAX_INDEX+1)*INC)
+    INC := 2
+    generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
+    generate_lines(renderer, font, &all_lines, &test_tokens, (MAX_INDEX+1)*INC)
 
     __SLICE__ := all_lines[LESS:MORE]
 
@@ -367,11 +366,15 @@ func main() {
                     check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
                     break
                 case *sdl.MouseWheelEvent:
-                    if t.Y == 1 {
-                        move_text_up = true
-                    }
-                    if t.Y == -1 {
-                        move_text_down = true
+                    switch t.Y {
+                        case 1:
+                            move_text_up = true
+                            break
+                        case -1:
+                            move_text_down = true
+                            break
+                        default:
+                            break
                     }
                     break
                 case *sdl.MouseButtonEvent:
@@ -519,19 +522,6 @@ func main() {
             add_new_line = true
         }
 
-        if move_text_up {
-            move_text_up = false
-
-            for index := range all_lines[START_INDEX:MAX_INDEX] {
-                all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
-            }
-            for index := range _RECTS_ {
-                _RECTS_[index].Y += TEXT_SCROLL_SPEED
-            }
-
-            del_new_line = true
-        }
-
         if add_new_line {
             LESS += 1
             MORE += 1
@@ -555,12 +545,33 @@ func main() {
             add_new_line = false
         }
 
+        if move_text_up {
+            move_text_up = false
+
+            for index := range all_lines[START_INDEX:MAX_INDEX] {
+                all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
+            }
+            for index := range _RECTS_ {
+                _RECTS_[index].Y += TEXT_SCROLL_SPEED
+            }
+
+            del_new_line = true
+        }
+
         if del_new_line {
             LESS -= 1
             MORE -= 1
             __SLICE__ = all_lines[LESS:MORE]
-            MAX_INDEX = MAX_INDEX - 1
 
+            rect_count := 0 // NOTE: This is a dirty HACK
+            for i := range all_lines[START_INDEX:MAX_INDEX] {
+                rect_count += len(all_lines[i].word_rects)
+            }
+            for i := rect_count; i < len(_RECTS_); i++ {
+                _RECTS_[i].Y -= 1
+            }
+
+            MAX_INDEX = MAX_INDEX - 1
             // TEMP HACK
             dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
             dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{0, 0, 0, 255})
