@@ -38,14 +38,13 @@ import (
 // TODO(maybe): compare: rendering lines with glyphs
 // TODO(maybe): compare: rendering lines like we do right now
 
-// [ ] try to optimize strings.split calls with sum_word_lengths
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
 // [ ] bezier curve easing functions
 // [ ] grapical popup error messages like: error => your command is too long, etc...
 // [ ] fix wrapping text
 // [ ] make sure we handle utf8
-// [ ] compare method vs function overhead
+// [ ] compare method call vs. function call overhead in golang: asm?
 
 // NOTE: both of these would be easier if we wouldn't have to render the whole text at a time
 // ---------------------------------------
@@ -214,12 +213,12 @@ func main() {
     now_gen := time.Now()
 
     all_lines := make([]Line, len(test_tokens))
-    //_generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
+    //generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
 
     LESS := START_INDEX
     MORE := MAX_INDEX
-    INC := 2
 
+    INC := 2
     generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
     generate_lines(renderer, font, &all_lines, &test_tokens, (MAX_INDEX+1)*INC)
 
@@ -268,13 +267,14 @@ func main() {
     mouseover_word_texture := make([]bool, num_word_textures)
     mouseover_word_texture_FONT := make([]bool, len(ttf_font_list))
 
+    println(len(all_lines), num_word_textures, nlines)
+
     _LINES_ := make([]sdl.Rect, len(all_lines))
     for i := 0; i < nlines; i++ {
         _LINES_[i] = all_lines[i].bg_rect
     }
 
     _RECTS_ := make([]sdl.Rect, num_word_textures)
-    println(len(all_lines), num_word_textures)
     for index, apos := 0, 0; index < nlines; index++ {
         for pos := 0; pos < len(all_lines[index].word_rects); pos++ {
             _RECTS_[apos] = all_lines[index].word_rects[pos]
@@ -305,7 +305,7 @@ func main() {
     //renderer.SetViewport(&viewport_rect)
     TEXT_SCROLL_SPEED := int32(all_lines[0].bg_rect.H)
 
-    test_str := "one two three four"
+    test_str := "one two three four "
 
     fmt.Printf("%#v\n", get_word_lengths(&test_str))
     println(sum_word_lengths(get_word_lengths(&test_str)))
@@ -706,7 +706,13 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
     return tex
 }
 
-func _generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, dest *[]Line, tokens *[]string, end int) {
+func generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, dest *[]Line, tokens *[]string) {
+    for index := 0; index < len(*tokens); index++ {
+        new_ttf_texture_line(r, font, &(*dest)[index], (*tokens)[index], int32(index))
+    }
+}
+
+func __generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, dest *[]Line, tokens *[]string, end int) {
     for index := 0; index < len(*tokens); index++ {
         new_ttf_texture_line(r, font, &(*dest)[index], (*tokens)[index], int32(end+index))
     }
@@ -723,7 +729,7 @@ func generate_lines(renderer *sdl.Renderer, font *ttf.Font, lines *[]Line, str *
     }
     ptr := (*lines)[end:max]
     slice := (*str)[end:max]
-    _generate_and_populate_lines(renderer, font, &ptr, &slice, end)
+    __generate_and_populate_lines(renderer, font, &ptr, &slice, end)
 }
 
 func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_text string, skip_nr int32) {
@@ -733,6 +739,9 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_t
 
     text := strings.Split(line_text, " ")
     text_len := len(text)
+
+    assert_if(text_len == 0)
+
     line.word_rects = make([]sdl.Rect, text_len)
 
     x, y, _ := font.SizeUTF8(" ")
@@ -896,22 +905,20 @@ func get_word_lengths(s *string) []int {
     var result []int
     curr := 0
     for index := 0; index < len(*s); index++ {
-        if (string((*s)[index]) == "\n") {
-            break
-        }
-        if (string((*s)[index]) == "\r") {
-            break
-        }
+        //if (string((*s)[index]) == "\n") {
+        //    break
+        //}
+        //if (string((*s)[index]) == "\r") {
+        //    break
+        //}
         if (!is_space(string((*s)[index]))) {
             curr += 1
         } else {
-            curr *= 7
             result = append(result, curr)
             curr = 0
         }
     }
     if (curr > 0) {
-        curr *= 7
         result = append(result, curr)
     }
     return result
