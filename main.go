@@ -38,6 +38,8 @@ import (
 // TODO(maybe): compare: rendering lines with glyphs
 // TODO(maybe): compare: rendering lines like we do right now
 
+// [ ] bug: when using a scroll wheel: word_rects are shifting down
+
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
 // [ ] bezier curve easing functions
@@ -92,6 +94,7 @@ type Line struct {
     texture *sdl.Texture
     bg_rect sdl.Rect
     word_rects []sdl.Rect
+    slice []Line
 }
 
 type DebugWrapLine struct {
@@ -213,14 +216,14 @@ func main() {
     now_gen := time.Now()
 
     all_lines := make([]Line, len(test_tokens))
-    //generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
+    generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
 
     LESS := START_INDEX
     MORE := MAX_INDEX
 
-    INC := 2
-    generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
-    generate_lines(renderer, font, &all_lines, &test_tokens, (MAX_INDEX+1)*INC)
+    //INC := 2
+    //generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
+    //generate_lines(renderer, font, &all_lines, &test_tokens, (MAX_INDEX+1)*INC)
 
     __SLICE__ := all_lines[LESS:MORE]
 
