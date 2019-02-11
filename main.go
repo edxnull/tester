@@ -188,33 +188,7 @@ func main() {
 
     font := gfonts.current_font
 
-    gfonts.bg_rect = sdl.Rect{}
-    adder_y := 0
-	for index, element := range gfonts.fonts {
-        gx, gy, _ := gfonts.fonts[index].data.SizeUTF8(" ")
-		gfonts.fonts[index].size = gx * len(element.name)
-
-        gfonts.textures[index] = make_ttf_texture(renderer, gfonts.fonts[index].data,
-                                                            gfonts.fonts[index].name,
-                                                            &sdl.Color{0, 0, 0, 0})
-
-        gfonts.ttf_rects[index] = sdl.Rect{0, int32(adder_y), int32(gx*len(element.name)), int32(gy)}
-
-        if gfonts.bg_rect.W < gfonts.ttf_rects[index].W {
-            gfonts.bg_rect.W = gfonts.ttf_rects[index].W
-        }
-
-        gfonts.highlight_rect[index] = gfonts.ttf_rects[index]
-
-        gfonts.bg_rect.H += gfonts.ttf_rects[index].H
-        adder_y += gy
-
-        if index == len(gfonts.fonts)-1 {
-            for i := 0; i < len(gfonts.ttf_rects); i++ {
-                gfonts.highlight_rect[i].W = gfonts.bg_rect.W
-            }
-        }
-    }
+    generate_rects_for_fonts(renderer, &gfonts)
 
     // NOTE: should we keep fonts in memory? or free them instead?
 
@@ -1085,7 +1059,7 @@ func allocate_font_space(font *FontSelector, size int) {
 }
 
 func generate_fonts(font *FontSelector, ttf_font_list []string, font_dir string) {
-    CURRENT := 6
+    CURRENT := 6 // magic number
     for index, element := range ttf_font_list {
         if CURRENT == index {
             (*font).current_font = load_font(font_dir + element, TTF_FONT_SIZE)
@@ -1097,5 +1071,35 @@ func generate_fonts(font *FontSelector, ttf_font_list []string, font_dir string)
         }
         (*font).fonts[index].data = load_font(font_dir + element, TTF_FONT_SIZE_FOR_FONT_LIST)
         (*font).fonts[index].name = element
+    }
+}
+
+func generate_rects_for_fonts(renderer *sdl.Renderer, font *FontSelector) {
+    (*font).bg_rect = sdl.Rect{}
+    adder_y := 0
+    for index, element := range (*font).fonts {
+        gx, gy, _ := (*font).fonts[index].data.SizeUTF8(" ")
+        (*font).fonts[index].size = gx * len(element.name)
+
+        (*font).textures[index] = make_ttf_texture(renderer, (*font).fonts[index].data,
+                                                             (*font).fonts[index].name,
+                                                                &sdl.Color{0, 0, 0, 0})
+
+        (*font).ttf_rects[index] = sdl.Rect{0, int32(adder_y), int32(gx*len(element.name)), int32(gy)}
+
+        if (*font).bg_rect.W < (*font).ttf_rects[index].W {
+            (*font).bg_rect.W = (*font).ttf_rects[index].W
+        }
+
+        (*font).highlight_rect[index] = (*font).ttf_rects[index]
+
+        (*font).bg_rect.H += (*font).ttf_rects[index].H
+        adder_y += gy
+
+        if index == len((*font).fonts)-1 {
+            for i := 0; i < len((*font).ttf_rects); i++ {
+                (*font).highlight_rect[i].W = (*font).bg_rect.W
+            }
+        }
     }
 }
