@@ -277,16 +277,10 @@ func main() {
         }
     }
 
-    mouseover_line := make([]bool, len(all_lines))
     mouseover_word_texture := make([]bool, num_word_textures)
     mouseover_word_texture_FONT := make([]bool, len(ttf_font_list))
 
     println(len(all_lines), num_word_textures, nlines)
-
-    _LINES_ := make([]sdl.Rect, len(all_lines))
-    for i := 0; i < nlines; i++ {
-        _LINES_[i] = all_lines[i].bg_rect
-    }
 
     _RECTS_ := make([]sdl.Rect, num_word_textures)
     for index, apos := 0, 0; index < nlines; index++ {
@@ -373,7 +367,6 @@ func main() {
                     }
                     break
                 case *sdl.MouseMotionEvent:
-                    check_collision_mouse_over_words(t, &_LINES_, &mouseover_line)
                     check_collision_mouse_over_words(t, &_RECTS_, &mouseover_word_texture)
                     check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
                     break
@@ -498,12 +491,6 @@ func main() {
                 engage_loop = true
             }
         }
-
-        //for i := range mouseover_line {
-        //    if mouseover_line[i] == true {
-        //        println("LINE :", i)
-        //    }
-        //}
 
         if engage_loop && !cmd.show {
             for index := range _RECTS_ {
