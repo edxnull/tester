@@ -45,6 +45,7 @@ import (
 // [ ] grapical popup error messages like: error => your command is too long, etc...
 // [ ] fix wrapping text
 // [ ] make sure we handle utf8
+// [ ] compare method vs function overhead
 
 // NOTE: both of these would be easier if we wouldn't have to render the whole text at a time
 // ---------------------------------------
@@ -250,7 +251,7 @@ func main() {
     engage_loop := false
     add_new_line := false
     del_new_line := false
-    dbg_first_pass := true
+    dirty_hack := true
 
     nlines := 0
     num_word_textures := 0
@@ -587,10 +588,10 @@ func main() {
                 }
             }
 
-            if dbg_first_pass { // A DIRTY HACK
+            if dirty_hack { // A DIRTY HACK
                 dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
                 dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{0, 0, 0, 255})
-                dbg_first_pass = false
+                dirty_hack = false
             }
 
             draw_rect_with_border_filled(renderer, &dbg_rect, &sdl.Color{180, 123, 55, 255})
