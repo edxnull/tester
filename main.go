@@ -177,34 +177,16 @@ func main() {
 
     ticker := time.NewTicker(time.Second / 60)
 
-    var font *ttf.Font
     var gfonts FontSelector = FontSelector{}
 
     ttf_font_list := get_filenames(font_dir, []string{"ttf", "otf"})
     txt_list := get_filenames(text_dir, []string{".txt"})
     fmt.Println(txt_list)
 
-    gfonts.fonts = make([]Font, len(ttf_font_list))
-    gfonts.textures = make([]*sdl.Texture, len(ttf_font_list))
-    gfonts.ttf_rects = make([]sdl.Rect, len(ttf_font_list))
-    gfonts.highlight_rect = make([]sdl.Rect, len(ttf_font_list))
+    allocate_font_space(&gfonts, len(ttf_font_list))
+    generate_fonts(&gfonts, ttf_font_list, font_dir)
 
-    DEBUG_INDEX := 6
-
-	for index, element := range ttf_font_list {
-        if DEBUG_INDEX == index {
-            gfonts.current_font = load_font(font_dir + element, TTF_FONT_SIZE)
-            w, h, _ := gfonts.current_font.SizeUTF8(" ")
-            skp := gfonts.current_font.LineSkip()
-            gfonts.current_font_w = w
-            gfonts.current_font_h = h
-            gfonts.current_font_skip = skp
-        }
-        gfonts.fonts[index].data = load_font(font_dir + element, TTF_FONT_SIZE_FOR_FONT_LIST)
-		gfonts.fonts[index].name = element
-	}
-
-    font = gfonts.current_font
+    font := gfonts.current_font
 
     gfonts.bg_rect = sdl.Rect{}
     adder_y := 0
@@ -1093,4 +1075,27 @@ func get_filedata(path string, filename string) []byte {
     file.Close()
 
     return result
+}
+
+func allocate_font_space(font *FontSelector, size int) {
+    (*font).fonts = make([]Font, size)
+    (*font).textures = make([]*sdl.Texture, size)
+    (*font).ttf_rects = make([]sdl.Rect, size)
+    (*font).highlight_rect = make([]sdl.Rect, size)
+}
+
+func generate_fonts(font *FontSelector, ttf_font_list []string, font_dir string) {
+    CURRENT := 6
+    for index, element := range ttf_font_list {
+        if CURRENT == index {
+            (*font).current_font = load_font(font_dir + element, TTF_FONT_SIZE)
+            w, h, _ := (*font).current_font.SizeUTF8(" ")
+            skp := (*font).current_font.LineSkip()
+            (*font).current_font_w = w
+            (*font).current_font_h = h
+            (*font).current_font_skip = skp
+        }
+        (*font).fonts[index].data = load_font(font_dir + element, TTF_FONT_SIZE_FOR_FONT_LIST)
+        (*font).fonts[index].name = element
+    }
 }
