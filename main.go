@@ -316,6 +316,7 @@ func main() {
     location := v2{0, 0}
     test_rectq := sdl.Rect{int32(location.x), int32(location.y), 10, 10}
 
+    // ****** PSEUDO_SMOOTH SCROLLING ******
     do_test_lerp := false
     STEP_CONST := float32(50)
     stepsize := float32(50)
@@ -329,6 +330,7 @@ func main() {
             sdl.Rect{0, 66, WIN_W, 10},
     }
     YPOS := float32(0)
+    // ****** PSEUDO_SMOOTH SCROLLING ******
 
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -529,6 +531,7 @@ func main() {
             }
 
             do_test_lerp = true
+
             add_new_line = true
         }
 
