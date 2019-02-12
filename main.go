@@ -316,6 +316,20 @@ func main() {
     location := v2{0, 0}
     test_rectq := sdl.Rect{int32(location.x), int32(location.y), 10, 10}
 
+    do_test_lerp := false
+    STEP_CONST := float32(50)
+    stepsize := float32(50)
+    test_line_rectq := []sdl.Rect{
+            sdl.Rect{0,  0, WIN_W, 10},
+            sdl.Rect{0, 11, WIN_W, 10},
+            sdl.Rect{0, 22, WIN_W, 10},
+            sdl.Rect{0, 33, WIN_W, 10},
+            sdl.Rect{0, 44, WIN_W, 10},
+            sdl.Rect{0, 55, WIN_W, 10},
+            sdl.Rect{0, 66, WIN_W, 10},
+    }
+    YPOS := float32(0)
+
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
             switch t := event.(type) {
@@ -509,9 +523,12 @@ func main() {
             for index := range all_lines[START_INDEX:MAX_INDEX] {
                 all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
             }
+
             for index := range _RECTS_ {
                 _RECTS_[index].Y -= TEXT_SCROLL_SPEED
             }
+
+            do_test_lerp = true
             add_new_line = true
         }
 
@@ -617,6 +634,23 @@ func main() {
 
         renderer.SetDrawColor(255, 100, 0, 100)
         renderer.DrawLine(wrapline.x1+int32(X_OFFSET), wrapline.y1, wrapline.x2+int32(X_OFFSET), wrapline.y2)
+
+        // ****** PSEUDO_SMOOTH SCROLLING ******
+        if do_test_lerp {
+            if float32(math.RoundToEven(float64(YPOS))) >= stepsize {
+                do_test_lerp = false
+                stepsize += STEP_CONST
+            }
+            for i := range test_line_rectq {
+                test_line_rectq[i].Y = int32(YPOS)
+                test_line_rectq[i].Y += int32(i*11)
+            }
+            YPOS = lerp(YPOS, stepsize, 0.06)
+        }
+        for i := range test_line_rectq {
+            draw_rect_with_border_filled(renderer, &test_line_rectq[i], &sdl.Color{100, 10, 50, 200})
+        }
+        // ****** PSEUDO_SMOOTH SCROLLING ******
 
         renderer.Present()
 
