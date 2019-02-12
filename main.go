@@ -42,7 +42,7 @@ import (
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
 // [ ] bezier curve easing functions
-// [ ] imgui menu
+// [ ] taskbar
 // [ ] searching
 // [ ] fuzzy search
 // [ ] copy & pasting text
@@ -318,8 +318,8 @@ func main() {
 
     // ****** PSEUDO_SMOOTH SCROLLING ******
     do_test_lerp := false
-    STEP_CONST := float32(50)
-    stepsize := float32(50)
+    STEP_CONST := float32(40)
+    stepsize := float32(40)
     test_line_rectq := []sdl.Rect{
             sdl.Rect{0,  0, WIN_W, 10},
             sdl.Rect{0, 11, WIN_W, 10},
