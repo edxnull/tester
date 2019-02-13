@@ -1,4 +1,4 @@
-pnewlnackage main
+package main
 
 import (
     "os"
@@ -41,6 +41,7 @@ import (
 // TODO: http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/Welcome.html
 // TODO: https://github.com/malkia/ufo/tree/master/samples/SDL
 
+// [ ] nothing is working anymore after resizing !NOT working < 16 TTF_FONT_SIZE
 // [ ] cleanup the code!
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
@@ -74,9 +75,9 @@ const WIN_W int32 = 800
 const WIN_H int32 = 600
 
 const X_OFFSET int = 7
-const TTF_FONT_SIZE int = 18
+const TTF_FONT_SIZE int = 16
 const TTF_FONT_SIZE_FOR_FONT_LIST int = 14
-const LINE_LENGTH int = 730
+const LINE_LENGTH int = 740
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to 'file'")
 var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
@@ -105,9 +106,11 @@ type Font struct {
 }
 
 type Line struct {
+    is_active bool
     texture *sdl.Texture
     bg_rect sdl.Rect
     word_rects []sdl.Rect
+    mouse_over_word []bool
     slice []Line
 }
 
@@ -230,16 +233,16 @@ func main() {
     now_gen := time.Now()
 
     all_lines := make([]Line, len(test_tokens))
-    //generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
+    generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
 
-    LESS := START_INDEX
-    MORE := MAX_INDEX
+    for i := 0; i < MAX_INDEX; i++ {
+        all_lines[i].is_active = true
+    }
 
-    MORE_INC := 2
-    generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
-    generate_lines(renderer, font, &all_lines, &test_tokens, (MAX_INDEX+1)*MORE_INC)
-
-    __SLICE__ := all_lines[LESS:MORE]
+    //INC := 2
+    //NEXT_MAX_INDEX := (40+1)*INC
+    //generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
+    //generate_lines(renderer, font, &all_lines, &test_tokens, NEXT_MAX_INDEX)
 
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
@@ -280,18 +283,9 @@ func main() {
         }
     }
 
-    mouseover_word_texture := make([]bool, num_word_textures)
     mouseover_word_texture_FONT := make([]bool, len(ttf_font_list))
 
     println(len(all_lines), num_word_textures, nlines)
-
-    _RECTS_ := make([]sdl.Rect, num_word_textures)
-    for index, apos := 0, 0; index < nlines; index++ {
-        for pos := 0; pos < len(all_lines[index].word_rects); pos++ {
-            _RECTS_[apos] = all_lines[index].word_rects[pos]
-            apos += 1
-        }
-    }
 
     _WORDS_ := make([]string, num_word_textures)
     for index, apos := 0, 0; index < nlines; index++ {
@@ -320,19 +314,19 @@ func main() {
     test_rectq := sdl.Rect{int32(location.x), int32(location.y), 10, 10}
 
     // ****** PSEUDO_SMOOTH SCROLLING ******
-    do_test_lerp := false
-    STEP_CONST := float32(40)
-    stepsize := float32(40)
-    test_line_rectq := []sdl.Rect{
-            sdl.Rect{0,  0, WIN_W, 10},
-            sdl.Rect{0, 11, WIN_W, 10},
-            sdl.Rect{0, 22, WIN_W, 10},
-            sdl.Rect{0, 33, WIN_W, 10},
-            sdl.Rect{0, 44, WIN_W, 10},
-            sdl.Rect{0, 55, WIN_W, 10},
-            sdl.Rect{0, 66, WIN_W, 10},
-    }
-    YPOS := float32(0)
+    //do_test_lerp := false
+    //STEP_CONST := float32(40)
+    //stepsize := float32(40)
+    //test_line_rectq := []sdl.Rect{
+    //        sdl.Rect{0,  0, WIN_W, 10},
+    //        sdl.Rect{0, 11, WIN_W, 10},
+    //        sdl.Rect{0, 22, WIN_W, 10},
+    //        sdl.Rect{0, 33, WIN_W, 10},
+    //        sdl.Rect{0, 44, WIN_W, 10},
+    //        sdl.Rect{0, 55, WIN_W, 10},
+    //        sdl.Rect{0, 66, WIN_W, 10},
+    //}
+    //YPOS := float32(0)
     // ****** PSEUDO_SMOOTH SCROLLING ******
 
     for running {
@@ -380,7 +374,11 @@ func main() {
                     }
                     break
                 case *sdl.MouseMotionEvent:
-                    check_collision_mouse_over_words(t, &_RECTS_, &mouseover_word_texture)
+                    for i := 0; i < len(all_lines); i++ {
+                        if all_lines[i].is_active {
+                            check_collision_mouse_over_words(t, &all_lines[i].word_rects, &all_lines[i].mouse_over_word)
+                        }
+                    }
                     check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
                     break
                 case *sdl.MouseWheelEvent:
@@ -491,29 +489,41 @@ func main() {
         renderer.Clear()
 
         // RENDERING TTF LINES
-        //for i := range all_lines[START_INDEX:MAX_INDEX] {
-        //    renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
-        //}
-
-        for i := range __SLICE__ {
-            renderer.Copy(__SLICE__[i].texture, nil, &__SLICE__[i].bg_rect)
+        for i := range all_lines {
+            if all_lines[i].is_active {
+                renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
+            }
         }
 
-        for i := range mouseover_word_texture {
-            if mouseover_word_texture[i] == true {
-                engage_loop = true
+        for i := 0; i < len(all_lines); i++ {
+            if all_lines[i].is_active {
+                for j := 0; j < len(all_lines[i].word_rects); j++ {
+                        draw_rect_without_border(renderer, &all_lines[i].word_rects[j], &sdl.Color{255, 100, 200, 100})
+                }
+            }
+        }
+
+        for i := 0; i < len(all_lines); i++ {
+            if all_lines[i].is_active {
+                for j := 0; j < len(all_lines[i].mouse_over_word); j++ {
+                    if all_lines[i].mouse_over_word[j] {
+                        engage_loop = true
+                    }
+                }
             }
         }
 
         if engage_loop && !cmd.show {
-            for index := range _RECTS_ {
-                if mouseover_word_texture[index] {
-                    if _WORDS_[index] != "\n" {
-                        draw_rect_without_border(renderer, &_RECTS_[index], &sdl.Color{255, 100, 200, 100})
-                        if print_word {
-                            if _WORDS_[index] != "\n" {
-                                fmt.Printf("%s\n", _WORDS_[index])
-                                print_word = false
+            for i := 0; i < len(all_lines); i++{
+                for j := 0; j < len(all_lines[i].word_rects); j++ {
+                    if all_lines[i].mouse_over_word[j] {
+                        if _WORDS_[i] != "\n" && all_lines[i].is_active {
+                            draw_rect_without_border(renderer, &all_lines[i].word_rects[j], &sdl.Color{255, 100, 200, 100})
+                            if print_word {
+                                if _WORDS_[i] != "\n" {
+                                    fmt.Printf("%s\n", all_lines[i].word_rects[j])
+                                    print_word = false
+                                }
                             }
                         }
                     }
@@ -529,29 +539,38 @@ func main() {
                 all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
             }
 
-            for index := range _RECTS_ {
-                _RECTS_[index].Y -= TEXT_SCROLL_SPEED
+            for i := 0; i < len(all_lines); i++ {
+                for j := 0; j < len(all_lines[i].word_rects); j++ {
+                    all_lines[i].word_rects[j].Y -= TEXT_SCROLL_SPEED
+                }
             }
 
-            do_test_lerp = true
+            //do_test_lerp = true
 
             add_new_line = true
         }
 
         if add_new_line {
-            LESS += 1
-            MORE += 1
-            __SLICE__ = all_lines[LESS:MORE]
             MAX_INDEX = MAX_INDEX + 1
+
+            all_lines[MAX_INDEX].is_active = true
+
+            num_active := 0
+            for i := 0; i < len(all_lines); i++ {
+                if all_lines[i].is_active {
+                    num_active += 1
+                }
+            }
+            println(num_active)
+
             all_lines[MAX_INDEX].bg_rect.Y = all_lines[MAX_INDEX-1].bg_rect.Y + (all_lines[MAX_INDEX].bg_rect.H - TEXT_SCROLL_SPEED)
             all_lines[MAX_INDEX-1].bg_rect.Y -= TEXT_SCROLL_SPEED
 
-            rect_count := 0 // NOTE: This is a dirty HACK
-            for i := range all_lines[START_INDEX:MAX_INDEX] {
-                rect_count += len(all_lines[i].word_rects)
-            }
-            for i := rect_count; i < len(_RECTS_); i++ {
-                _RECTS_[i].Y += 1
+            // TODO: add is_active
+            for i := MAX_INDEX; i < len(all_lines); i++ {
+                for j := 0; j < len(all_lines[i].word_rects); j++ {
+                    all_lines[i].word_rects[j].Y += 1
+                }
             }
 
             // TEMP HACK
@@ -567,27 +586,37 @@ func main() {
             for index := range all_lines[START_INDEX:MAX_INDEX] {
                 all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
             }
-            for index := range _RECTS_ {
-                _RECTS_[index].Y += TEXT_SCROLL_SPEED
+
+            // TODO: add is_active
+            for i := 0; i < len(all_lines); i++ {
+                for j := 0; j < len(all_lines[i].word_rects); j++ {
+                    all_lines[i].word_rects[j].Y += TEXT_SCROLL_SPEED
+                }
             }
 
             del_new_line = true
         }
 
         if del_new_line {
-            LESS -= 1
-            MORE -= 1
-            __SLICE__ = all_lines[LESS:MORE]
+            // TODO: add is_active
+            for i := MAX_INDEX; i < len(all_lines); i++ {
+                for j := 0; j < len(all_lines[i].word_rects); j++ {
+                    all_lines[i].word_rects[j].Y -= 1
+                }
+            }
 
-            rect_count := 0 // NOTE: This is a dirty HACK
-            for i := range all_lines[START_INDEX:MAX_INDEX] {
-                rect_count += len(all_lines[i].word_rects)
-            }
-            for i := rect_count; i < len(_RECTS_); i++ {
-                _RECTS_[i].Y -= 1
-            }
+            all_lines[MAX_INDEX].is_active = false
 
             MAX_INDEX = MAX_INDEX - 1
+
+            num_active := 0
+            for i := 0; i < len(all_lines); i++ {
+                if all_lines[i].is_active {
+                    num_active += 1
+                }
+            }
+            println(num_active)
+
             // TEMP HACK
             dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
             dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{0, 0, 0, 255})
@@ -642,20 +671,20 @@ func main() {
         renderer.DrawLine(wrapline.x1+int32(X_OFFSET), wrapline.y1, wrapline.x2+int32(X_OFFSET), wrapline.y2)
 
         // ****** PSEUDO_SMOOTH SCROLLING ******
-        if do_test_lerp {
-            if float32(math.RoundToEven(float64(YPOS))) >= stepsize {
-                do_test_lerp = false
-                stepsize += STEP_CONST
-            }
-            for i := range test_line_rectq {
-                test_line_rectq[i].Y = int32(YPOS)
-                test_line_rectq[i].Y += int32(i*11)
-            }
-            YPOS = lerp(YPOS, stepsize, 0.06)
-        }
-        for i := range test_line_rectq {
-            draw_rect_with_border_filled(renderer, &test_line_rectq[i], &sdl.Color{100, 10, 50, 200})
-        }
+        //if do_test_lerp {
+        //    if float32(math.RoundToEven(float64(YPOS))) >= stepsize {
+        //        do_test_lerp = false
+        //        stepsize += STEP_CONST
+        //    }
+        //    for i := range test_line_rectq {
+        //        test_line_rectq[i].Y = int32(YPOS)
+        //        test_line_rectq[i].Y += int32(i*11)
+        //    }
+        //    YPOS = lerp(YPOS, stepsize, 0.06)
+        //}
+        //for i := range test_line_rectq {
+        //    draw_rect_with_border_filled(renderer, &test_line_rectq[i], &sdl.Color{100, 10, 50, 200})
+        //}
         // ****** PSEUDO_SMOOTH SCROLLING ******
 
         renderer.Present()
@@ -794,6 +823,7 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_t
     assert_if(text_len == 0)
 
     line.word_rects = make([]sdl.Rect, text_len)
+    line.mouse_over_word = make([]bool, text_len)
 
     x, y, _ := font.SizeUTF8(" ")
     lineskip := font.LineSkip()
