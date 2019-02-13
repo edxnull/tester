@@ -1,4 +1,4 @@
-package main
+pnewlnackage main
 
 import (
     "os"
@@ -235,9 +235,9 @@ func main() {
     LESS := START_INDEX
     MORE := MAX_INDEX
 
-    INC := 2
+    MORE_INC := 2
     generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
-    generate_lines(renderer, font, &all_lines, &test_tokens, (MAX_INDEX+1)*INC)
+    generate_lines(renderer, font, &all_lines, &test_tokens, (MAX_INDEX+1)*MORE_INC)
 
     __SLICE__ := all_lines[LESS:MORE]
 
