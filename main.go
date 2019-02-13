@@ -43,7 +43,7 @@ import (
 
 // [ ] we should mark some lines as is_active = false after scrolling down / up
 // [ ] nothing is working anymore after resizing !NOT working < 16 TTF_FONT_SIZE
-// [ ] cleanup the code!
+// [x] cleanup the code!
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
 // [ ] bezier curve easing functions
