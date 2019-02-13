@@ -41,6 +41,7 @@ import (
 // TODO: http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/Welcome.html
 // TODO: https://github.com/malkia/ufo/tree/master/samples/SDL
 
+// [ ] we should mark some lines as is_active = false after scrolling down / up
 // [ ] nothing is working anymore after resizing !NOT working < 16 TTF_FONT_SIZE
 // [ ] cleanup the code!
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
@@ -109,6 +110,7 @@ type Line struct {
     is_active bool
     texture *sdl.Texture
     bg_rect sdl.Rect
+    words []string
     word_rects []sdl.Rect
     mouse_over_word []bool
     slice []Line
@@ -272,28 +274,7 @@ func main() {
     del_new_line := false
     dirty_hack := true
 
-    nlines := 0
-    num_word_textures := 0
-    for index := 0; index < len(all_lines); index++ {
-        if all_lines[index].texture != nil {
-            num_word_textures += len(all_lines[index].word_rects)
-            nlines += 1
-        } else {
-            break
-        }
-    }
-
     mouseover_word_texture_FONT := make([]bool, len(ttf_font_list))
-
-    println(len(all_lines), num_word_textures, nlines)
-
-    _WORDS_ := make([]string, num_word_textures)
-    for index, apos := 0, 0; index < nlines; index++ {
-        for _, rct := range strings.Split(test_tokens[index], " ") {
-            _WORDS_[apos] = rct
-            apos += 1
-        }
-    }
 
     wrap_line := false
 
@@ -517,11 +498,11 @@ func main() {
             for i := 0; i < len(all_lines); i++{
                 for j := 0; j < len(all_lines[i].word_rects); j++ {
                     if all_lines[i].mouse_over_word[j] {
-                        if _WORDS_[i] != "\n" && all_lines[i].is_active {
+                        if all_lines[i].words[j] != "\n" && all_lines[i].is_active {
                             draw_rect_without_border(renderer, &all_lines[i].word_rects[j], &sdl.Color{255, 100, 200, 100})
                             if print_word {
-                                if _WORDS_[i] != "\n" {
-                                    fmt.Printf("%s\n", all_lines[i].word_rects[j])
+                                if all_lines[i].words[j] != "\n" {
+                                    fmt.Printf("%s\n", all_lines[i].words[j])
                                     print_word = false
                                 }
                             }
@@ -821,6 +802,8 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_t
 
     line.word_rects = make([]sdl.Rect, text_len)
     line.mouse_over_word = make([]bool, text_len)
+    line.words = make([]string, text_len)
+    copy(line.words, text)
 
     x, y, _ := font.SizeUTF8(" ")
     lineskip := font.LineSkip()
