@@ -38,6 +38,9 @@ import (
 // TODO(maybe): compare: rendering lines with glyphs
 // TODO(maybe): compare: rendering lines like we do right now
 
+// TODO: http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/Welcome.html
+// TODO: https://github.com/malkia/ufo/tree/master/samples/SDL
+
 // [ ] cleanup the code!
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
@@ -667,7 +670,7 @@ func main() {
     renderer.Destroy()
     window.Destroy()
 
-    destroy_lines(&all_lines) // @WIP
+    destroy_lines(&all_lines)
 
     if cmd.ttf_texture != nil {
         cmd.ttf_texture.Destroy()
@@ -734,6 +737,7 @@ func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color
     surface , _= font.RenderUTF8Blended(text, *color)
     texture , _= renderer.CreateTextureFromSurface(surface)
     surface.Free()
+    sdl.ClearError()
 
     return texture
 }
@@ -742,9 +746,12 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
     if tex != nil {
         tex.Destroy()
         var surface *sdl.Surface
+
         surface, _ = f.RenderUTF8Blended(s, *c)
         tex, _ = r.CreateTextureFromSurface(surface)
         surface.Free()
+        sdl.ClearError()
+
         return tex
     }
     return tex
@@ -928,6 +935,7 @@ func destroy_lines(lines *[]Line) {
     for _, line := range *lines {
         line.texture.Destroy()
         line.texture = nil
+        sdl.ClearError()
     }
 }
 
