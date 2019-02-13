@@ -39,6 +39,7 @@ import (
 
 // TODO: http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/Welcome.html
 // TODO: https://github.com/malkia/ufo/tree/master/samples/SDL
+// TODO: try [raylib] for go or c
 
 // [ ] we should mark some lines as is_active = false after scrolling down / up
 // [ ] nothing is working anymore after resizing !NOT working < 16 TTF_FONT_SIZE
