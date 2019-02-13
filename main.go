@@ -12,7 +12,6 @@ import (
     "strings"
     "runtime"
     "io/ioutil"
-    "math/rand"
     "runtime/pprof"
     "github.com/veandco/go-sdl2/sdl"
     "github.com/veandco/go-sdl2/ttf"
@@ -44,6 +43,7 @@ import (
 // [ ] we should mark some lines as is_active = false after scrolling down / up
 // [ ] nothing is working anymore after resizing !NOT working < 16 TTF_FONT_SIZE
 // [x] cleanup the code!
+// [ ] refactor the code!
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
 // [ ] bezier curve easing functions
@@ -281,8 +281,6 @@ func main() {
     move_text_up := false
     move_text_down := false
 
-    test_rand_color := sdl.Color{uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255))}
-
     wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H}
 
     curr_char_w := 0
@@ -390,7 +388,7 @@ func main() {
                         input_char := string(t.Text[0])
                         cmd.input_buffer.WriteString(input_char)
                         cmd.ttf_texture.Destroy()
-                        cmd.ttf_texture = make_ttf_texture(renderer, font, cmd.input_buffer.String(), &test_rand_color)
+                        cmd.ttf_texture = make_ttf_texture(renderer, font, cmd.input_buffer.String(), &sdl.Color{0, 0, 0, 255})
                         curr_char_w = gfonts.current_font_w * len(input_char)
                         cmd.ttf_rect.W = int32(gfonts.current_font_w * len(cmd.input_buffer.String()))
                         cmd.ttf_rect.H = int32(gfonts.current_font_h)
@@ -473,14 +471,6 @@ func main() {
         for i := range all_lines {
             if all_lines[i].is_active {
                 renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
-            }
-        }
-
-        for i := 0; i < len(all_lines); i++ {
-            if all_lines[i].is_active {
-                for j := 0; j < len(all_lines[i].word_rects); j++ {
-                    draw_rect_without_border(renderer, &all_lines[i].word_rects[j], &sdl.Color{255, 100, 200, 100})
-                }
             }
         }
 
@@ -609,7 +599,14 @@ func main() {
         }
 
         if cmd.show {
-            draw_rect_with_border_filled(renderer, &cmd.bg_rect, &sdl.Color{255, 10, 100, cmd.alpha_value})
+            for i := 0; i < len(all_lines); i++ {
+                if all_lines[i].is_active {
+                    for j := 0; j < len(all_lines[i].word_rects); j++ {
+                        draw_rect_without_border(renderer, &all_lines[i].word_rects[j], &sdl.Color{255, 100, 200, 100})
+                    }
+                }
+            }
+            draw_rect_with_border_filled(renderer, &cmd.bg_rect, &sdl.Color{255, 10, 100, cmd.alpha_value+40})
             draw_rect_with_border(renderer, &cmd.ttf_rect, &sdl.Color{255, 255, 255, 0})
 
             renderer.Copy(cmd.ttf_texture, nil, &cmd.ttf_rect)
