@@ -308,7 +308,7 @@ func main() {
 
     //viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
     //renderer.SetViewport(&viewport_rect)
-    TEXT_SCROLL_SPEED := int32(all_lines[0].bg_rect.H)
+    TEXT_SCROLL_SPEED := int32(font.Height())
 
     location := v2{0, 0}
     test_rectq := sdl.Rect{int32(location.x), int32(location.y), 10, 10}
@@ -498,7 +498,7 @@ func main() {
         for i := 0; i < len(all_lines); i++ {
             if all_lines[i].is_active {
                 for j := 0; j < len(all_lines[i].word_rects); j++ {
-                        draw_rect_without_border(renderer, &all_lines[i].word_rects[j], &sdl.Color{255, 100, 200, 100})
+                    draw_rect_without_border(renderer, &all_lines[i].word_rects[j], &sdl.Color{255, 100, 200, 100})
                 }
             }
         }
@@ -566,7 +566,6 @@ func main() {
             all_lines[MAX_INDEX].bg_rect.Y = all_lines[MAX_INDEX-1].bg_rect.Y + (all_lines[MAX_INDEX].bg_rect.H - TEXT_SCROLL_SPEED)
             all_lines[MAX_INDEX-1].bg_rect.Y -= TEXT_SCROLL_SPEED
 
-            // TODO: add is_active
             for i := MAX_INDEX; i < len(all_lines); i++ {
                 for j := 0; j < len(all_lines[i].word_rects); j++ {
                     all_lines[i].word_rects[j].Y += 1
@@ -587,7 +586,6 @@ func main() {
                 all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
             }
 
-            // TODO: add is_active
             for i := 0; i < len(all_lines); i++ {
                 for j := 0; j < len(all_lines[i].word_rects); j++ {
                     all_lines[i].word_rects[j].Y += TEXT_SCROLL_SPEED
@@ -598,7 +596,6 @@ func main() {
         }
 
         if del_new_line {
-            // TODO: add is_active
             for i := MAX_INDEX; i < len(all_lines); i++ {
                 for j := 0; j < len(all_lines[i].word_rects); j++ {
                     all_lines[i].word_rects[j].Y -= 1
