@@ -29,21 +29,15 @@ import (
 // https://stackoverflow.com/questions/41441807/minimize-window-to-system-tray
 // https://gamedev.stackexchange.com/questions/136473/sdl2-taskbar-icon-notification-blinking-flashing-orange
 
-// TODO: rendering glyphs https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_38.html
-// 		 should we just render some glyps onto a texture and just write them to a texture instead of rendering 1 texture per line?
-//       https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_46.html#SEC46
-
-// TODO(maybe): compare: rendering multiple lines per texture
-// TODO(maybe): compare: rendering lines with glyphs
-// TODO(maybe): compare: rendering lines like we do right now
-
+// TODO: http://blog.moagrius.com/actionscript/jsas-understanding-easing/ 
 // TODO: http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/Welcome.html
 // TODO: https://github.com/malkia/ufo/tree/master/samples/SDL
 // TODO: try [raylib] for go or c
 
+// [x] cleanup the code!
+// [ ] smooth scrolling
 // [ ] we should mark some lines as is_active = false after scrolling down / up
 // [ ] nothing is working anymore after resizing !NOT working < 16 TTF_FONT_SIZE
-// [x] cleanup the code!
 // [ ] refactor the code!
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
@@ -56,7 +50,6 @@ import (
 // [ ] save words to a trie tree?
 // [ ] figure out what to do about languages like left to right and asian languages
 // [ ] export/import csv
-// [ ] smooth scrolling
 // [ ] experiment with imgui
 // [ ] grapical popup error messages like: error => your command is too long, etc...
 // [ ] fix wrapping text
@@ -486,7 +479,7 @@ func main() {
         }
 
         if engage_loop && !cmd.show {
-            for i := 0; i < len(all_lines); i++{
+            for i := 0; i < len(all_lines); i++ {
                 for j := 0; j < len(all_lines[i].word_rects); j++ {
                     if all_lines[i].mouse_over_word[j] {
                         if all_lines[i].words[j] != "\n" && all_lines[i].is_active {
