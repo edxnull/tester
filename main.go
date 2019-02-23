@@ -35,6 +35,14 @@ import (
 // TODO: try [raylib] for go or c
 
 // [x] cleanup the code!
+// [ ] scrollbar
+// [ ] proper time handling like dt and such
+// [ ] how can we not render everything on every frame?
+// [ ] why do we get such a huge GPU commit bump on start/ GPU commit drop after resizing?
+// [ ] tables [rows x columns]
+// [ ] checkbox rect within a rect [x] or [[]]
+// [ ] color rgb or rgba [color] [r, g, b] ... [r, g, b, a]
+// [ ] should we compress strings?? Huffman encoding?
 // [ ] tooltip on word hover
 // [ ] interactive tooltip
 // [ ] progress bar for loading files and other purposes
@@ -53,7 +61,7 @@ import (
 // [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
 // [ ] add equations of motion for nice animation effects https://easings.net/ 
 // [ ] bezier curve easing functions
-// [ ] taskbar
+// [ ] taskbar / menu bar
 // [ ] searching
 // [ ] fuzzy search
 // [ ] copy & pasting text
@@ -61,7 +69,7 @@ import (
 // [ ] save words to a trie tree?
 // [ ] figure out what to do about languages like left to right and asian languages
 // [ ] export/import csv
-// [ ] experiment with imgui
+// [ ] experiment with imgui style widgets
 // [ ] grapical popup error messages like: error => your command is too long, etc...
 // [ ] fix wrapping text
 // [ ] make sure we handle utf8
