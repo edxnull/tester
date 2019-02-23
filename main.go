@@ -35,6 +35,17 @@ import (
 // TODO: try [raylib] for go or c
 
 // [x] cleanup the code!
+// [ ] tooltip on word hover
+// [ ] interactive tooltip
+// [ ] progress bar for loading files and other purposes
+// [ ] visualising word stats
+// [ ] selecting and reloading text
+// [ ] changing font size
+// [ ] selecting and reloading fonts
+// [ ] do not render offscreen stuff
+// [ ] loading and playing audio files
+// [ ] recording audio?
+// [ ] proper reloading text on demand
 // [ ] smooth scrolling
 // [ ] we should mark some lines as is_active = false after scrolling down / up
 // [ ] nothing is working anymore after resizing !NOT working < 16 TTF_FONT_SIZE
@@ -56,13 +67,6 @@ import (
 // [ ] make sure we handle utf8
 // [ ] compare method call vs. function call overhead in golang: asm?
 // [ ] cmd input commands + parsing
-
-// NOTE: both of these would be easier if we wouldn't have to render the whole text at a time
-// ---------------------------------------
-// [ ] selecting and reloading text
-// [ ] changing font size
-// [ ] selecting and reloading fonts
-// ---------------------------------------
 
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
@@ -287,9 +291,10 @@ func main() {
     test_rectq := sdl.Rect{int32(location.x), int32(location.y), 10, 10}
 
     // ****** PSEUDO_SMOOTH SCROLLING ******
-    //do_test_lerp := false
-    //STEP_CONST := float32(40)
-    //stepsize := float32(40)
+    //do_test_lerp_up := false
+    //do_test_lerp_down := false
+    //STEP_CONST := float32(TEXT_SCROLL_SPEED)
+    //stepsize := float32(TEXT_SCROLL_SPEED)
     //test_line_rectq := []sdl.Rect{
     //        sdl.Rect{0,  0, WIN_W, 10},
     //        sdl.Rect{0, 11, WIN_W, 10},
@@ -499,20 +504,16 @@ func main() {
 
         if move_text_down {
             move_text_down = false
-
             for index := range all_lines[START_INDEX:MAX_INDEX] {
                 all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
             }
-
             for i := 0; i < len(all_lines); i++ {
                 for j := 0; j < len(all_lines[i].word_rects); j++ {
                     all_lines[i].word_rects[j].Y -= TEXT_SCROLL_SPEED
                 }
             }
-
-            //do_test_lerp = true
-
             add_new_line = true
+            //do_test_lerp_down = true
         }
 
         if add_new_line {
@@ -556,8 +557,8 @@ func main() {
                     all_lines[i].word_rects[j].Y += TEXT_SCROLL_SPEED
                 }
             }
-
             del_new_line = true
+            //do_test_lerp_up = true
         }
 
         if del_new_line {
@@ -640,16 +641,36 @@ func main() {
         renderer.DrawLine(wrapline.x1+int32(X_OFFSET), wrapline.y1, wrapline.x2+int32(X_OFFSET), wrapline.y2)
 
         // ****** PSEUDO_SMOOTH SCROLLING ******
-        //if do_test_lerp {
-        //    if float32(math.RoundToEven(float64(YPOS))) >= stepsize {
-        //        do_test_lerp = false
-        //        stepsize += STEP_CONST
-        //    }
+        //if do_test_lerp_down {
         //    for i := range test_line_rectq {
         //        test_line_rectq[i].Y = int32(YPOS)
         //        test_line_rectq[i].Y += int32(i*11)
         //    }
         //    YPOS = lerp(YPOS, stepsize, 0.06)
+        //    //println("YPOS down", YPOS)
+        //    //fmt.Printf("down %#v %f %f %f %d\n", test_line_rectq[0], YPOS, stepsize,
+        //    //                                     stepsize-YPOS, test_line_rectq[0].Y - int32((stepsize-YPOS)))
+        //    if float32(math.RoundToEven(float64(YPOS))) >= stepsize {
+        //        do_test_lerp_down = false
+        //        YPOS = 0.0
+        //        //stepsize += STEP_CONST
+        //        //println("stepsize triggered down", stepsize)
+        //    }
+        //}
+
+        //if do_test_lerp_up {
+        //    for i := range test_line_rectq {
+        //        test_line_rectq[i].Y = int32(YPOS)
+        //        test_line_rectq[i].Y -= int32(i*11)
+        //    }
+        //    YPOS = lerp(YPOS, stepsize, 0.06)
+        //    //println("YPOS up", YPOS, "stepsize", stepsize)
+        //    fmt.Printf("up %#v %f %f\n", test_line_rectq[0], YPOS, stepsize)
+        //    if float32(math.RoundToEven(float64(YPOS))) >= stepsize {
+        //        do_test_lerp_up = false
+        //        stepsize -= STEP_CONST
+        //        //println("stepsize triggered up", stepsize)
+        //    }
         //}
         //for i := range test_line_rectq {
         //    draw_rect_with_border_filled(renderer, &test_line_rectq[i], &sdl.Color{100, 10, 50, 200})
@@ -1066,7 +1087,7 @@ func lerp(a float32, b float32, t float32) float32 {
     if t > 1 || t < 0 {
         return 0.0
     }
-    return (1-t) * a + t * b
+    return (1-t)*a + t*b
 }
 
 func normalize(n float32, max float32) float32{
