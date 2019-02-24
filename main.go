@@ -48,12 +48,12 @@ import (
 // [ ] progress bar for loading files and other purposes
 // [ ] visualising word stats
 // [ ] selecting and reloading text
-// [ ] changing font size
+// [ ] proper reloading text on demand
 // [ ] selecting and reloading fonts
+// [ ] changing font size
 // [ ] do not render offscreen stuff
 // [ ] loading and playing audio files
 // [ ] recording audio?
-// [ ] proper reloading text on demand
 // [ ] smooth scrolling
 // [ ] we should mark some lines as is_active = false after scrolling down / up
 // [ ] nothing is working anymore after resizing !NOT working < 16 TTF_FONT_SIZE
@@ -66,6 +66,7 @@ import (
 // [ ] fuzzy search
 // [ ] copy & pasting text
 // [ ] copy & pasting commands
+// [ ] get an N and a list of unique words in a file
 // [ ] save words to a trie tree?
 // [ ] figure out what to do about languages like left to right and asian languages
 // [ ] export/import csv
@@ -529,14 +530,6 @@ func main() {
 
             all_lines[MAX_INDEX].is_active = true
 
-            num_active := 0
-            for i := 0; i < len(all_lines); i++ {
-                if all_lines[i].is_active {
-                    num_active += 1
-                }
-            }
-            println(num_active)
-
             all_lines[MAX_INDEX].bg_rect.Y = all_lines[MAX_INDEX-1].bg_rect.Y + (all_lines[MAX_INDEX].bg_rect.H - TEXT_SCROLL_SPEED)
             all_lines[MAX_INDEX-1].bg_rect.Y -= TEXT_SCROLL_SPEED
 
@@ -579,14 +572,6 @@ func main() {
             all_lines[MAX_INDEX].is_active = false
 
             MAX_INDEX = MAX_INDEX - 1
-
-            num_active := 0
-            for i := 0; i < len(all_lines); i++ {
-                if all_lines[i].is_active {
-                    num_active += 1
-                }
-            }
-            println(num_active)
 
             // TEMP HACK
             dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
