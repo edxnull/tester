@@ -316,6 +316,7 @@ func main() {
     //YPOS := float32(0)
     // ****** PSEUDO_SMOOTH SCROLLING ******
 
+    DECR_INDEX := 0
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
             switch t := event.(type) {
@@ -476,10 +477,8 @@ func main() {
         renderer.Clear()
 
         // RENDERING TTF LINES
-        for i := range all_lines {
-            if all_lines[i].is_active {
-                renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
-            }
+        for i := range all_lines[START_INDEX:MAX_INDEX] {
+            renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
         }
 
         for i := 0; i < len(all_lines); i++ {
@@ -529,6 +528,12 @@ func main() {
             MAX_INDEX = MAX_INDEX + 1
 
             all_lines[MAX_INDEX].is_active = true
+            all_lines[DECR_INDEX].is_active = false
+            DECR_INDEX += 1
+
+            fmt.Printf("DEBUG: %#v\n", all_lines[0].bg_rect)
+            fmt.Printf("DEBUG: %#v\n", all_lines[1].bg_rect)
+            fmt.Printf("DEBUG: %#v\n", all_lines[2].bg_rect)
 
             all_lines[MAX_INDEX].bg_rect.Y = all_lines[MAX_INDEX-1].bg_rect.Y + (all_lines[MAX_INDEX].bg_rect.H - TEXT_SCROLL_SPEED)
             all_lines[MAX_INDEX-1].bg_rect.Y -= TEXT_SCROLL_SPEED
@@ -570,6 +575,8 @@ func main() {
             }
 
             all_lines[MAX_INDEX].is_active = false
+            all_lines[DECR_INDEX].is_active = true
+            DECR_INDEX -= 1
 
             MAX_INDEX = MAX_INDEX - 1
 
