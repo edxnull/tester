@@ -316,6 +316,11 @@ func main() {
     //YPOS := float32(0)
     // ****** PSEUDO_SMOOTH SCROLLING ******
 
+    s := NewStack(10)
+    println(s.IsEmpty())
+    println(s.Len(), s.Cap())
+    fmt.Printf("%#v\n", s.data)
+
     DECR_INDEX := 0
     for running {
         for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -477,8 +482,10 @@ func main() {
         renderer.Clear()
 
         // RENDERING TTF LINES
-        for i := range all_lines[START_INDEX:MAX_INDEX] {
-            renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
+        for i := range all_lines {
+            if all_lines[i].is_active {
+                renderer.Copy(all_lines[i].texture, nil, &all_lines[i].bg_rect)
+            }
         }
 
         for i := 0; i < len(all_lines); i++ {
@@ -513,7 +520,9 @@ func main() {
         if move_text_down {
             move_text_down = false
             for index := range all_lines[START_INDEX:MAX_INDEX] {
-                all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
+                if all_lines[index].is_active {
+                    all_lines[index].bg_rect.Y -= TEXT_SCROLL_SPEED
+                }
             }
             for i := 0; i < len(all_lines); i++ {
                 for j := 0; j < len(all_lines[i].word_rects); j++ {
@@ -531,9 +540,10 @@ func main() {
             all_lines[DECR_INDEX].is_active = false
             DECR_INDEX += 1
 
-            fmt.Printf("DEBUG: %#v\n", all_lines[0].bg_rect)
-            fmt.Printf("DEBUG: %#v\n", all_lines[1].bg_rect)
-            fmt.Printf("DEBUG: %#v\n", all_lines[2].bg_rect)
+            for i := 0; i < 20; i++ {
+                fmt.Printf("[UP]: %#v\n", all_lines[i].bg_rect)
+            }
+            println("---------------------------------------------------------")
 
             all_lines[MAX_INDEX].bg_rect.Y = all_lines[MAX_INDEX-1].bg_rect.Y + (all_lines[MAX_INDEX].bg_rect.H - TEXT_SCROLL_SPEED)
             all_lines[MAX_INDEX-1].bg_rect.Y -= TEXT_SCROLL_SPEED
@@ -555,7 +565,9 @@ func main() {
             move_text_up = false
 
             for index := range all_lines[START_INDEX:MAX_INDEX] {
-                all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
+                if all_lines[index].is_active {
+                    all_lines[index].bg_rect.Y += TEXT_SCROLL_SPEED
+                }
             }
 
             for i := 0; i < len(all_lines); i++ {
@@ -577,6 +589,11 @@ func main() {
             all_lines[MAX_INDEX].is_active = false
             all_lines[DECR_INDEX].is_active = true
             DECR_INDEX -= 1
+
+            for i := 0; i < 20; i++ {
+                fmt.Printf("[DOWN]: %#v\n", all_lines[i].bg_rect)
+            }
+            println("---------------------------------------------------------")
 
             MAX_INDEX = MAX_INDEX - 1
 
@@ -831,6 +848,7 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_t
     move_x  := X_OFFSET
     move_y  := skip_nr
     ix := 0
+    // TODO: EVIL!!!
     for index := 0; index < text_len; index++ {
         ix = x * len(text[index])
         if index == 0 {
