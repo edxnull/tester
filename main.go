@@ -10,6 +10,7 @@ import (
     "bytes"
     "strconv"
     "strings"
+	"unsafe"
     "runtime"
     "io/ioutil"
     "runtime/pprof"
@@ -17,6 +18,7 @@ import (
     "github.com/veandco/go-sdl2/ttf"
 )
 
+// https://medium.com/basecs/trying-to-understand-tries-3ec6bede0014
 // TODO
 // https://gist.github.com/tetsuok/3025333
 // we have to turn off compiler optimizations in order to debug properly
@@ -34,7 +36,22 @@ import (
 // TODO: https://github.com/malkia/ufo/tree/master/samples/SDL
 // TODO: try [raylib] for go or c
 
+//taken from https://www.youtube.com/watch?v=40d26ZGfhR8
+// check that his func is stack allocated
+func value() int {
+    v := new(int)
+    return *v
+}
+//check that this is heap allocated
+func escape() *int {
+    v := 43
+    return &v
+}
+
+
 // [x] cleanup the code!
+// [ ] get rid of int (because on 64-bit systems it would become 64 bit and waste memory)
+// [ ] do we have to use int everywhere? Maybe it should be better to use int16 in some cases?
 // [ ] scrollbar
 // [ ] proper time handling like dt and such
 // [ ] how can we not render everything on every frame?
@@ -171,6 +188,16 @@ func main() {
     // PROFILING SNIPPET
 
     runtime.LockOSThread()
+
+	dummy_a := new(int)
+	dummy_b := new(string)
+	dummy_c := string("H")
+	dummy_d := new(int64)
+
+	println(unsafe.Sizeof(dummy_a))
+	println(unsafe.Sizeof(dummy_b))
+	println(unsafe.Sizeof(dummy_c))
+	println(unsafe.Sizeof(dummy_d))
 
     if err := sdl.Init(sdl.INIT_TIMER|sdl.INIT_VIDEO|sdl.INIT_AUDIO); err != nil {
         panic(err)
