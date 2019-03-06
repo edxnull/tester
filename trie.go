@@ -1,7 +1,5 @@
 package main
 
-import _ "fmt"
-
 const R = 26
 
 type TrieNode struct {
