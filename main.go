@@ -325,23 +325,6 @@ func main() {
     location := v2{0, 0}
     test_rectq := sdl.Rect{int32(location.x), int32(location.y), 10, 10}
 
-    // ****** PSEUDO_SMOOTH SCROLLING ******
-    //do_test_lerp_up := false
-    //do_test_lerp_down := false
-    //STEP_CONST := float32(TEXT_SCROLL_SPEED)
-    //stepsize := float32(TEXT_SCROLL_SPEED)
-    //test_line_rectq := []sdl.Rect{
-    //        sdl.Rect{0,  0, WIN_W, 10},
-    //        sdl.Rect{0, 11, WIN_W, 10},
-    //        sdl.Rect{0, 22, WIN_W, 10},
-    //        sdl.Rect{0, 33, WIN_W, 10},
-    //        sdl.Rect{0, 44, WIN_W, 10},
-    //        sdl.Rect{0, 55, WIN_W, 10},
-    //        sdl.Rect{0, 66, WIN_W, 10},
-    //}
-    //YPOS := float32(0)
-    // ****** PSEUDO_SMOOTH SCROLLING ******
-
     qsize := int(math.RoundToEven(float64(WIN_H) / float64(font.Height()))) + 1
     queue := NewQueue(qsize)
     re := make([]sdl.Rect, qsize)
@@ -691,43 +674,6 @@ func main() {
 
         renderer.SetDrawColor(255, 100, 0, 100)
         renderer.DrawLine(wrapline.x1+int32(X_OFFSET), wrapline.y1, wrapline.x2+int32(X_OFFSET), wrapline.y2)
-
-        // ****** PSEUDO_SMOOTH SCROLLING ******
-        //if do_test_lerp_down {
-        //    for i := range test_line_rectq {
-        //        test_line_rectq[i].Y = int32(YPOS)
-        //        test_line_rectq[i].Y += int32(i*11)
-        //    }
-        //    YPOS = lerp(YPOS, stepsize, 0.06)
-        //    //println("YPOS down", YPOS)
-        //    //fmt.Printf("down %#v %f %f %f %d\n", test_line_rectq[0], YPOS, stepsize,
-        //    //                                     stepsize-YPOS, test_line_rectq[0].Y - int32((stepsize-YPOS)))
-        //    if float32(math.RoundToEven(float64(YPOS))) >= stepsize {
-        //        do_test_lerp_down = false
-        //        YPOS = 0.0
-        //        //stepsize += STEP_CONST
-        //        //println("stepsize triggered down", stepsize)
-        //    }
-        //}
-
-        //if do_test_lerp_up {
-        //    for i := range test_line_rectq {
-        //        test_line_rectq[i].Y = int32(YPOS)
-        //        test_line_rectq[i].Y -= int32(i*11)
-        //    }
-        //    YPOS = lerp(YPOS, stepsize, 0.06)
-        //    //println("YPOS up", YPOS, "stepsize", stepsize)
-        //    fmt.Printf("up %#v %f %f\n", test_line_rectq[0], YPOS, stepsize)
-        //    if float32(math.RoundToEven(float64(YPOS))) >= stepsize {
-        //        do_test_lerp_up = false
-        //        stepsize -= STEP_CONST
-        //        //println("stepsize triggered up", stepsize)
-        //    }
-        //}
-        //for i := range test_line_rectq {
-        //    draw_rect_with_border_filled(renderer, &test_line_rectq[i], &sdl.Color{100, 10, 50, 200})
-        //}
-        // ****** PSEUDO_SMOOTH SCROLLING ******
 
         renderer.Present()
 
