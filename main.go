@@ -247,6 +247,7 @@ func main() {
     // NOTE: should we keep fonts in memory? or free them instead?
 
     start := time.Now()
+    //test_tokens := make([]string, determine_nwrap_lines(line_tokens, LINE_LENGTH, gfonts.current_font_w))
     test_tokens := make([]string, determine_nwrap_lines(line_tokens, LINE_LENGTH, gfonts.current_font_w))
     for apos, bpos := 0, 0; apos < len(line_tokens); apos += 1 {
         if (len(line_tokens[apos]) > 1) {
@@ -267,16 +268,16 @@ func main() {
     now_gen := time.Now()
 
     all_lines := make([]Line, len(test_tokens))
-    generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
+    //generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
+
+    //INC := 2
+    //NEXT_MAX_INDEX := (40+1)*INC
+    generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
+    //generate_lines(renderer, font, &all_lines, &test_tokens, NEXT_MAX_INDEX)
 
     for i := 0; i < MAX_INDEX; i++ {
         all_lines[i].is_active = true
     }
-
-    //INC := 2
-    //NEXT_MAX_INDEX := (40+1)*INC
-    //generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
-    //generate_lines(renderer, font, &all_lines, &test_tokens, NEXT_MAX_INDEX)
 
     end_gen := time.Now().Sub(now_gen)
     fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
@@ -345,7 +346,6 @@ func main() {
     queue := NewQueue(qsize)
     re := make([]sdl.Rect, qsize)
     rey := genY(font, qsize)
-    println(font.LineSkip(), font.Height())
     for i := 0 ; i < qsize; i++ {
         re[i] = sdl.Rect{0, int32(rey[i]), WIN_W, int32(font.Height())}
     }
