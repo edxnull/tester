@@ -166,7 +166,8 @@ func main() {
     // PROFILING SNIPPET
     var debug bool
 
-    flag.BoolVar(&debug, "debug", false, "")
+    flag.BoolVar(&debug, "debug", false, "debug needs a bool value: -debug=true")
+
     flag.Parse()
 
     if *cpuprofile != "" {
@@ -185,7 +186,7 @@ func main() {
         println("we can put debug if's everywhere!")
     }
 
-    runtime.LockOSThread()
+    runtime.LockOSThread() // NOTE: not sure I need this here!
 
 	dummy_a := new(int)
 	dummy_b := new(string)
@@ -498,6 +499,11 @@ func main() {
         current := list.head.next
         for i := 0; i < list.size; i++ {
             renderer.Copy(current.data.texture, nil, &current.data.bg_rect)
+            for j := 0; j < len(current.data.mouse_over_word); j++ {
+                if current.data.mouse_over_word[j] {
+                    engage_loop = true
+                }
+            }
             current = current.next
         }
 
@@ -505,29 +511,19 @@ func main() {
             draw_rect_with_border(renderer, &re[i], &sdl.Color{200, 100, 0, 200})
         }
 
-        for i := 0; i < len(all_lines); i++ {
-            for j := 0; j < len(all_lines[i].mouse_over_word); j++ {
-                if all_lines[i].mouse_over_word[j] {
-                    engage_loop = true
-                }
-            }
-        }
-
         if engage_loop && !cmd.show {
-            for i := 0; i < len(all_lines); i++ {
-                for j := 0; j < len(all_lines[i].word_rects); j++ {
-                    if all_lines[i].mouse_over_word[j] {
-                        if all_lines[i].words[j] != "\n" {
-                            draw_rect_without_border(renderer, &all_lines[i].word_rects[j], &sdl.Color{255, 100, 200, 100})
-                            if print_word {
-                                if all_lines[i].words[j] != "\n" {
-                                    fmt.Printf("%s\n", all_lines[i].words[j])
-                                    print_word = false
-                                }
-                            }
+            current := list.head.next
+            for i := 0; i < list.size; i++ {
+                for j := 0; j < len(current.data.mouse_over_word); j++ {
+                    if current.data.mouse_over_word[j] {
+                        draw_rect_without_border(renderer, &current.data.word_rects[j], &sdl.Color{255, 100, 200, 100})
+                        if print_word && current.data.words[j] != "\n" {
+                            fmt.Printf("%s\n", current.data.words[j])
+                            print_word = false
                         }
                     }
                 }
+                current = current.next
             }
             engage_loop = false
         }
