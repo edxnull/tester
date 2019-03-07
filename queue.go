@@ -5,7 +5,7 @@ import "fmt"
 // FIFO queue
 
 type Queue struct {
-	data []int
+	data []*Line
 	front int
     rear  int
 	size  int
@@ -13,7 +13,7 @@ type Queue struct {
 
 func NewQueue(size int) *Queue {
 	return &Queue {
-        make([]int, size), size-1, size, 0,
+        make([]*Line, size), size-1, size, 0,
     }
 }
 
@@ -29,9 +29,9 @@ func (q *Queue) IsEmpty() bool {
     return q.size == 0
 }
 
-func (q *Queue) Enqueue(num int) {
+func (q *Queue) Enqueue(line *Line) {
     if (q.rear-1) >= 0 {
-        q.data[q.rear-1] = num
+        q.data[q.rear-1] = line
         q.rear -= 1
         q.size += 1
     } else {
@@ -39,14 +39,14 @@ func (q *Queue) Enqueue(num int) {
     }
 }
 
-func (q *Queue) Dequeue() int {
+func (q *Queue) Dequeue() *Line {
     if q.rear <= q.front {
         deleted := q.data[q.front]
         copy(q.data[q.Len()-q.size+1:], q.data[q.Len()-q.size:q.Len()-1])
-        q.data[q.Len()-q.size] = 0
+        q.data[q.Len()-q.size] = nil
         q.size -= 1
         q.rear += 1
         return deleted
     }
-    return -1
+    return nil
 }

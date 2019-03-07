@@ -1,7 +1,7 @@
 package main
 
 type Node struct {
-    data int
+    data *Line
     next *Node
     prev *Node
 }
@@ -13,14 +13,14 @@ type List struct {
 }
 
 func NewList() *List {
-    return &List{0, &Node{0, nil, nil},
-                    &Node{0, nil, nil},
+    return &List{0, &Node{nil, nil, nil},
+                    &Node{nil, nil, nil},
     }
 }
 
-func (L *List) Append(num int) {
+func (L *List) Append(line *Line) {
     if L.size == 0 {
-        node := &Node{num, nil, nil}
+        node := &Node{line, nil, nil}
         L.head.next = node
         L.head.next.prev = L.head
         L.tail.next = node
@@ -30,22 +30,22 @@ func (L *List) Append(num int) {
         for current.next != nil {
             current = current.next
         }
-        node := &Node{num, nil, current}
+        node := &Node{line, nil, current}
         current.next = node
         L.tail.next = current.next
         L.size += 1
     }
 }
 
-func (L *List) Prepend(num int) {
+func (L *List) Prepend(line *Line) {
     if L.head == nil && L.tail == nil {
-        node := &Node{num, nil, nil}
+        node := &Node{line, nil, nil}
         L.head.next = node
         L.head.next.prev = L.head
         L.tail.next = node
         L.size += 1
     } else {
-        node := &Node{num, L.head.next, L.head}
+        node := &Node{line, L.head.next, L.head}
         L.head.next = node
         L.head.next.next.prev = node
         L.size += 1
