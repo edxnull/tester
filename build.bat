@@ -4,7 +4,7 @@ echo "Building *tester* app"
 REM set GOOS=windows
 REM set GOARCH=386
 REM go build -gcflags="-N -l" main.go
-go build main.go stack.go queue.go list.go trie.go
+go build -i main.go stack.go queue.go list.go trie.go
 echo "Finished...."
 
 REM go build -gcflags=m main.go

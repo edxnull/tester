@@ -18,7 +18,6 @@ import (
     "github.com/veandco/go-sdl2/ttf"
 )
 
-// https://medium.com/basecs/trying-to-understand-tries-3ec6bede0014
 // TODO
 // https://gist.github.com/tetsuok/3025333
 // we have to turn off compiler optimizations in order to debug properly
@@ -47,7 +46,6 @@ func escape() *int {
     v := 43
     return &v
 }
-
 
 // [x] cleanup the code!
 // [ ] get rid of int (because on 64-bit systems it would become 64 bit and waste memory)
@@ -343,10 +341,15 @@ func main() {
     //YPOS := float32(0)
     // ****** PSEUDO_SMOOTH SCROLLING ******
 
-    s := NewStack(10)
-    println(s.IsEmpty())
-    println(s.Len(), s.Cap())
-    fmt.Printf("%#v\n", s.data)
+    qsize := int(math.RoundToEven(float64(WIN_H) / float64(font.Height()))) + 1
+    queue := NewQueue(qsize)
+    re := make([]sdl.Rect, qsize)
+    rey := genY(font, qsize)
+    println(font.LineSkip(), font.Height())
+    for i := 0 ; i < qsize; i++ {
+        re[i] = sdl.Rect{0, int32(rey[i]), WIN_W, int32(font.Height())}
+    }
+    fmt.Println(queue.data)
 
     DECR_INDEX := 0
     for running {
@@ -394,6 +397,7 @@ func main() {
                     }
                     break
                 case *sdl.MouseMotionEvent:
+                    //fmt.Println(t.X, t.Y)
                     for i := 0; i < len(all_lines); i++ {
                         if all_lines[i].is_active {
                             check_collision_mouse_over_words(t, &all_lines[i].word_rects, &all_lines[i].mouse_over_word)
@@ -507,6 +511,10 @@ func main() {
         }
         renderer.SetDrawColor(255, 255, 255, 0)
         renderer.Clear()
+
+        for i := range re {
+            draw_rect_with_border(renderer, &re[i], &sdl.Color{200, 100, 0, 200})
+        }
 
         // RENDERING TTF LINES
         for i := range all_lines {
@@ -1229,4 +1237,13 @@ func generate_rects_for_fonts(renderer *sdl.Renderer, font *FontSelector) {
             }
         }
     }
+}
+
+func genY(font *ttf.Font, size int) []int {
+    result := make([]int, size)
+
+    for i := 0; i < size; i++ {
+        result[i] = i*font.LineSkip()
+    }
+    return result
 }
