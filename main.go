@@ -108,13 +108,6 @@ var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 var MAX_INDEX int = 40
 var START_INDEX int = 0
 
-type RctStat uint8
-const (
-    TypeActive RctStat = 0
-    TypePending RctStat = 1
-    TypeInactive RctStat = 2
-)
-
 type v2 struct {
     x float32
     y float32
