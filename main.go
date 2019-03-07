@@ -164,7 +164,11 @@ type FontSelector struct {
 
 func main() {
     // PROFILING SNIPPET
+    var debug bool
+
+    flag.BoolVar(&debug, "debug", false, "")
     flag.Parse()
+
     if *cpuprofile != "" {
         f, err := os.Create(*cpuprofile)
         if err != nil {
@@ -176,6 +180,10 @@ func main() {
         defer pprof.StopCPUProfile()
     }
     // PROFILING SNIPPET
+
+    if debug {
+        println("we can put debug if's everywhere!")
+    }
 
     runtime.LockOSThread()
 
