@@ -349,7 +349,6 @@ func main() {
 			switch t := event.(type) {
 			case *sdl.QuitEvent:
 				running = false
-				break
 			case *sdl.WindowEvent:
 				switch t.Event {
 				case sdl.WINDOWEVENT_SIZE_CHANGED:
@@ -383,40 +382,26 @@ func main() {
 						wrapline.y2 = new_win_h
 						//renderer.SetViewport(&viewport_rect)
 					}
-					break
-				default:
-					break
 				}
-				break
 			case *sdl.MouseMotionEvent:
 				//fmt.Println(t.X, t.Y)
 				for i := 0; i < len(all_lines); i++ {
 					check_collision_mouse_over_words(t, &all_lines[i].word_rects, &all_lines[i].mouse_over_word)
 				}
 				check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
-				break
 			case *sdl.MouseWheelEvent:
 				switch t.Y {
 				case 1:
 					move_text_up = true
-					break
 				case -1:
 					move_text_down = true
-					break
-				default:
-					break
 				}
-				break
 			case *sdl.MouseButtonEvent:
 				switch t.Type {
 				case sdl.MOUSEBUTTONDOWN:
 				case sdl.MOUSEBUTTONUP:
 					print_word = true
-					break
-				default:
-					break
 				}
-				break
 			case *sdl.TextInputEvent:
 				if cmd.show {
 					fmt.Printf("[debug] keyinput: %c\n", t.Text[0])
@@ -429,7 +414,6 @@ func main() {
 					cmd.ttf_rect.H = int32(gfonts.current_font_h)
 					cmd.cursor_rect.X += int32(curr_char_w)
 				}
-				break
 			case *sdl.KeyboardEvent:
 				if cmd.show {
 					if t.Keysym.Sym == sdl.K_BACKSPACE {
@@ -453,11 +437,9 @@ func main() {
 							if cmd.show {
 								cmd.show = false
 							}
-							break
 						case sdl.K_BACKSPACE:
 							execute_cmd_write_to_buffer(renderer, &cmd, curr_char_w, gfonts.current_font, gfonts.current_font_w,
 								gfonts.current_font_h)
-							break
 						case sdl.K_RETURN:
 							if cmd.show {
 								if len(cmd.input_buffer.String()) > 0 {
@@ -469,24 +451,15 @@ func main() {
 									fmt.Printf("[debug] cmd_text_buffer (cap): %d\n", cmd.input_buffer.Cap())
 								}
 							}
-							break
 						case sdl.K_UP:
 							move_text_up = true
-							break
 						case sdl.K_DOWN:
 							move_text_down = true
-							break
-						default:
-							break
 						}
 					}
-					break
-				default:
-					break
 				}
 				if t.Keysym.Sym == sdl.K_ESCAPE {
 					running = false
-					break
 				}
 				if t.Keysym.Sym == sdl.K_LEFT {
 					println("SHOULD SCROLL FONT back")
@@ -494,7 +467,6 @@ func main() {
 				if t.Keysym.Sym == sdl.K_RIGHT {
 					println("SHOULD SCROLL FONT forward")
 				}
-				break
 			default:
 				continue
 			}
