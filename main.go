@@ -541,14 +541,6 @@ func main() {
                 }
                 current = current.next
             }
-            // this is redundant
-            // we just have to fix the other part of this code line:
-            // if engage_loop && !cmd.show ...
-            last := stack.GetLast()
-            fmt.Println(last, stack.top, stack.IsEmpty())
-            for i := 0; i < len(last.word_rects); i++ {
-                last.word_rects[i].Y = -100
-            }
         }
 
         if move_text_up {
