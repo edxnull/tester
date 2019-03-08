@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 // FILO stack
 
 type Stack struct {
@@ -33,7 +31,7 @@ func (s *Stack) Push(line *Line) {
 		s.data[s.top] = line
 		s.top += 1
 	} else {
-		fmt.Println("Error :: We need to allocate more Stack space")
+		panic("Error :: We need to allocate more Stack space")
 	}
 }
 
