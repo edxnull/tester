@@ -1033,53 +1033,53 @@ func get_filedata(path string, filename string) []byte {
 }
 
 func allocate_font_space(font *FontSelector, size int) {
-	(*font).fonts = make([]Font, size)
-	(*font).textures = make([]*sdl.Texture, size)
-	(*font).ttf_rects = make([]sdl.Rect, size)
-	(*font).highlight_rect = make([]sdl.Rect, size)
+	font.fonts = make([]Font, size)
+	font.textures = make([]*sdl.Texture, size)
+	font.ttf_rects = make([]sdl.Rect, size)
+	font.highlight_rect = make([]sdl.Rect, size)
 }
 
 func generate_fonts(font *FontSelector, ttf_font_list []string, font_dir string) {
 	CURRENT := 6 // magic number
 	for index, element := range ttf_font_list {
 		if CURRENT == index {
-			(*font).current_font = load_font(font_dir+element, TTF_FONT_SIZE)
-			w, h, _ := (*font).current_font.SizeUTF8(" ")
-			skp := (*font).current_font.LineSkip()
-			(*font).current_font_w = w
-			(*font).current_font_h = h
-			(*font).current_font_skip = skp
+			font.current_font = load_font(font_dir+element, TTF_FONT_SIZE)
+			w, h, _ := font.current_font.SizeUTF8(" ")
+			skp := font.current_font.LineSkip()
+			font.current_font_w = w
+			font.current_font_h = h
+			font.current_font_skip = skp
 		}
-		(*font).fonts[index].data = load_font(font_dir+element, TTF_FONT_SIZE_FOR_FONT_LIST)
-		(*font).fonts[index].name = element
+		font.fonts[index].data = load_font(font_dir+element, TTF_FONT_SIZE_FOR_FONT_LIST)
+		font.fonts[index].name = element
 	}
 }
 
 func generate_rects_for_fonts(renderer *sdl.Renderer, font *FontSelector) {
-	(*font).bg_rect = sdl.Rect{}
+	font.bg_rect = sdl.Rect{}
 	adder_y := 0
-	for index, element := range (*font).fonts {
+	for index, element := range font.fonts {
 		gx, gy, _ := (*font).fonts[index].data.SizeUTF8(" ")
-		(*font).fonts[index].size = gx * len(element.name)
+		font.fonts[index].size = gx * len(element.name)
 
-		(*font).textures[index] = make_ttf_texture(renderer, (*font).fonts[index].data,
-			(*font).fonts[index].name,
+		font.textures[index] = make_ttf_texture(renderer, font.fonts[index].data,
+			font.fonts[index].name,
 			&sdl.Color{0, 0, 0, 0})
 
-		(*font).ttf_rects[index] = sdl.Rect{0, int32(adder_y), int32(gx * len(element.name)), int32(gy)}
+		font.ttf_rects[index] = sdl.Rect{0, int32(adder_y), int32(gx * len(element.name)), int32(gy)}
 
-		if (*font).bg_rect.W < (*font).ttf_rects[index].W {
-			(*font).bg_rect.W = (*font).ttf_rects[index].W
+		if font.bg_rect.W < font.ttf_rects[index].W {
+			font.bg_rect.W = font.ttf_rects[index].W
 		}
 
-		(*font).highlight_rect[index] = (*font).ttf_rects[index]
+		font.highlight_rect[index] = font.ttf_rects[index]
 
-		(*font).bg_rect.H += (*font).ttf_rects[index].H
+		font.bg_rect.H += font.ttf_rects[index].H
 		adder_y += gy
 
-		if index == len((*font).fonts)-1 {
-			for i := 0; i < len((*font).ttf_rects); i++ {
-				(*font).highlight_rect[i].W = (*font).bg_rect.W
+		if index == len(font.fonts)-1 {
+			for i := 0; i < len(font.ttf_rects); i++ {
+				font.highlight_rect[i].W = font.bg_rect.W
 			}
 		}
 	}
