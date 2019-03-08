@@ -47,6 +47,11 @@ func escape() *int {
     return &v
 }
 
+// check out Bill Kennedy
+// https://godoc.org/golang.org/x/net/trace
+// https://www.youtube.com/watch?v=2557w0qsDV0
+// https://www.youtube.com/watch?v=ZfdF8gPinlU
+
 // [x] cleanup the code!
 // [ ] list.go should we set data to nil everytime?
 // [ ] get rid of int (because on 64-bit systems it would become 64 bit and waste memory)

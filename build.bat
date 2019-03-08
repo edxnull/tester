@@ -23,3 +23,4 @@ REM go test -bench=. -benchmem
 
 REM pprof -http=":8081" [.exe] [.prof]
 REM go test -bench=. -benchmem
+REM go build -race
