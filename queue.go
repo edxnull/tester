@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 // FIFO queue
 
 type Queue struct {
@@ -35,7 +33,7 @@ func (q *Queue) Enqueue(line *Line) {
         q.rear -= 1
         q.size += 1
     } else {
-        fmt.Println("ERROR :: We need to allocate more Queue space")
+        panic("ERROR :: We need to allocate more Queue space")
     }
 }
 
