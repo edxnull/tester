@@ -515,7 +515,7 @@ func main() {
             current := list.head.next
             for i := 0; i < list.size; i++ {
                 for j := 0; j < len(current.data.mouse_over_word); j++ {
-                    if current.data.mouse_over_word[j] {
+                    if current.data.mouse_over_word[j] && current.data.words[j] != "\n" {
                         draw_rect_without_border(renderer, &current.data.word_rects[j], &sdl.Color{255, 100, 200, 100})
                         if print_word && current.data.words[j] != "\n" {
                             fmt.Printf("%s\n", current.data.words[j])
