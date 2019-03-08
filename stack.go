@@ -6,26 +6,26 @@ import "fmt"
 
 type Stack struct {
 	data []*Line
-	top int
+	top  int
 	size int
 }
 
 func NewStack(size int) *Stack {
-	return &Stack {
+	return &Stack{
 		make([]*Line, size), 0, size,
 	}
 }
 
 func (s *Stack) Len() int {
-    return len(s.data)
+	return len(s.data)
 }
 
 func (s *Stack) Cap() int {
-    return cap(s.data)
+	return cap(s.data)
 }
 
 func (s *Stack) IsEmpty() bool {
-    return s.top == 0
+	return s.top == 0
 }
 
 func (s *Stack) Push(line *Line) {
@@ -48,8 +48,8 @@ func (s *Stack) Pop() *Line {
 }
 
 func (s *Stack) GetLast() *Line {
-    if s.IsEmpty() {
-        return nil
-    }
-    return s.data[s.top-1]
+	if s.IsEmpty() {
+		return nil
+	}
+	return s.data[s.top-1]
 }
