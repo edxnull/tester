@@ -288,15 +288,15 @@ func main() {
 	cmd_win_h := int32(18)
 	cmd := CmdConsole{}
 	cmd.alpha_value = 100
-	cmd.ttf_texture = make_ttf_texture(renderer, font, " ", &sdl.Color{0, 0, 0, 255})
-	cmd.ttf_rect = sdl.Rect{0, WIN_H - cmd_win_h, int32(gfonts.current_font_w * len(" ")), int32(gfonts.current_font_h)}
-	cmd.bg_rect = sdl.Rect{0, WIN_H - cmd_win_h, WIN_W, int32(gfonts.current_font_h)}
-	cmd.cursor_rect = sdl.Rect{0, WIN_H - cmd_win_h, int32(gfonts.current_font_w), int32(gfonts.current_font_h)}
+	cmd.ttf_texture = make_ttf_texture(renderer, font, " ", &sdl.Color{R: 0, G: 0, B: 0, A: 255})
+	cmd.ttf_rect = sdl.Rect{X: 0, Y: WIN_H - cmd_win_h, W: int32(gfonts.current_font_w * len(" ")), H: int32(gfonts.current_font_h)}
+	cmd.bg_rect = sdl.Rect{X: 0, Y: WIN_H - cmd_win_h, W: WIN_W, H: int32(gfonts.current_font_h)}
+	cmd.cursor_rect = sdl.Rect{X: 0, Y: WIN_H - cmd_win_h, W: int32(gfonts.current_font_w), H: int32(gfonts.current_font_h)}
 	cmd.input_buffer.Grow(128) // we need to make sure we never write past this value?
 
 	dbg_str := make_console_text(0, len(test_tokens))
-	dbg_rect := sdl.Rect{0, WIN_H - cmd_win_h - cmd_win_h - 2, int32(gfonts.current_font_w * len(dbg_str)), int32(gfonts.current_font_h)}
-	dbg_ttf := make_ttf_texture(renderer, gfonts.current_font, dbg_str, &sdl.Color{0, 0, 0, 255})
+	dbg_rect := sdl.Rect{X: 0, Y: WIN_H - cmd_win_h - cmd_win_h - 2, W: int32(gfonts.current_font_w * len(dbg_str)), H: int32(gfonts.current_font_h)}
+	dbg_ttf := make_ttf_texture(renderer, gfonts.current_font, dbg_str, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
 	sdl.SetHint(sdl.HINT_FRAMEBUFFER_ACCELERATION, "1")
 	sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "1")
@@ -323,7 +323,7 @@ func main() {
 	//renderer.SetViewport(&viewport_rect)
 
 	location := v2{0, 0}
-	test_rectq := sdl.Rect{int32(location.x), int32(location.y), 10, 10}
+	test_rectq := sdl.Rect{X: int32(location.x), Y: int32(location.y), W: 10, H: 10}
 
 	qsize := int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
 	stack := NewStack(qsize)
@@ -337,7 +337,7 @@ func main() {
 	re := make([]sdl.Rect, qsize)
 	rey := genY(font, qsize)
 	for i := 0; i < qsize; i++ {
-		re[i] = sdl.Rect{0, int32(rey[i]), WIN_W, int32(font.Height())}
+		re[i] = sdl.Rect{X: 0, Y: int32(rey[i]), W: WIN_W, H: int32(font.Height())}
 		all_lines[i].bg_rect.Y = re[i].Y
 		for j := 0; j < len(all_lines[i].word_rects); j++ {
 			all_lines[i].word_rects[j].Y = re[i].Y
@@ -408,7 +408,7 @@ func main() {
 					input_char := string(t.Text[0])
 					cmd.input_buffer.WriteString(input_char)
 					cmd.ttf_texture.Destroy()
-					cmd.ttf_texture = make_ttf_texture(renderer, font, cmd.input_buffer.String(), &sdl.Color{0, 0, 0, 255})
+					cmd.ttf_texture = make_ttf_texture(renderer, font, cmd.input_buffer.String(), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 					curr_char_w = gfonts.current_font_w * len(input_char)
 					cmd.ttf_rect.W = int32(gfonts.current_font_w * len(cmd.input_buffer.String()))
 					cmd.ttf_rect.H = int32(gfonts.current_font_h)
@@ -486,7 +486,7 @@ func main() {
 		}
 
 		for i := range re {
-			draw_rect_with_border(renderer, &re[i], &sdl.Color{200, 100, 0, 200})
+			draw_rect_with_border(renderer, &re[i], &sdl.Color{R: 200, G: 100, B: 0, A: 200})
 		}
 
 		if engage_loop && !cmd.show {
@@ -494,7 +494,7 @@ func main() {
 			for i := 0; i < list.size; i++ {
 				for j := 0; j < len(current.data.mouse_over_word); j++ {
 					if current.data.mouse_over_word[j] && current.data.words[j] != "\n" {
-						draw_rect_without_border(renderer, &current.data.word_rects[j], &sdl.Color{255, 100, 200, 100})
+						draw_rect_without_border(renderer, &current.data.word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
 						if print_word && current.data.words[j] != "\n" {
 							fmt.Printf("%s\n", current.data.words[j])
 							print_word = false
@@ -538,44 +538,44 @@ func main() {
 
 		if wrap_line {
 			for i := 0; i < len(all_lines[START_INDEX:MAX_INDEX]); i++ {
-				draw_rect_without_border(renderer, &all_lines[i].bg_rect, &sdl.Color{100, 255, 255, 100})
+				draw_rect_without_border(renderer, &all_lines[i].bg_rect, &sdl.Color{R: 100, G: 255, B: 255, A: 100})
 			}
 		}
 
 		if cmd.show {
 			for i := 0; i < len(all_lines); i++ {
 				for j := 0; j < len(all_lines[i].word_rects); j++ {
-					draw_rect_without_border(renderer, &all_lines[i].word_rects[j], &sdl.Color{255, 100, 200, 100})
+					draw_rect_without_border(renderer, &all_lines[i].word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
 				}
 			}
-			draw_rect_with_border_filled(renderer, &cmd.bg_rect, &sdl.Color{255, 10, 100, cmd.alpha_value + 40})
-			draw_rect_with_border(renderer, &cmd.ttf_rect, &sdl.Color{255, 255, 255, 0})
+			draw_rect_with_border_filled(renderer, &cmd.bg_rect, &sdl.Color{R: 255, G: 10, B: 100, A: cmd.alpha_value + 40})
+			draw_rect_with_border(renderer, &cmd.ttf_rect, &sdl.Color{R: 255, G: 255, B: 255, A: 0})
 
 			renderer.Copy(cmd.ttf_texture, nil, &cmd.ttf_rect)
 
-			draw_rect_with_border_filled(renderer, &cmd.cursor_rect, &sdl.Color{0, 0, 0, cmd.alpha_value})
+			draw_rect_with_border_filled(renderer, &cmd.cursor_rect, &sdl.Color{R: 0, G: 0, B: 0, A: cmd.alpha_value})
 
-			draw_rect_without_border(renderer, &gfonts.bg_rect, &sdl.Color{255, 0, 255, uint8(gfonts.alpha_f32)})
+			draw_rect_without_border(renderer, &gfonts.bg_rect, &sdl.Color{R: 255, G: 0, B: 255, A: uint8(gfonts.alpha_f32)})
 
 			for i := 0; i < len(gfonts.textures); i++ {
 				renderer.Copy(gfonts.textures[i], nil, &gfonts.ttf_rects[i])
 				if mouseover_word_texture_FONT[i] == true {
-					draw_rect_without_border(renderer, &gfonts.highlight_rect[i], &sdl.Color{0, 0, 0, 100})
+					draw_rect_without_border(renderer, &gfonts.highlight_rect[i], &sdl.Color{R: 0, G: 0, B: 0, A: 100})
 				}
 			}
 
 			if dirty_hack { // A DIRTY HACK
 				dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
-				dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{0, 0, 0, 255})
+				dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 				dirty_hack = false
 			}
 
-			draw_rect_with_border_filled(renderer, &dbg_rect, &sdl.Color{180, 123, 55, 255})
+			draw_rect_with_border_filled(renderer, &dbg_rect, &sdl.Color{R: 180, G: 123, B: 55, A: 255})
 			renderer.Copy(dbg_ttf, nil, &dbg_rect)
 
 			test_rectq.X = int32(location.x)
 			test_rectq.Y = int32(location.y)
-			draw_rect_without_border(renderer, &test_rectq, &sdl.Color{55, 100, 155, 255})
+			draw_rect_without_border(renderer, &test_rectq, &sdl.Color{R: 55, G: 100, B: 155, A: 255})
 			if location.x < 100-1 {
 				location.x = lerp(location.x, 100.0, 0.05)
 			}
@@ -715,7 +715,7 @@ func generate_lines(renderer *sdl.Renderer, font *ttf.Font, lines *[]Line, str *
 func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_text string) {
 	assert_if(len(line_text) == 0)
 
-	line.texture = make_ttf_texture(rend, font, line_text, &sdl.Color{0, 0, 0, 0})
+	line.texture = make_ttf_texture(rend, font, line_text, &sdl.Color{R: 0, G: 0, B: 0, A: 0})
 
 	text := strings.Split(line_text, " ")
 	text_len := len(text)
@@ -735,10 +735,10 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_t
 	ix := 0
 	for index := 0; index < text_len; index++ {
 		ix = x * len(text[index])
-		line.word_rects[index] = sdl.Rect{int32(move_x), int32(-y), int32(ix), int32(y)}
+		line.word_rects[index] = sdl.Rect{X: int32(move_x), Y: int32(-y), W: int32(ix), H: int32(y)}
 		move_x += (ix + x)
 	}
-	line.bg_rect = sdl.Rect{int32(X_OFFSET), int32(-y), int32(tw), int32(y)}
+	line.bg_rect = sdl.Rect{X: int32(X_OFFSET), Y: int32(-y), W: int32(tw), H: int32(y)}
 	text = nil
 }
 
@@ -932,7 +932,7 @@ func execute_cmd_write_to_buffer(renderer *sdl.Renderer, cmd *CmdConsole, curr_c
 		cmd.ttf_texture.Destroy()
 
 		if len(cmd.input_buffer.String()) > 0 {
-			cmd.ttf_texture = make_ttf_texture(renderer, font, temp_string, &sdl.Color{0, 0, 0, 255})
+			cmd.ttf_texture = make_ttf_texture(renderer, font, temp_string, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 		}
 
 		if len(temp_string) != 0 {
@@ -1064,9 +1064,9 @@ func generate_rects_for_fonts(renderer *sdl.Renderer, font *FontSelector) {
 
 		font.textures[index] = make_ttf_texture(renderer, font.fonts[index].data,
 			font.fonts[index].name,
-			&sdl.Color{0, 0, 0, 0})
+			&sdl.Color{R: 0, G: 0, B: 0, A: 0})
 
-		font.ttf_rects[index] = sdl.Rect{0, int32(adder_y), int32(gx * len(element.name)), int32(gy)}
+		font.ttf_rects[index] = sdl.Rect{X: 0, Y: int32(adder_y), W: int32(gx * len(element.name)), H: int32(gy)}
 
 		if font.bg_rect.W < font.ttf_rects[index].W {
 			font.bg_rect.W = font.ttf_rects[index].W
