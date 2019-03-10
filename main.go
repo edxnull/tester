@@ -236,12 +236,11 @@ func main() {
 
 	ticker := time.NewTicker(time.Second / 60)
 
-	var gfonts FontSelector = FontSelector{}
-
 	ttf_font_list := get_filenames(font_dir, []string{"ttf", "otf"})
 	txt_list := get_filenames(text_dir, []string{".txt"})
 	fmt.Println(txt_list)
 
+	var gfonts FontSelector
 	allocate_font_space(&gfonts, len(ttf_font_list))
 	generate_fonts(&gfonts, ttf_font_list, font_dir)
 
