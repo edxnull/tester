@@ -998,10 +998,10 @@ func get_filenames(path string, format []string) []string {
 		panic(err)
 	}
 
-	for _, f := range list {
+	for index := 0; index < len(list); index++ {
 		for i := 0; i < len(format); i++ {
-			if strings.Contains(f.Name(), format[i]) {
-				result = append(result, f.Name())
+			if strings.Contains(list[index].Name(), format[i]) {
+				result = append(result, list[index].Name())
 				break
 			}
 		}
