@@ -104,7 +104,7 @@ const WIN_W int32 = 800
 const WIN_H int32 = 600
 
 const X_OFFSET int = 7
-const TTF_FONT_SIZE int = 16
+const TTF_FONT_SIZE int = 13
 const TTF_FONT_SIZE_FOR_FONT_LIST int = 14
 const LINE_LENGTH int = 740
 
@@ -212,9 +212,7 @@ func main() {
 		panic(err)
 	}
 
-	window, err := sdl.CreateWindow(WIN_TITLE, sdl.WINDOWPOS_CENTERED,
-		sdl.WINDOWPOS_CENTERED,
-		WIN_W, WIN_H,
+	window, err := sdl.CreateWindow(WIN_TITLE, sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, WIN_W, WIN_H,
 		sdl.WINDOW_SHOWN|sdl.WINDOW_RESIZABLE)
 	if err != nil {
 		panic(err)
