@@ -2,72 +2,35 @@ package main
 
 import (
 	"testing"
+    "strings"
+    "bytes"
 )
 
-func TestCopy(t *testing.T) {
-	y := doCopy(true, false)
-	if len(y) != 1000 {
-		t.Fatalf("Expected len(y) to be 1000 but was %d", len(y))
-	}
-}
+var gcb [][]byte
+var gcs []string
 
-func TestAppend(t *testing.T) {
-	y := doCopy(false, false)
-	if len(y) != 1000 {
-		t.Fatalf("Expected len(y) to be 1000 but was %d", len(y))
-	}
-}
+func BenchmarkSplitToBytes(b *testing.B) {
+	filename := "HP01.txt"
+	text_dir := "./text/"
 
-func TestAppendAlloc(t *testing.T) {
-	y := doCopy(false, true)
-	if len(y) != 1000 {
-		t.Fatalf("Expected len(y) to be 1000 but was %d", len(y))
-	}
-}
+    var line_tokens [][]byte
 
-func doCopy(useCopy bool, preAlloc bool) []int64 {
-	existing := make([]int64, 1000, 1000)
-	var y []int64
-	if useCopy {
-		y = make([]int64, 1000, 1000)
-		copy(y, existing)
-	} else {
-		var init []int64
-
-		if preAlloc {
-			init = make([]int64, 0, 1000)
-		} else {
-			init = []int64{}
-		}
-		y = append(init, existing...)
-	}
-	return y
-}
-
-func BenchmarkAppend(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		doCopy(false, false)
+        line_tokens = bytes.Split(get_filedata(text_dir, filename), []byte("\n"))
 	}
+
+    gcb = line_tokens
 }
 
-func BenchmarkAppendAlloc(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		doCopy(false, true)
-	}
-}
+func BenchmarkSplitToStrings(b *testing.B) {
+	filename := "HP01.txt"
+	text_dir := "./text/"
 
-func BenchmarkAppendAllocInline(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		existing := make([]int64, 1000, 1000)
-		var init []int64
+    var line_tokens []string
 
-		init = make([]int64, 0, 1000)
-		_ = append(init, existing...)
-	}
-}
-
-func BenchmarkCopy(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		doCopy(true, true)
+        line_tokens = strings.Split(string(get_filedata(text_dir, filename)), "\n")
 	}
+
+    gcs = line_tokens
 }

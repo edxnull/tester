@@ -35,6 +35,11 @@ import (
 // TODO: https://github.com/malkia/ufo/tree/master/samples/SDL
 // TODO: try [raylib] for go or c
 
+
+// This is a very nice resource for those who want to learn more
+// about Golang
+// https://github.com/golang/go/wiki
+
 //taken from https://www.youtube.com/watch?v=40d26ZGfhR8
 // check that his func is stack allocated
 func value() int {
@@ -54,6 +59,7 @@ func escape() *int {
 // https://www.youtube.com/watch?v=ZfdF8gPinlU
 
 // [x] cleanup the code!
+// [ ] test struct padding?
 // [ ] list.go should we set data to nil everytime?
 // [ ] get rid of int (because on 64-bit systems it would become 64 bit and waste memory)
 // [ ] do we have to use int everywhere? Maybe it should be better to use int16 in some cases?
@@ -198,11 +204,15 @@ func main() {
 	dummy_b := new(string)
 	dummy_c := string("H")
 	dummy_d := new(int64)
+	dummy_e := new(bool)
+	dummy_f := true
 
 	println(unsafe.Sizeof(dummy_a))
 	println(unsafe.Sizeof(dummy_b))
 	println(unsafe.Sizeof(dummy_c))
 	println(unsafe.Sizeof(dummy_d))
+	println(unsafe.Sizeof(dummy_e))
+	println(unsafe.Sizeof(dummy_f))
 
 	if err := sdl.Init(sdl.INIT_TIMER | sdl.INIT_VIDEO | sdl.INIT_AUDIO); err != nil {
 		panic(err)
