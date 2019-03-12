@@ -450,18 +450,20 @@ func main() {
 		}
 
 		if move_text_up {
-			move_text_up = false
-			list.PopFromTail()
-			list.Prepend(stack.Pop())
-			NEXT_ELEMENT -= 1
-			current := list.head.next
-			for i := 0; i < list.size; i++ {
-				current.data.bg_rect.Y = re[i].Y
-				for j := 0; j < len(current.data.word_rects); j++ {
-					current.data.word_rects[j].Y = re[i].Y
-				}
-				current = current.next
-			}
+            if stack.IsEmpty() != true {
+                move_text_up = false
+                list.PopFromTail()
+                list.Prepend(stack.Pop())
+                NEXT_ELEMENT -= 1
+                current := list.head.next
+                for i := 0; i < list.size; i++ {
+                    current.data.bg_rect.Y = re[i].Y
+                    for j := 0; j < len(current.data.word_rects); j++ {
+                        current.data.word_rects[j].Y = re[i].Y
+                    }
+                    current = current.next
+                }
+            }
 		}
 
 		if wrap_line {
