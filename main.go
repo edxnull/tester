@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"flag"
 	"fmt"
 	"github.com/veandco/go-sdl2/sdl"
@@ -35,7 +34,6 @@ import (
 // TODO: https://github.com/malkia/ufo/tree/master/samples/SDL
 // TODO: try [raylib] for go or c
 
-
 // This is a very nice resource for those who want to learn more
 // about Golang
 // https://github.com/golang/go/wiki
@@ -58,6 +56,7 @@ func escape() *int {
 // https://www.youtube.com/watch?v=2557w0qsDV0
 // https://www.youtube.com/watch?v=ZfdF8gPinlU
 
+// [ ] use r.SetClipRect r.GetClipRect for rendering
 // [x] cleanup the code!
 // [ ] test struct padding?
 // [ ] list.go should we set data to nil everytime?
@@ -74,6 +73,7 @@ func escape() *int {
 // [ ] tooltip on word hover
 // [ ] interactive tooltip
 // [ ] progress bar for loading files and other purposes
+// [ ] SDL_ConvertSurface for faster blitting?
 // [ ] visualising word stats
 // [ ] selecting and reloading text
 // [ ] proper reloading text on demand
@@ -145,17 +145,6 @@ type Line struct {
 type DebugWrapLine struct {
 	x1, y1 int32
 	x2, y2 int32
-}
-
-type CmdConsole struct {
-	show         bool
-	move_left    bool
-	alpha_value  uint8
-	bg_rect      sdl.Rect
-	ttf_rect     sdl.Rect
-	cursor_rect  sdl.Rect
-	ttf_texture  *sdl.Texture
-	input_buffer bytes.Buffer
 }
 
 type FontSelector struct {
@@ -282,24 +271,22 @@ func main() {
 	now_gen := time.Now()
 
 	all_lines := make([]Line, len(test_tokens))
-	//generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
+	generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
+
+	for i := 0; i < MAX_INDEX; i++ {
+		all_lines[i].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[i].words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 0})
+	}
 
 	//INC := 2
 	//NEXT_MAX_INDEX := (40+1)*INC
-	generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
+	//generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
 	//generate_lines(renderer, font, &all_lines, &test_tokens, NEXT_MAX_INDEX)
 
 	end_gen := time.Now().Sub(now_gen)
 	fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
 
 	cmd_win_h := int32(18)
-	cmd := CmdConsole{}
-	cmd.alpha_value = 100
-	cmd.ttf_texture = make_ttf_texture(renderer, font, " ", &sdl.Color{R: 0, G: 0, B: 0, A: 255})
-	cmd.ttf_rect = sdl.Rect{X: 0, Y: WIN_H - cmd_win_h, W: int32(gfonts.current_font_w * len(" ")), H: int32(gfonts.current_font_h)}
-	cmd.bg_rect = sdl.Rect{X: 0, Y: WIN_H - cmd_win_h, W: WIN_W, H: int32(gfonts.current_font_h)}
-	cmd.cursor_rect = sdl.Rect{X: 0, Y: WIN_H - cmd_win_h, W: int32(gfonts.current_font_w), H: int32(gfonts.current_font_h)}
-	cmd.input_buffer.Grow(128) // we need to make sure we never write past this value?
+	cmd := NewCmdConsole(renderer, font)
 
 	dbg_str := make_console_text(0, len(test_tokens))
 	dbg_rect := sdl.Rect{X: 0, Y: WIN_H - cmd_win_h - cmd_win_h - 2, W: int32(gfonts.current_font_w * len(dbg_str)), H: int32(gfonts.current_font_h)}
@@ -367,32 +354,16 @@ func main() {
 					}
 
 					if new_win_w > WIN_W && new_win_h > WIN_H {
-						//viewport_rect.H = new_win_h
-						//viewport_rect.W = WIN_W
-
-						cmd.bg_rect.W = new_win_w
-						cmd.bg_rect.Y = new_win_h - cmd_win_h
-						cmd.ttf_rect.Y = new_win_h - cmd_win_h
-						cmd.cursor_rect.Y = new_win_h - cmd_win_h
-
+						cmd.Resize(new_win_w, new_win_h)
 						wrapline.y2 = new_win_h
-						//renderer.SetViewport(&viewport_rect)
 					} else {
-						//viewport_rect.W = WIN_W
-						//viewport_rect.H = WIN_H
-
-						cmd.bg_rect.W = WIN_W
-						cmd.bg_rect.Y = new_win_h - cmd_win_h
-						cmd.ttf_rect.Y = new_win_h - cmd_win_h
-						cmd.cursor_rect.Y = new_win_h - cmd_win_h
-
+						cmd.Resize(WIN_W, new_win_h)
 						wrapline.y2 = new_win_h
-						//renderer.SetViewport(&viewport_rect)
 					}
 				}
 			case *sdl.MouseMotionEvent:
 				//fmt.Println(t.X, t.Y)
-				for i := 0; i < len(all_lines); i++ {
+				for i := 0; i < MAX_INDEX; i++ {
 					check_collision_mouse_over_words(t, &all_lines[i].word_rects, &all_lines[i].mouse_over_word)
 				}
 				check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
@@ -411,22 +382,13 @@ func main() {
 				}
 			case *sdl.TextInputEvent:
 				if cmd.show {
-					fmt.Printf("[debug] keyinput: %c\n", t.Text[0])
-					input_char := string(t.Text[0])
-					cmd.input_buffer.WriteString(input_char)
-					cmd.ttf_texture.Destroy()
-					cmd.ttf_texture = make_ttf_texture(renderer, font, cmd.input_buffer.String(), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
-					curr_char_w = gfonts.current_font_w * len(input_char)
-					cmd.ttf_rect.W = int32(gfonts.current_font_w * len(cmd.input_buffer.String()))
-					cmd.ttf_rect.H = int32(gfonts.current_font_h)
-					cmd.cursor_rect.X += int32(curr_char_w)
+					cmd.WriteChar(renderer, gfonts, t.Text[0])
 				}
 			case *sdl.KeyboardEvent:
 				if cmd.show {
 					if t.Keysym.Sym == sdl.K_BACKSPACE {
 						if t.Repeat > 0 {
-							execute_cmd_write_to_buffer(renderer, &cmd, curr_char_w, gfonts.current_font, gfonts.current_font_w,
-								gfonts.current_font_h)
+							cmd.Reset(renderer, curr_char_w, gfonts.current_font, gfonts.current_font_w, gfonts.current_font_h)
 						}
 					}
 				}
@@ -445,17 +407,11 @@ func main() {
 								cmd.show = false
 							}
 						case sdl.K_BACKSPACE:
-							execute_cmd_write_to_buffer(renderer, &cmd, curr_char_w, gfonts.current_font, gfonts.current_font_w,
-								gfonts.current_font_h)
+							cmd.Reset(renderer, curr_char_w, gfonts.current_font, gfonts.current_font_w, gfonts.current_font_h)
 						case sdl.K_RETURN:
 							if cmd.show {
 								if len(cmd.input_buffer.String()) > 0 {
-									fmt.Printf("[debug] PRE-Reset Buffer len %d \n", len(cmd.input_buffer.String()))
-									cmd.input_buffer.Reset()
-									cmd.ttf_texture.Destroy()
-									cmd.cursor_rect.X = 0
-									fmt.Printf("[debug] Reset Buffer len %d \n", len(cmd.input_buffer.String()))
-									fmt.Printf("[debug] cmd_text_buffer (cap): %d\n", cmd.input_buffer.Cap())
+									cmd.MakeNULL()
 								}
 							}
 						case sdl.K_UP:
@@ -550,7 +506,7 @@ func main() {
 		}
 
 		if cmd.show {
-			for i := 0; i < len(all_lines); i++ {
+			for i := 0; i < MAX_INDEX; i++ {
 				for j := 0; j < len(all_lines[i].word_rects); j++ {
 					draw_rect_without_border(renderer, &all_lines[i].word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
 				}
@@ -562,7 +518,8 @@ func main() {
 
 			draw_rect_with_border_filled(renderer, &cmd.cursor_rect, &sdl.Color{R: 0, G: 0, B: 0, A: cmd.alpha_value})
 
-			draw_rect_without_border(renderer, &gfonts.bg_rect, &sdl.Color{R: 255, G: 0, B: 255, A: uint8(gfonts.alpha_f32)})
+			draw_rect_without_border(renderer, &gfonts.bg_rect, &sdl.Color{R: 255, G: 0, B: 255, A: 100})
+			//renderer.SetClipRect(&gfonts.bg_rect) we can make our stuff dissapear
 
 			for i := 0; i < len(gfonts.textures); i++ {
 				renderer.Copy(gfonts.textures[i], nil, &gfonts.ttf_rects[i])
@@ -722,7 +679,7 @@ func generate_lines(renderer *sdl.Renderer, font *ttf.Font, lines *[]Line, str *
 func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_text string) {
 	assert_if(len(line_text) == 0)
 
-	line.texture = make_ttf_texture(rend, font, line_text, &sdl.Color{R: 0, G: 0, B: 0, A: 0})
+	//line.texture = make_ttf_texture(rend, font, line_text, &sdl.Color{R: 0, G: 0, B: 0, A: 0})
 
 	text := strings.Split(line_text, " ")
 	text_len := len(text)
@@ -926,34 +883,6 @@ func draw_rect_with_border_filled(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl
 func draw_rect_without_border(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl.Color) {
 	renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
 	renderer.FillRect(rect)
-}
-
-func execute_cmd_write_to_buffer(renderer *sdl.Renderer, cmd *CmdConsole, curr_char_w int, font *ttf.Font, fontw int, fonth int) {
-	if cmd.cursor_rect.X <= 0 {
-		cmd.cursor_rect.X = 0
-	} else {
-		temp_string := cmd.input_buffer.String()[0 : len(cmd.input_buffer.String())-1]
-		cmd.input_buffer.Reset()
-		cmd.input_buffer.WriteString(temp_string)
-
-		cmd.ttf_texture.Destroy()
-
-		if len(cmd.input_buffer.String()) > 0 {
-			cmd.ttf_texture = make_ttf_texture(renderer, font, temp_string, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
-		}
-
-		if len(temp_string) != 0 {
-			curr_char_w = fontw * len(string(temp_string[len(temp_string)-1]))
-
-			cmd.cursor_rect.X -= int32(curr_char_w)
-
-			cmd.ttf_rect.W = int32(fontw * len(cmd.input_buffer.String()))
-			cmd.ttf_rect.H = int32(fonth)
-			println(temp_string)
-		} else {
-			cmd.cursor_rect.X = 0
-		}
-	}
 }
 
 func number_as_string(n int) string {
