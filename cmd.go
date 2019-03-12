@@ -22,9 +22,24 @@ func NewCmdConsole(renderer *sdl.Renderer, font *ttf.Font) CmdConsole {
 	cmd.alpha_value = 100
 	fw, fh, _ := font.SizeUTF8(" ")
 	cmd.ttf_texture = make_ttf_texture(renderer, font, " ", &sdl.Color{R: 0, G: 0, B: 0, A: 255})
-	cmd.ttf_rect = sdl.Rect{X: 0, Y: WIN_H - int32(fh), W: int32(fw * len(" ")), H: int32(fh)}
-	cmd.bg_rect = sdl.Rect{X: 0, Y: WIN_H - int32(fh), W: WIN_W, H: int32(fh)}
-	cmd.cursor_rect = sdl.Rect{X: 0, Y: WIN_H - int32(fh), W: int32(fw), H: int32(fh)}
+	cmd.ttf_rect = sdl.Rect{
+		X: 0,
+		Y: WIN_H - int32(fh),
+		W: int32(fw * len(" ")),
+		H: int32(fh),
+	}
+	cmd.bg_rect = sdl.Rect{
+		X: 0,
+		Y: WIN_H - int32(fh),
+		W: WIN_W,
+		H: int32(fh),
+	}
+	cmd.cursor_rect = sdl.Rect{
+		X: 0,
+		Y: WIN_H - int32(fh),
+		W: int32(fw),
+		H: int32(fh),
+	}
 	cmd.input_buffer.Grow(64)
 	return cmd
 }
