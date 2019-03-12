@@ -17,47 +17,13 @@ import (
 	"unsafe"
 )
 
-// TODO
-// https://gist.github.com/tetsuok/3025333
-// we have to turn off compiler optimizations in order to debug properly
-// TODO  try to use: go tool vet
-// TODO: https://appliedgo.net/big-o/
-
-// TODO: USE sdl.WINDOWEVENT_EXPOSED for proper redrawing
-
-// TODO: add notification icon (please use WINDOWS docs for that, as SDL doesn't support it for now)
-// https://stackoverflow.com/questions/41441807/minimize-window-to-system-tray
-// https://gamedev.stackexchange.com/questions/136473/sdl2-taskbar-icon-notification-blinking-flashing-orange
-
 // TODO: http://blog.moagrius.com/actionscript/jsas-understanding-easing/
 // TODO: http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/Welcome.html
 // TODO: https://github.com/malkia/ufo/tree/master/samples/SDL
-// TODO: try [raylib] for go or c
-
-// This is a very nice resource for those who want to learn more
-// about Golang
-// https://github.com/golang/go/wiki
-
-//taken from https://www.youtube.com/watch?v=40d26ZGfhR8
-// check that his func is stack allocated
-func value() int {
-	v := new(int)
-	return *v
-}
-
-//check that this is heap allocated
-func escape() *int {
-	v := 43
-	return &v
-}
-
-// check out Bill Kennedy
-// https://godoc.org/golang.org/x/net/trace
-// https://www.youtube.com/watch?v=2557w0qsDV0
-// https://www.youtube.com/watch?v=ZfdF8gPinlU
 
 // [ ] use r.SetClipRect r.GetClipRect for rendering
 // [x] cleanup the code!
+// [ ] USE sdl.WINDOWEVENT_EXPOSED for proper redrawing
 // [ ] test struct padding?
 // [ ] list.go should we set data to nil everytime?
 // [ ] get rid of int (because on 64-bit systems it would become 64 bit and waste memory)
