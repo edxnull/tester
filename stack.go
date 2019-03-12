@@ -9,9 +9,7 @@ type Stack struct {
 }
 
 func NewStack(size int) *Stack {
-	return &Stack{
-		make([]*Line, size), 0, size,
-	}
+	return &Stack{make([]*Line, size), 0, size}
 }
 
 func (s *Stack) Len() int {

@@ -285,7 +285,7 @@ func main() {
 	test_rectq := sdl.Rect{X: int32(location.x), Y: int32(location.y), W: 10, H: 10}
 
 	qsize := int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
-	stack := NewStack(qsize)
+	stack := NewStack(len(all_lines))
 
 	list := NewList()
 	for i := 0; i < qsize; i++ {
@@ -437,6 +437,13 @@ func main() {
 		if move_text_down {
 			move_text_down = false
 			stack.Push(list.PopFromHead().data)
+
+            stack.GetLast().texture.Destroy()
+            stack.GetLast().texture = nil
+
+            // Temporary solution
+            all_lines[NEXT_ELEMENT].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[NEXT_ELEMENT].words, " "), &sdl.Color{R:0, G:0, B:0, A:255})
+
 			list.Append(&all_lines[NEXT_ELEMENT])
 			NEXT_ELEMENT += 1
 			current := list.head.next
@@ -453,6 +460,7 @@ func main() {
             if stack.IsEmpty() != true {
                 move_text_up = false
                 list.PopFromTail()
+                stack.GetLast().texture = make_ttf_texture(renderer, font, strings.Join(stack.GetLast().words, " "), &sdl.Color{R:0, G:0, B:0, A:255})
                 list.Prepend(stack.Pop())
                 NEXT_ELEMENT -= 1
                 current := list.head.next
