@@ -18,8 +18,10 @@ import (
 )
 
 // TODO: http://blog.moagrius.com/actionscript/jsas-understanding-easing/
-// TODO: http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/Welcome.html
 // TODO: https://github.com/malkia/ufo/tree/master/samples/SDL
+
+// TODO: http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/Welcome.html
+// TODO: http://northstar-www.dartmouth.edu/doc/idl/html_6.2/Creating_Widget_Applications.html
 
 // [ ] use r.SetClipRect r.GetClipRect for rendering
 // [x] cleanup the code!
@@ -27,6 +29,7 @@ import (
 // [ ] test struct padding?
 // [ ] list.go should we set data to nil everytime?
 // [ ] get rid of int (because on 64-bit systems it would become 64 bit and waste memory)
+// [ ] renderer.SetLogicalSize(WIN_W, WIN_H) -> SetLogicalSize is important for device independant rendering!
 // [ ] do we have to use int everywhere? Maybe it should be better to use int16 in some cases?
 // [ ] scrollbar
 // [ ] proper time handling like dt and such
@@ -188,10 +191,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	// NOTE: important!
-	// SetLogicalSize is important for device independant rendering!
-	// renderer.SetLogicalSize(WIN_W, WIN_H)
 
 	filename := "HP01.txt"
 	font_dir := "./fonts/"
