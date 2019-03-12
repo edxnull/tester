@@ -1,20 +1,20 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"github.com/veandco/go-sdl2/sdl"
-	"github.com/veandco/go-sdl2/ttf"
-	"io/ioutil"
-	"log"
-	"math"
 	"os"
-	"runtime"
-	"runtime/pprof"
-	"strconv"
-	"strings"
+	"log"
+	"flag"
+	"math"
 	"time"
 	"unsafe"
+	"runtime"
+	"strconv"
+	"strings"
+	"io/ioutil"
+	"runtime/pprof"
+	"github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/ttf"
 )
 
 // TODO: http://blog.moagrius.com/actionscript/jsas-understanding-easing/
