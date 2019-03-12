@@ -440,10 +440,7 @@ func main() {
 
             stack.GetLast().texture.Destroy()
             stack.GetLast().texture = nil
-
-            // Temporary solution
             all_lines[NEXT_ELEMENT].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[NEXT_ELEMENT].words, " "), &sdl.Color{R:0, G:0, B:0, A:255})
-
 			list.Append(&all_lines[NEXT_ELEMENT])
 			NEXT_ELEMENT += 1
 			current := list.head.next
