@@ -486,11 +486,14 @@ func main() {
 		}
 
 		if cmd.show {
-			for i := 0; i < MAX_INDEX; i++ {
-				for j := 0; j < len(all_lines[i].word_rects); j++ {
-					draw_rect_without_border(renderer, &all_lines[i].word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
+            current := list.head.next
+			for i := 0; i < list.Size(); i++ {
+				for j := 0; j < len(current.data.word_rects); j++ {
+					draw_rect_without_border(renderer, &current.data.word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
 				}
+                current = current.next
 			}
+
 			draw_rect_with_border_filled(renderer, &cmd.bg_rect, &sdl.Color{R: 255, G: 10, B: 100, A: cmd.alpha_value + 40})
 			draw_rect_with_border(renderer, &cmd.ttf_rect, &sdl.Color{R: 255, G: 255, B: 255, A: 0})
 
@@ -543,7 +546,12 @@ func main() {
 	renderer.Destroy()
 	window.Destroy()
 
-	destroy_lines(&all_lines)
+    current := list.head.next
+    for i := 0; i < list.Size(); i++ {
+        current.data.texture.Destroy()
+        current.data.texture = nil
+        current = current.next
+    }
 
 	if cmd.ttf_texture != nil {
 		cmd.ttf_texture.Destroy()
@@ -634,26 +642,6 @@ func generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, dest *[]Line, 
 	for index := 0; index < len(*tokens); index++ {
 		new_ttf_texture_line(r, font, &(*dest)[index], (*tokens)[index])
 	}
-}
-
-func __generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, dest *[]Line, tokens *[]string, end int) {
-	for index := 0; index < len(*tokens); index++ {
-		new_ttf_texture_line(r, font, &(*dest)[index], (*tokens)[index])
-	}
-}
-
-func generate_lines(renderer *sdl.Renderer, font *ttf.Font, lines *[]Line, str *[]string, max int) {
-	end := 0
-	for index := 0; index < len((*lines)); index++ {
-		if (*lines)[index].texture != nil {
-			end += 1
-		} else {
-			break
-		}
-	}
-	ptr := (*lines)[end:max]
-	slice := (*str)[end:max]
-	__generate_and_populate_lines(renderer, font, &ptr, &slice, end)
 }
 
 func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_text string) {
@@ -794,14 +782,6 @@ func determine_nwrap_lines(str []string, max_len int, xsize int) int32 {
 		}
 	}
 	return result
-}
-
-func destroy_lines(lines *[]Line) {
-	for _, line := range *lines {
-		line.texture.Destroy()
-		line.texture = nil
-		sdl.ClearError()
-	}
 }
 
 func assert_if(cond bool) {
