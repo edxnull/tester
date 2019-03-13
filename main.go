@@ -17,47 +17,15 @@ import (
 	"github.com/veandco/go-sdl2/ttf"
 )
 
-// TODO: http://blog.moagrius.com/actionscript/jsas-understanding-easing/
-// TODO: https://github.com/malkia/ufo/tree/master/samples/SDL
-
-// TODO: http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/Welcome.html
-// TODO: http://northstar-www.dartmouth.edu/doc/idl/html_6.2/Creating_Widget_Applications.html
-
-// [ ] use r.SetClipRect r.GetClipRect for rendering
-// [x] cleanup the code!
-// [ ] USE sdl.WINDOWEVENT_EXPOSED for proper redrawing
-// [ ] test struct padding?
-// [ ] list.go should we set data to nil everytime?
-// [ ] get rid of int (because on 64-bit systems it would become 64 bit and waste memory)
-// [ ] renderer.SetLogicalSize(WIN_W, WIN_H) -> SetLogicalSize is important for device independant rendering!
-// [ ] do we have to use int everywhere? Maybe it should be better to use int16 in some cases?
-// [ ] scrollbar
-// [ ] proper time handling like dt and such
-// [ ] how can we not render everything on every frame?
+// GENERAL
+// [ ] cleanup the code!
+// [ ] refactor wrapping text
 // [ ] why do we get such a huge GPU commit bump on start/ GPU commit drop after resizing?
-// [ ] tables [rows x columns]
-// [ ] checkbox rect within a rect [x] or [[]]
-// [ ] color rgb or rgba [color] [r, g, b] ... [r, g, b, a]
 // [ ] should we compress strings?? Huffman encoding?
-// [ ] tooltip on word hover
-// [ ] interactive tooltip
-// [ ] progress bar for loading files and other purposes
-// [ ] SDL_ConvertSurface for faster blitting?
-// [ ] visualising word stats
-// [ ] selecting and reloading text
-// [ ] proper reloading text on demand
 // [ ] selecting and reloading fonts
 // [ ] changing font size
-// [ ] do not render offscreen stuff
-// [ ] loading and playing audio files
-// [ ] recording audio?
-// [ ] smooth scrolling
-// [ ] nothing is working anymore after resizing !NOT working < 16 TTF_FONT_SIZE
-// [ ] refactor the code!
-// [ ] try to optimize rendering/displaying rects with "enum" flags ~> [TypeActive; TypeInactive; TypePending]
-// [ ] add equations of motion for nice animation effects https://easings.net/
-// [ ] bezier curve easing functions
-// [ ] taskbar / menu bar
+// [ ] selecting and reloading text
+// [ ] proper reloading text on demand
 // [ ] searching
 // [ ] fuzzy search
 // [ ] copy & pasting text
@@ -66,12 +34,49 @@ import (
 // [ ] save words to a trie tree?
 // [ ] figure out what to do about languages like left to right and asian languages
 // [ ] export/import csv
+// [ ] make sure we handle utf8
+// [ ] cmd input commands + parsing
+
+// SDL RELATED
+// [ ] use r.SetClipRect r.GetClipRect for rendering
+// [ ] USE sdl.WINDOWEVENT_EXPOSED for proper redrawing
+// [ ] renderer.SetLogicalSize(WIN_W, WIN_H) -> SetLogicalSize is important for device independant rendering!
+// [ ] proper time handling like dt and such
+// [ ] how can we not render everything on every frame?
+// [ ] SDL_ConvertSurface for faster blitting?
+
+// VISUAL
+// [ ] scrollbar
+// [ ] http://blog.moagrius.com/actionscript/jsas-understanding-easing/
+// [ ] https://github.com/malkia/ufo/tree/master/samples/SDL
+// [ ] http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/Welcome.html
+// [ ] http://northstar-www.dartmouth.edu/doc/idl/html_6.2/Creating_Widget_Applications.html
+// [ ] add equations of motion for nice animation effects https://easings.net/
+// [ ] tables [rows x columns]
+// [ ] color rgb or rgba [color] [r, g, b] ... [r, g, b, a]
+// [ ] checkbox rect within a rect [x] or [[]]
+// [ ] tooltip on word hover
+// [ ] interactive tooltip
+// [ ] progress bar for loading files and other purposes
+// [ ] visualising word stats
+// [ ] smooth scrolling
+// [ ] bezier curve easing functions
+// [ ] taskbar / menu bar
 // [ ] experiment with imgui style widgets
 // [ ] grapical popup error messages like: error => your command is too long, etc...
-// [ ] fix wrapping text
-// [ ] make sure we handle utf8
+
+// AUDIO
+// [ ] loading and playing audio files
+// [ ] recording audio?
+
+// TESTING
+// [ ] create automated tests to scroll through the page from top to bottom checking if we ever fail to allocate/deallocate *Line
+
+// GO RELATED
+// [ ] test struct padding?
+// [ ] list.go should we set data to nil everytime?
+// [ ] get rid of int (because on 64-bit systems it would become 64 bit and waste memory) or not???? maybe use int16 in some cases
 // [ ] compare method call vs. function call overhead in golang: asm?
-// [ ] cmd input commands + parsing
 
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
