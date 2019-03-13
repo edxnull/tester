@@ -1,20 +1,20 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"log"
 	"flag"
-	"math"
-	"time"
-	"unsafe"
-	"runtime"
-	"strconv"
-	"strings"
-	"io/ioutil"
-	"runtime/pprof"
+	"fmt"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
+	"io/ioutil"
+	"log"
+	"math"
+	"os"
+	"runtime"
+	"runtime/pprof"
+	"strconv"
+	"strings"
+	"time"
+	"unsafe"
 )
 
 // GENERAL
@@ -325,10 +325,10 @@ func main() {
 				}
 			case *sdl.MouseMotionEvent:
 				//fmt.Println(t.X, t.Y)
-                current := list.head.next
+				current := list.head.next
 				for i := 0; i < list.Size(); i++ {
 					check_collision_mouse_over_words(t, &current.data.word_rects, &current.data.mouse_over_word)
-                    current = current.next
+					current = current.next
 				}
 				check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
 			case *sdl.MouseWheelEvent:
@@ -435,11 +435,11 @@ func main() {
 
 		if move_text_down {
 			move_text_down = false
-            inc_dbg_str = true
+			inc_dbg_str = true
 			stack.Push(list.PopFromHead().data)
-            stack.GetLast().texture.Destroy()
-            stack.GetLast().texture = nil
-            all_lines[NEXT_ELEMENT].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[NEXT_ELEMENT].words, " "), &sdl.Color{R:0, G:0, B:0, A:255})
+			stack.GetLast().texture.Destroy()
+			stack.GetLast().texture = nil
+			all_lines[NEXT_ELEMENT].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[NEXT_ELEMENT].words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 			list.Append(&all_lines[NEXT_ELEMENT])
 			NEXT_ELEMENT += 1
 			current := list.head.next
@@ -453,39 +453,39 @@ func main() {
 		}
 
 		if move_text_up {
-            if stack.IsEmpty() != true {
-                move_text_up = false
-                inc_dbg_str = true
-                list.PopFromTail()
-                stack.GetLast().texture = make_ttf_texture(renderer, font, strings.Join(stack.GetLast().words, " "), &sdl.Color{R:0, G:0, B:0, A:255})
-                list.Prepend(stack.Pop())
-                NEXT_ELEMENT -= 1
-                current := list.head.next
-                for i := 0; i < list.Size(); i++ {
-                    current.data.bg_rect.Y = re[i].Y
-                    for j := 0; j < len(current.data.word_rects); j++ {
-                        current.data.word_rects[j].Y = re[i].Y
-                    }
-                    current = current.next
-                }
-            }
+			if stack.IsEmpty() != true {
+				move_text_up = false
+				inc_dbg_str = true
+				list.PopFromTail()
+				stack.GetLast().texture = make_ttf_texture(renderer, font, strings.Join(stack.GetLast().words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
+				list.Prepend(stack.Pop())
+				NEXT_ELEMENT -= 1
+				current := list.head.next
+				for i := 0; i < list.Size(); i++ {
+					current.data.bg_rect.Y = re[i].Y
+					for j := 0; j < len(current.data.word_rects); j++ {
+						current.data.word_rects[j].Y = re[i].Y
+					}
+					current = current.next
+				}
+			}
 		}
 
 		if wrap_line {
-            current := list.head.next
-            for i := 0; i < list.Size(); i++ {
+			current := list.head.next
+			for i := 0; i < list.Size(); i++ {
 				draw_rect_without_border(renderer, &current.data.bg_rect, &sdl.Color{R: 100, G: 255, B: 255, A: 100})
-                current = current.next
-            }
+				current = current.next
+			}
 		}
 
 		if cmd.show {
-            current := list.head.next
+			current := list.head.next
 			for i := 0; i < list.Size(); i++ {
 				for j := 0; j < len(current.data.word_rects); j++ {
 					draw_rect_without_border(renderer, &current.data.word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
 				}
-                current = current.next
+				current = current.next
 			}
 
 			draw_rect_with_border_filled(renderer, &cmd.bg_rect, &sdl.Color{R: 255, G: 10, B: 100, A: cmd.alpha_value + 40})
@@ -540,12 +540,12 @@ func main() {
 	renderer.Destroy()
 	window.Destroy()
 
-    current := list.head.next
-    for i := 0; i < list.Size(); i++ {
-        current.data.texture.Destroy()
-        current.data.texture = nil
-        current = current.next
-    }
+	current := list.head.next
+	for i := 0; i < list.Size(); i++ {
+		current.data.texture.Destroy()
+		current.data.texture = nil
+		current = current.next
+	}
 
 	if cmd.ttf_texture != nil {
 		cmd.ttf_texture.Destroy()
