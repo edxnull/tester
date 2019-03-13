@@ -328,8 +328,10 @@ func main() {
 				}
 			case *sdl.MouseMotionEvent:
 				//fmt.Println(t.X, t.Y)
-				for i := 0; i < MAX_INDEX; i++ {
-					check_collision_mouse_over_words(t, &all_lines[i].word_rects, &all_lines[i].mouse_over_word)
+                current := list.head.next
+				for i := 0; i < list.Size(); i++ {
+					check_collision_mouse_over_words(t, &current.data.word_rects, &current.data.mouse_over_word)
+                    current = current.next
 				}
 				check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
 			case *sdl.MouseWheelEvent:
@@ -403,7 +405,7 @@ func main() {
 		renderer.Clear()
 
 		current := list.head.next
-		for i := 0; i < list.size; i++ {
+		for i := 0; i < list.Size(); i++ {
 			renderer.Copy(current.data.texture, nil, &current.data.bg_rect)
 			for j := 0; j < len(current.data.mouse_over_word); j++ {
 				if current.data.mouse_over_word[j] {
@@ -419,7 +421,7 @@ func main() {
 
 		if engage_loop && !cmd.show {
 			current := list.head.next
-			for i := 0; i < list.size; i++ {
+			for i := 0; i < list.Size(); i++ {
 				for j := 0; j < len(current.data.mouse_over_word); j++ {
 					if current.data.mouse_over_word[j] && current.data.words[j] != "\n" {
 						draw_rect_without_border(renderer, &current.data.word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
@@ -437,14 +439,13 @@ func main() {
 		if move_text_down {
 			move_text_down = false
 			stack.Push(list.PopFromHead().data)
-
             stack.GetLast().texture.Destroy()
             stack.GetLast().texture = nil
             all_lines[NEXT_ELEMENT].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[NEXT_ELEMENT].words, " "), &sdl.Color{R:0, G:0, B:0, A:255})
 			list.Append(&all_lines[NEXT_ELEMENT])
 			NEXT_ELEMENT += 1
 			current := list.head.next
-			for i := 0; i < list.size; i++ {
+			for i := 0; i < list.Size(); i++ {
 				current.data.bg_rect.Y = re[i].Y
 				for j := 0; j < len(current.data.word_rects); j++ {
 					current.data.word_rects[j].Y = re[i].Y
@@ -461,7 +462,7 @@ func main() {
                 list.Prepend(stack.Pop())
                 NEXT_ELEMENT -= 1
                 current := list.head.next
-                for i := 0; i < list.size; i++ {
+                for i := 0; i < list.Size(); i++ {
                     current.data.bg_rect.Y = re[i].Y
                     for j := 0; j < len(current.data.word_rects); j++ {
                         current.data.word_rects[j].Y = re[i].Y
