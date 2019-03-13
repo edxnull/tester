@@ -91,9 +91,6 @@ const LINE_LENGTH int = 740
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to 'file'")
 var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
 
-var MAX_INDEX int = 40
-var START_INDEX int = 0
-
 type v2 struct {
 	x float32
 	y float32
@@ -243,11 +240,6 @@ func main() {
 	all_lines := make([]Line, len(test_tokens))
 	generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
 
-	//INC := 2
-	//NEXT_MAX_INDEX := (40+1)*INC
-	//generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
-	//generate_lines(renderer, font, &all_lines, &test_tokens, NEXT_MAX_INDEX)
-
 	end_gen := time.Now().Sub(now_gen)
 	fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
 
@@ -266,7 +258,7 @@ func main() {
 	running := true
 	print_word := false
 	engage_loop := false
-	dirty_hack := true
+	inc_dbg_str := true
 
 	mouseover_word_texture_FONT := make([]bool, len(ttf_font_list))
 
@@ -443,6 +435,7 @@ func main() {
 
 		if move_text_down {
 			move_text_down = false
+            inc_dbg_str = true
 			stack.Push(list.PopFromHead().data)
             stack.GetLast().texture.Destroy()
             stack.GetLast().texture = nil
@@ -462,6 +455,7 @@ func main() {
 		if move_text_up {
             if stack.IsEmpty() != true {
                 move_text_up = false
+                inc_dbg_str = true
                 list.PopFromTail()
                 stack.GetLast().texture = make_ttf_texture(renderer, font, strings.Join(stack.GetLast().words, " "), &sdl.Color{R:0, G:0, B:0, A:255})
                 list.Prepend(stack.Pop())
@@ -511,10 +505,10 @@ func main() {
 				}
 			}
 
-			if dirty_hack { // A DIRTY HACK
-				dbg_str = make_console_text(MAX_INDEX, len(test_tokens))
+			if inc_dbg_str { // A DIRTY HACK
+				dbg_str = make_console_text(NEXT_ELEMENT, len(test_tokens))
 				dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
-				dirty_hack = false
+				inc_dbg_str = false
 			}
 
 			draw_rect_with_border_filled(renderer, &dbg_rect, &sdl.Color{R: 180, G: 123, B: 55, A: 255})
