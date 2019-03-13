@@ -18,7 +18,7 @@ import (
 )
 
 // GENERAL
-// [ ] cleanup the code!
+// [ ] refactor FontSelector
 // [ ] refactor wrapping text
 // [ ] why do we get such a huge GPU commit bump on start/ GPU commit drop after resizing?
 // [ ] should we compress strings?? Huffman encoding?
@@ -70,6 +70,7 @@ import (
 // [ ] recording audio?
 
 // TESTING
+// [ ] automated visual tests
 // [ ] create automated tests to scroll through the page from top to bottom checking if we ever fail to allocate/deallocate *Line
 
 // GO RELATED
