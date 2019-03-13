@@ -243,10 +243,6 @@ func main() {
 	all_lines := make([]Line, len(test_tokens))
 	generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
 
-	for i := 0; i < MAX_INDEX; i++ {
-		all_lines[i].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[i].words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 0})
-	}
-
 	//INC := 2
 	//NEXT_MAX_INDEX := (40+1)*INC
 	//generate_lines(renderer, font, &all_lines, &test_tokens, MAX_INDEX+1)
@@ -291,6 +287,11 @@ func main() {
 
 	qsize := int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
 	stack := NewStack(len(all_lines))
+
+	for i := 0; i < qsize; i++ {
+		all_lines[i].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[i].words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 0})
+	}
+
 
 	list := NewList()
 	for i := 0; i < qsize; i++ {
