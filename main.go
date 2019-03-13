@@ -292,7 +292,6 @@ func main() {
 		all_lines[i].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[i].words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 0})
 	}
 
-
 	list := NewList()
 	for i := 0; i < qsize; i++ {
 		list.Append(&all_lines[i])
@@ -479,9 +478,11 @@ func main() {
 		}
 
 		if wrap_line {
-			for i := 0; i < len(all_lines[START_INDEX:MAX_INDEX]); i++ {
-				draw_rect_without_border(renderer, &all_lines[i].bg_rect, &sdl.Color{R: 100, G: 255, B: 255, A: 100})
-			}
+            current := list.head.next
+            for i := 0; i < list.Size(); i++ {
+				draw_rect_without_border(renderer, &current.data.bg_rect, &sdl.Color{R: 100, G: 255, B: 255, A: 100})
+                current = current.next
+            }
 		}
 
 		if cmd.show {
