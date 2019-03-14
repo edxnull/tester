@@ -22,6 +22,7 @@ import (
 // [ ] refactor wrapping text
 // [ ] why do we get such a huge GPU commit bump on start/ GPU commit drop after resizing?
 // [ ] should we compress strings?? Huffman encoding?
+// [ ] should we use hash algorithms?
 // [ ] selecting and reloading fonts
 // [ ] changing font size
 // [ ] selecting and reloading text
@@ -235,12 +236,9 @@ func main() {
 	end_start := time.Now().Sub(start)
 	fmt.Printf("[[do_wrap_lines loop took %s]]\n", end_start.String())
 
-	//@PERFORMANCE SLOW
 	now_gen := time.Now()
-
 	all_lines := make([]Line, len(test_tokens))
 	generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
-
 	end_gen := time.Now().Sub(now_gen)
 	fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
 
