@@ -356,6 +356,18 @@ func main() {
 							cmd.Reset(renderer, curr_char_w, gfonts.current_font, gfonts.current_font_w, gfonts.current_font_h)
 						}
 					}
+                    switch t.Type {
+                    case sdl.KEYDOWN:
+                    case sdl.KEYUP:
+                        if t.Keysym.Mod == sdl.KMOD_LCTRL && t.Keysym.Sym == sdl.K_v {
+                            if sdl.HasClipboardText() {
+                                str, _:= sdl.GetClipboardText()
+                                for i := range str {
+                                    cmd.WriteChar(renderer, gfonts, uint8(str[i]))
+                                }
+                            }
+                        }
+                    }
 				}
 				switch t.Type {
 				case sdl.KEYDOWN:
