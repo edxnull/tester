@@ -86,7 +86,7 @@ const WIN_W int32 = 800
 const WIN_H int32 = 600
 
 const X_OFFSET int = 7
-const TTF_FONT_SIZE int = 13
+const TTF_FONT_SIZE int = 14
 const TTF_FONT_SIZE_FOR_FONT_LIST int = 12
 const LINE_LENGTH int = 740
 
@@ -242,11 +242,10 @@ func main() {
 	end_gen := time.Now().Sub(now_gen)
 	fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
 
-	cmd_win_h := int32(18)
 	cmd := NewCmdConsole(renderer, font)
 
 	dbg_str := make_console_text(0, len(test_tokens))
-	dbg_rect := sdl.Rect{X: 0, Y: WIN_H - cmd_win_h - cmd_win_h - 2, W: int32(gfonts.current_font_w * len(dbg_str)), H: int32(gfonts.current_font_h)}
+	dbg_rect := sdl.Rect{X: 0, Y: WIN_H - (cmd.bg_rect.H * 2), W: int32(gfonts.current_font_w * len(dbg_str)), H: int32(gfonts.current_font_h)}
 	dbg_ttf := make_ttf_texture(renderer, gfonts.current_font, dbg_str, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
 	sdl.SetHint(sdl.HINT_FRAMEBUFFER_ACCELERATION, "1")
@@ -503,7 +502,7 @@ func main() {
 
 			draw_rect_with_border_filled(renderer, &cmd.cursor_rect, &sdl.Color{R: 0, G: 0, B: 0, A: cmd.alpha_value})
 
-			draw_rect_without_border(renderer, &gfonts.bg_rect, &sdl.Color{R: 255, G: 0, B: 255, A: 100})
+			draw_rect_without_border(renderer, &gfonts.bg_rect, &sdl.Color{R: 255, G: 255, B: 255, A: 255})
 			//renderer.SetClipRect(&gfonts.bg_rect) we can make our stuff dissapear
 
 			for i := 0; i < len(gfonts.textures); i++ {
@@ -514,17 +513,13 @@ func main() {
 			}
 
 			if inc_dbg_str { // A DIRTY HACK
+				inc_dbg_str = false
 				dbg_str = make_console_text(NEXT_ELEMENT, len(test_tokens))
 				dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
-				inc_dbg_str = false
 			}
 
 			draw_rect_with_border_filled(renderer, &dbg_rect, &sdl.Color{R: 180, G: 123, B: 55, A: 255})
 			renderer.Copy(dbg_ttf, nil, &dbg_rect)
-
-			if gfonts.alpha_f32 < 255-1 {
-				gfonts.alpha_f32 = lerp(gfonts.alpha_f32, 255.0, 0.123)
-			}
 		}
 
 		renderer.SetDrawColor(255, 100, 0, 100)
