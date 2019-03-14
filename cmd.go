@@ -71,6 +71,22 @@ func (cmd *CmdConsole) WriteChar(renderer *sdl.Renderer, font FontSelector, t ui
 	}
 }
 
+func (cmd *CmdConsole) WriteString(renderer *sdl.Renderer, font FontSelector, str string) {
+	for i := range str {
+		if cmd.input_buffer.Len() >= (cmd.input_buffer.Cap() - 1) {
+			break
+		}
+		cmd.input_buffer.WriteString(string(str[i]))
+		curr_char_w := font.current_font_w * len(str)
+		cmd.ttf_rect.W = int32(font.current_font_w * len(cmd.input_buffer.String()))
+		cmd.ttf_rect.H = int32(font.current_font_h)
+		cmd.cursor_rect.X += int32(curr_char_w)
+	}
+	cmd.ttf_texture.Destroy()
+	cmd.MakeTexture(renderer, font.current_font, cmd.input_buffer.String(), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
+	println("OK")
+}
+
 func (cmd *CmdConsole) Reset(renderer *sdl.Renderer, curr_char_w int, font *ttf.Font, fontw int, fonth int) {
 	if cmd.cursor_rect.X <= 0 {
 		cmd.cursor_rect.X = 0
@@ -101,6 +117,6 @@ func (cmd *CmdConsole) Reset(renderer *sdl.Renderer, curr_char_w int, font *ttf.
 func (cmd *CmdConsole) MakeNULL() {
 	cmd.input_buffer.Reset()
 	cmd.ttf_texture.Destroy()
-    cmd.ttf_texture = nil
+	cmd.ttf_texture = nil
 	cmd.cursor_rect.X = 0
 }

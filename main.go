@@ -19,12 +19,12 @@ import (
 
 // GENERAL
 // [ ] refactor FontSelector
+// [ ] changing font size
+// [ ] selecting and reloading fonts
 // [ ] refactor wrapping text
 // [ ] why do we get such a huge GPU commit bump on start/ GPU commit drop after resizing?
 // [ ] should we compress strings?? Huffman encoding?
 // [ ] should we use hash algorithms?
-// [ ] selecting and reloading fonts
-// [ ] changing font size
 // [ ] selecting and reloading text
 // [ ] proper reloading text on demand
 // [ ] searching
@@ -219,7 +219,6 @@ func main() {
 	// NOTE: should we keep fonts in memory? or free them instead?
 
 	start := time.Now()
-	//test_tokens := make([]string, determine_nwrap_lines(line_tokens, LINE_LENGTH, gfonts.current_font_w))
 	test_tokens := make([]string, determine_nwrap_lines(line_tokens, LINE_LENGTH, gfonts.current_font_w))
 	for apos, bpos := 0, 0; apos < len(line_tokens); apos += 1 {
 		if len(line_tokens[apos]) > 1 {
@@ -356,9 +355,7 @@ func main() {
 						if t.Keysym.Mod == sdl.KMOD_LCTRL && t.Keysym.Sym == sdl.K_v {
 							if sdl.HasClipboardText() {
 								str, _ := sdl.GetClipboardText()
-								for i := range str {
-									cmd.WriteChar(renderer, gfonts, uint8(str[i]))
-								}
+								cmd.WriteString(renderer, gfonts, str)
 							}
 						}
 					}
