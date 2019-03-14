@@ -87,7 +87,7 @@ const WIN_H int32 = 600
 
 const X_OFFSET int = 7
 const TTF_FONT_SIZE int = 13
-const TTF_FONT_SIZE_FOR_FONT_LIST int = 14
+const TTF_FONT_SIZE_FOR_FONT_LIST int = 12
 const LINE_LENGTH int = 740
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to 'file'")
@@ -202,7 +202,7 @@ func main() {
 
 	line_tokens := strings.Split(string(get_filedata(text_dir, filename)), "\n")
 
-	ticker := time.NewTicker(time.Second / 60)
+	ticker := time.NewTicker(time.Second / 40)
 
 	ttf_font_list := get_filenames(font_dir, []string{"ttf", "otf"})
 	txt_list := get_filenames(text_dir, []string{".txt"})
@@ -272,9 +272,6 @@ func main() {
 
 	//viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
 	//renderer.SetViewport(&viewport_rect)
-
-	location := v2{0, 0}
-	test_rectq := sdl.Rect{X: int32(location.x), Y: int32(location.y), W: 10, H: 10}
 
 	qsize := int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
 	stack := NewStack(len(all_lines))
@@ -525,12 +522,6 @@ func main() {
 			draw_rect_with_border_filled(renderer, &dbg_rect, &sdl.Color{R: 180, G: 123, B: 55, A: 255})
 			renderer.Copy(dbg_ttf, nil, &dbg_rect)
 
-			test_rectq.X = int32(location.x)
-			test_rectq.Y = int32(location.y)
-			draw_rect_without_border(renderer, &test_rectq, &sdl.Color{R: 55, G: 100, B: 155, A: 255})
-			if location.x < 100-1 {
-				location.x = lerp(location.x, 100.0, 0.05)
-			}
 			if gfonts.alpha_f32 < 255-1 {
 				gfonts.alpha_f32 = lerp(gfonts.alpha_f32, 255.0, 0.123)
 			}
