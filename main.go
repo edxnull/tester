@@ -18,6 +18,7 @@ import (
 )
 
 // GENERAL
+// [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
 // [ ] add *sdl.Texture to the list structure, to avoid allocating *sdl.Texture pointers in type Line struct?
 // [ ] refactor FontSelector
 // [ ] changing font size
