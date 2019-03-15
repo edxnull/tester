@@ -18,6 +18,7 @@ import (
 )
 
 // GENERAL
+// [ ] add *sdl.Texture to the list structure, to avoid allocating *sdl.Texture pointers in type Line struct?
 // [ ] refactor FontSelector
 // [ ] changing font size
 // [ ] selecting and reloading fonts
@@ -39,6 +40,8 @@ import (
 // [ ] cmd input commands + parsing
 
 // SDL RELATED
+// [ ] try using r.SetScale()
+// [ ] use r.DrawLines() to draw triangles?
 // [ ] use r.SetClipRect r.GetClipRect for rendering
 // [ ] USE sdl.WINDOWEVENT_EXPOSED for proper redrawing
 // [ ] renderer.SetLogicalSize(WIN_W, WIN_H) -> SetLogicalSize is important for device independant rendering!
@@ -79,6 +82,10 @@ import (
 // [ ] list.go should we set data to nil everytime?
 // [ ] get rid of int (because on 64-bit systems it would become 64 bit and waste memory) or not???? maybe use int16 in some cases
 // [ ] compare method call vs. function call overhead in golang: asm?
+
+// DEBUGERS
+// [ ] try github aarzilli/gdlv
+// [ ] try go-delve/delve
 
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
