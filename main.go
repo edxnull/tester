@@ -18,12 +18,14 @@ import (
 )
 
 // GENERAL
+// [ ] fmt.Println(runtime.Caller(0)) use this to get a LINENR when calculating unique ID's for IMGUI
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
 // [ ] add *sdl.Texture to the list structure, to avoid allocating *sdl.Texture pointers in type Line struct?
 // [ ] refactor FontSelector
 // [ ] changing font size
 // [ ] selecting and reloading fonts
 // [ ] refactor wrapping text
+// [ ] make sure that we don't exceed max sdl.texture width
 // [ ] why do we get such a huge GPU commit bump on start/ GPU commit drop after resizing?
 // [ ] should we compress strings?? Huffman encoding?
 // [ ] should we use hash algorithms?
@@ -41,6 +43,11 @@ import (
 // [ ] cmd input commands + parsing
 
 // SDL RELATED
+// [ ] try sdl.UpdateTexture(texture, null, surface.pixels, surface.pitch) instead of alloc/dealloc all the time.
+//     - the pixel format should be in the format of the texture. Use QueryTexture() for that.
+//     - apparently this would be slow, but it's worth a shot in order to avoid allocs/deallocs.
+//     Alternatively, it's possible to use Lock()/Unlock() functions for updating Textures
+// [ ] SDL_ConvertSurface for faster blitting?
 // [ ] try using r.SetScale()
 // [ ] use r.DrawLines() to draw triangles?
 // [ ] use r.SetClipRect r.GetClipRect for rendering
@@ -48,7 +55,6 @@ import (
 // [ ] renderer.SetLogicalSize(WIN_W, WIN_H) -> SetLogicalSize is important for device independant rendering!
 // [ ] proper time handling like dt and such
 // [ ] how can we not render everything on every frame?
-// [ ] SDL_ConvertSurface for faster blitting?
 
 // VISUAL
 // [ ] scrollbar
