@@ -25,3 +25,5 @@ REM go test -bench=. -benchmem
 REM pprof -http=":8081" [.exe] [.prof]
 REM go test -bench=. -benchmem
 REM go build -race
+REM godoc -http=":8081"
+REM http://127.0.0.1:8081/pkg/
