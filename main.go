@@ -308,6 +308,11 @@ func main() {
 		}
 	}
 
+    foobar := TestMakeTexture(renderer, font, "foo is the greatest man alive", &sdl.Color{0,0,0,255})
+    defer foobar.Destroy()
+    _, _, fw, fh, _ := foobar.Query()
+    foobar_rect := sdl.Rect{0, 0, fw, fh}
+
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch t := event.(type) {
@@ -418,6 +423,8 @@ func main() {
 		}
 		renderer.SetDrawColor(255, 255, 255, 0)
 		renderer.Clear()
+
+        renderer.Copy(foobar, nil, &foobar_rect)
 
 		current := list.head.next
 		for i := 0; i < list.Size(); i++ {
@@ -990,4 +997,24 @@ func genY(font *ttf.Font, size int) []int {
 		result[i] = i * font.LineSkip()
 	}
 	return result
+}
+
+// https://github.com/zielmicha/SDL2/blob/master/src/render/SDL_render.c 
+// refactor this function!
+func TestMakeTexture(renderer *sdl.Renderer, font *ttf.Font, text string, color *sdl.Color) *sdl.Texture{
+    var surface *sdl.Surface
+    var ttf_texture *sdl.Texture
+    surface, _ = font.RenderUTF8Blended(text, *color)
+    ttf_texture, _ = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_STREAMING, surface.W, surface.H)
+    //bytes, pitch, _ := ttf_texture.Lock(nil)
+    //copy(bytes, surface.Pixels())
+    fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
+    converted, _ := surface.Convert(fmt, 0)
+    ttf_texture.Update(nil, converted.Pixels(), int(converted.Pitch))
+    ttf_texture.SetBlendMode(sdl.BLENDMODE_BLEND)
+    //ttf_texture.Unlock()
+    fmt.Free()
+    surface.Free()
+    converted.Free()
+    return ttf_texture
 }
