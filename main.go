@@ -430,10 +430,6 @@ func main() {
 			current = current.next
 		}
 
-		for i := range re {
-			draw_rect_with_border(renderer, &re[i], &sdl.Color{R: 200, G: 100, B: 0, A: 200})
-		}
-
 		if engage_loop && !cmd.show {
 			current := list.head.next
 			for i := 0; i < list.Size(); i++ {
@@ -505,6 +501,10 @@ func main() {
 				}
 				current = current.next
 			}
+
+            for i := range re {
+                draw_rect_with_border(renderer, &re[i], &sdl.Color{R: 200, G: 100, B: 0, A: 200})
+            }
 
 			draw_rect_with_border_filled(renderer, &cmd.bg_rect, &sdl.Color{R: 255, G: 10, B: 100, A: cmd.alpha_value + 40})
 			draw_rect_with_border(renderer, &cmd.ttf_rect, &sdl.Color{R: 255, G: 255, B: 255, A: 0})
