@@ -308,10 +308,13 @@ func main() {
 		}
 	}
 
-    foobar := TestMakeTexture(renderer, font, "foo is the greatest man alive", &sdl.Color{0,0,0,255})
-    defer foobar.Destroy()
+    foobar := TestMakeTexture(renderer, font, "fooba$", &sdl.Color{0,0,0,255})
     _, _, fw, fh, _ := foobar.Query()
-    foobar_rect := sdl.Rect{0, 0, fw, fh}
+    TestUpdateTexture(renderer, foobar, font, "boo", &sdl.Color{0,0,0,255})
+    TestUpdateTexture(renderer, foobar, font, "gooz", &sdl.Color{0,0,0,255})
+    TestUpdateTexture(renderer, foobar, font, "whatever man, this is bullshit", &sdl.Color{0,0,0,255})
+    foobar_rect := sdl.Rect{int32(X_OFFSET), 0, fw, fh}
+    defer foobar.Destroy()
 
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -424,6 +427,7 @@ func main() {
 		renderer.SetDrawColor(255, 255, 255, 0)
 		renderer.Clear()
 
+        draw_rect_with_border_filled(renderer, &foobar_rect, &sdl.Color{212, 111, 222, 30})
         renderer.Copy(foobar, nil, &foobar_rect)
 
 		current := list.head.next
@@ -1005,16 +1009,33 @@ func TestMakeTexture(renderer *sdl.Renderer, font *ttf.Font, text string, color 
     var surface *sdl.Surface
     var ttf_texture *sdl.Texture
     surface, _ = font.RenderUTF8Blended(text, *color)
-    ttf_texture, _ = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_STREAMING, surface.W, surface.H)
+    //w, _, _ := font.SizeUTF8(" ")
+    ttf_texture, _ = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_STREAMING, int32(LINE_LENGTH), surface.H)
     //bytes, pitch, _ := ttf_texture.Lock(nil)
-    //copy(bytes, surface.Pixels())
     fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
     converted, _ := surface.Convert(fmt, 0)
-    ttf_texture.Update(nil, converted.Pixels(), int(converted.Pitch))
+    ttf_texture.Update(&sdl.Rect{0, 0, surface.W, surface.H}, converted.Pixels(), int(converted.Pitch))
     ttf_texture.SetBlendMode(sdl.BLENDMODE_BLEND)
     //ttf_texture.Unlock()
     fmt.Free()
     surface.Free()
     converted.Free()
     return ttf_texture
+}
+
+func TestUpdateTexture(renderer *sdl.Renderer, texture *sdl.Texture, font *ttf.Font, text string, color *sdl.Color) {
+    var surface *sdl.Surface
+    surface, _ = font.RenderUTF8Blended(text, *color)
+    fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
+    converted, _ := surface.Convert(fmt, 0)
+    //bytes, _, _ := texture.Lock(&sdl.Rect{0, 0, surface.W, surface.H})
+    //bytes, _, _ := texture.Lock(nil)
+    //println(len(bytes), len(converted.Pixels()))
+    //copy(bytes, converted.Pixels())
+    texture.Update(&sdl.Rect{0, 0, surface.W, surface.H}, converted.Pixels(), int(converted.Pitch))
+    //texture.Update(nil, bytes, pitch)
+    //texture.Unlock()
+    fmt.Free()
+    surface.Free()
+    converted.Free()
 }
