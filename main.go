@@ -355,11 +355,10 @@ func main() {
 				}
 				check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
 			case *sdl.MouseWheelEvent:
-                println(t.Y)
-				switch t.Y {
-				case 1:
+				switch {
+				case t.Y > 0:
 					move_text_up = true
-				case -1:
+				case t.Y < 0:
 					move_text_down = true
 				}
 			case *sdl.MouseButtonEvent:
