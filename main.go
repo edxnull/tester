@@ -538,6 +538,10 @@ func main() {
 				renderer.Copy(gfonts.textures[i], nil, &gfonts.ttf_rects[i])
 				if mouseover_word_texture_FONT[i] == true {
 					draw_rect_without_border(renderer, &gfonts.highlight_rect[i], &sdl.Color{R: 0, G: 0, B: 0, A: 100})
+                    if print_word {
+                        println(gfonts.fonts[i].name)
+                        print_word = false
+                    }
 				}
 			}
 
