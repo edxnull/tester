@@ -17,6 +17,8 @@ import (
 	"unsafe"
 )
 
+// https://www.youtube.com/watch?v=KlDWmTcyXdA 
+
 // GENERAL
 // [ ] fmt.Println(runtime.Caller(0)) use this to get a LINENR when calculating unique ID's for IMGUI
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
@@ -85,6 +87,7 @@ import (
 // [ ] create automated tests to scroll through the page from top to bottom checking if we ever fail to allocate/deallocate *Line
 
 // GO RELATED
+// [ ] move to a 64-bit version of golang and sdl2 (needed for DELVE debugger)
 // [ ] test struct padding?
 // [ ] list.go should we set data to nil everytime?
 // [ ] get rid of int (because on 64-bit systems it would become 64 bit and waste memory) or not???? maybe use int16 in some cases
@@ -102,7 +105,7 @@ const WIN_H int32 = 600
 const X_OFFSET int = 7
 const TTF_FONT_SIZE int = 14
 const TTF_FONT_SIZE_FOR_FONT_LIST int = 12
-const LINE_LENGTH int = 740
+const LINE_LENGTH int = 500
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to 'file'")
 var memprofile = flag.String("memprofile", "", "write mem profile to 'file'")
@@ -308,13 +311,17 @@ func main() {
 		}
 	}
 
-    foobar := TestMakeTexture(renderer, font, "fooba$", &sdl.Color{0,0,0,255})
-    _, _, fw, fh, _ := foobar.Query()
-    TestUpdateTexture(renderer, foobar, font, "boo", &sdl.Color{0,0,0,255})
-    TestUpdateTexture(renderer, foobar, font, "gooz", &sdl.Color{0,0,0,255})
-    TestUpdateTexture(renderer, foobar, font, "whatever man, this is bullshit", &sdl.Color{0,0,0,255})
-    foobar_rect := sdl.Rect{int32(X_OFFSET), 0, fw, fh}
-    defer foobar.Destroy()
+    //foobar := TestMakeTexture(renderer, font, "fooba$", &sdl.Color{0,0,0,255})
+    //_, _, fw, fh, _ := foobar.Query()
+    //TestUpdateTexture(renderer, foobar, font, "boo", &sdl.Color{0,0,0,255})
+    //TestUpdateTexture(renderer, foobar, font, "gooz", &sdl.Color{0,0,0,255})
+    //TestUpdateTexture(renderer, foobar, font, "whatever man, this is bullshit", &sdl.Color{0,0,0,255})
+    //TestClearTexture(renderer, foobar, font, &sdl.Color{0, 0, 0, 255})
+    //TestUpdateTexture(renderer, foobar, font, "A wise man once said: ....", &sdl.Color{0,0,0,255})
+    //TestClearTexture(renderer, foobar, font, &sdl.Color{0, 0, 0, 255})
+    //TestUpdateTexture(renderer, foobar, font, "....", &sdl.Color{0,0,0,255})
+    //foobar_rect := sdl.Rect{int32(X_OFFSET), 0, fw, fh}
+    //defer foobar.Destroy()
 
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -348,6 +355,7 @@ func main() {
 				}
 				check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
 			case *sdl.MouseWheelEvent:
+                println(t.Y)
 				switch t.Y {
 				case 1:
 					move_text_up = true
@@ -427,8 +435,8 @@ func main() {
 		renderer.SetDrawColor(255, 255, 255, 0)
 		renderer.Clear()
 
-        draw_rect_with_border_filled(renderer, &foobar_rect, &sdl.Color{212, 111, 222, 30})
-        renderer.Copy(foobar, nil, &foobar_rect)
+        //draw_rect_with_border_filled(renderer, &foobar_rect, &sdl.Color{212, 111, 222, 30})
+        //renderer.Copy(foobar, nil, &foobar_rect)
 
 		current := list.head.next
 		for i := 0; i < list.Size(); i++ {
@@ -1009,14 +1017,11 @@ func TestMakeTexture(renderer *sdl.Renderer, font *ttf.Font, text string, color 
     var surface *sdl.Surface
     var ttf_texture *sdl.Texture
     surface, _ = font.RenderUTF8Blended(text, *color)
-    //w, _, _ := font.SizeUTF8(" ")
     ttf_texture, _ = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_STREAMING, int32(LINE_LENGTH), surface.H)
-    //bytes, pitch, _ := ttf_texture.Lock(nil)
     fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
     converted, _ := surface.Convert(fmt, 0)
     ttf_texture.Update(&sdl.Rect{0, 0, surface.W, surface.H}, converted.Pixels(), int(converted.Pitch))
     ttf_texture.SetBlendMode(sdl.BLENDMODE_BLEND)
-    //ttf_texture.Unlock()
     fmt.Free()
     surface.Free()
     converted.Free()
@@ -1028,13 +1033,20 @@ func TestUpdateTexture(renderer *sdl.Renderer, texture *sdl.Texture, font *ttf.F
     surface, _ = font.RenderUTF8Blended(text, *color)
     fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
     converted, _ := surface.Convert(fmt, 0)
-    //bytes, _, _ := texture.Lock(&sdl.Rect{0, 0, surface.W, surface.H})
-    //bytes, _, _ := texture.Lock(nil)
-    //println(len(bytes), len(converted.Pixels()))
-    //copy(bytes, converted.Pixels())
     texture.Update(&sdl.Rect{0, 0, surface.W, surface.H}, converted.Pixels(), int(converted.Pitch))
-    //texture.Update(nil, bytes, pitch)
-    //texture.Unlock()
+    fmt.Free()
+    surface.Free()
+    converted.Free()
+}
+
+func TestClearTexture(renderer *sdl.Renderer, texture *sdl.Texture, font *ttf.Font, color *sdl.Color) {
+    var surface *sdl.Surface
+    surface, _ = font.RenderUTF8Blended(" ", *color)
+    fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
+    converted, _ := surface.Convert(fmt, 0)
+    bytes, _, _ := texture.Lock(nil)
+    copy(bytes, converted.Pixels())
+    texture.Unlock()
     fmt.Free()
     surface.Free()
     converted.Free()
