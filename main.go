@@ -459,7 +459,7 @@ func main() {
 		renderer.Clear()
 
         draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{111, 111, 111, 90})
-        if scrollbar.selected {
+        if scrollbar.drag || scrollbar.selected {
             draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{111, 111, 111, 255})
         }
 
