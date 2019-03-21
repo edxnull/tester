@@ -369,7 +369,6 @@ func main() {
                         scrollbar.rect.Y = 0
                     }
                     if (scrollbar.rect.Y+scrollbar.rect.H) >= WIN_H {
-                        println(scrollbar.rect.Y)
                         scrollbar.rect.Y = WIN_H-scrollbar.rect.H
                     }
                 }
