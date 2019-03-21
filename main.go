@@ -57,7 +57,7 @@ import (
 // [ ] how can we not render everything on every frame?
 
 // VISUAL
-// [ ] scrollbar
+// [ ] scrollbar actual scrolling functionality
 // [ ] http://blog.moagrius.com/actionscript/jsas-understanding-easing/
 // [ ] https://github.com/malkia/ufo/tree/master/samples/SDL
 // [ ] http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/Welcome.html
