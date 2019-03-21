@@ -475,6 +475,10 @@ func main() {
 			current = current.next
 		}
 
+        if print_word && !engage_loop {
+            print_word = false
+        }
+
 		if engage_loop && !cmd.show {
 			current := list.head.next
 			for i := 0; i < list.Size(); i++ {
