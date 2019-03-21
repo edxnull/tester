@@ -137,6 +137,12 @@ type DebugWrapLine struct {
 	x2, y2 int32
 }
 
+type Scrollbar struct {
+    drag     bool
+    selected bool
+    rect sdl.Rect
+}
+
 type FontSelector struct {
 	show              bool
 	fonts             []Font
@@ -323,6 +329,8 @@ func main() {
     //foobar_rect := sdl.Rect{int32(X_OFFSET), 0, fw, fh}
     //defer foobar.Destroy()
 
+    scrollbar := &Scrollbar{drag: false, selected: false, rect: sdl.Rect{int32(LINE_LENGTH+X_OFFSET-5), 0, 5, 30}}
+
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch t := event.(type) {
@@ -354,6 +362,17 @@ func main() {
 					current = current.next
 				}
 				check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
+                scrollbar.selected = check_collision(t, &scrollbar.rect)
+                if scrollbar.drag {
+                    scrollbar.rect.Y += t.YRel
+                    if scrollbar.rect.Y <= 0 {
+                        scrollbar.rect.Y = 0
+                    }
+                    if (scrollbar.rect.Y+scrollbar.rect.H) >= WIN_H {
+                        println(scrollbar.rect.Y)
+                        scrollbar.rect.Y = WIN_H-scrollbar.rect.H
+                    }
+                }
 			case *sdl.MouseWheelEvent:
 				switch {
 				case t.Y > 0:
@@ -367,6 +386,12 @@ func main() {
 				case sdl.MOUSEBUTTONUP:
 					print_word = true
 				}
+
+                if scrollbar.selected && t.Type == sdl.MOUSEBUTTONDOWN && t.State == sdl.PRESSED {
+                    scrollbar.drag = true
+                } else {
+                    scrollbar.drag = false
+                }
 			case *sdl.TextInputEvent:
 				if cmd.show {
 					cmd.WriteChar(renderer, gfonts, t.Text[0])
@@ -433,6 +458,11 @@ func main() {
 		}
 		renderer.SetDrawColor(255, 255, 255, 0)
 		renderer.Clear()
+
+        draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{111, 111, 111, 90})
+        if scrollbar.selected {
+            draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{111, 111, 111, 255})
+        }
 
         //draw_rect_with_border_filled(renderer, &foobar_rect, &sdl.Color{212, 111, 222, 30})
         //renderer.Copy(foobar, nil, &foobar_rect)
@@ -715,10 +745,10 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
 
 func check_collision(event *sdl.MouseMotionEvent, rect *sdl.Rect) bool {
 	result := false
-	mx_gt_rx := event.X > (*rect).X
-	mx_lt_rx_rw := event.X < (*rect).X+(*rect).W
-	my_gt_ry := event.Y > (*rect).Y
-	my_lt_ry_rh := event.Y < (*rect).Y+(*rect).H
+	mx_gt_rx := event.X > rect.X
+	mx_lt_rx_rw := event.X < rect.X+rect.W
+	my_gt_ry := event.Y > rect.Y
+	my_lt_ry_rh := event.Y < rect.Y+rect.H
 
 	if (mx_gt_rx && mx_lt_rx_rw) && (my_gt_ry && my_lt_ry_rh) {
 		result = true
