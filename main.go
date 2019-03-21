@@ -17,8 +17,6 @@ import (
 	"unsafe"
 )
 
-// https://www.youtube.com/watch?v=KlDWmTcyXdA 
-
 // GENERAL
 // [ ] fmt.Println(runtime.Caller(0)) use this to get a LINENR when calculating unique ID's for IMGUI
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
