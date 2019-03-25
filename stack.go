@@ -49,3 +49,13 @@ func (s *Stack) GetLast() *Line {
 	}
 	return s.data[s.top-1]
 }
+
+func (s *Stack) MakeNULL() bool {
+    if s.IsEmpty() {
+        return false
+    }
+    for i := s.top; i > 0; i-- {
+        s.Pop()
+    }
+    return true
+}
