@@ -364,13 +364,13 @@ func main() {
                 scrollbar.selected = check_collision(t, &scrollbar.rect)
                 if scrollbar.drag {
                     scrollbar.rect.Y += t.YRel
-                    scrollbar.CalcPosDuringAction(int(scrollbar.rect.Y), TEST_TOKENS_LEN)
                     if scrollbar.rect.Y <= 0 {
                         scrollbar.rect.Y = 0
                     }
                     if (scrollbar.rect.Y+scrollbar.rect.H) >= WIN_H {
                         scrollbar.rect.Y = WIN_H-scrollbar.rect.H
                     }
+                    scrollbar.CalcPosDuringAction(int(scrollbar.rect.Y), TEST_TOKENS_LEN)
                 }
 			case *sdl.MouseWheelEvent:
 				switch {
