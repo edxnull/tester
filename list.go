@@ -62,6 +62,9 @@ func (L *List) DoPrint() {
 }
 
 func (L *List) PopFromHead() *Node {
+    if L.IsEmpty() {
+        return nil
+    }
 	first := L.head.next
 	L.head.next = L.head.next.next
 	L.head.next.prev = L.head
@@ -72,6 +75,9 @@ func (L *List) PopFromHead() *Node {
 }
 
 func (L *List) PopFromTail() *Node {
+    if L.IsEmpty() {
+        return nil
+    }
 	last := L.tail.next
 	L.tail.next = L.tail.next.prev
 	L.tail.next.next = nil
