@@ -291,6 +291,7 @@ func main() {
 
 	//viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
 	//renderer.SetViewport(&viewport_rect)
+    TEST_TOKENS_LEN := len(test_tokens)
 
 	qsize := int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
 	stack := NewStack(len(all_lines))
@@ -505,6 +506,7 @@ func main() {
 			all_lines[NEXT_ELEMENT].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[NEXT_ELEMENT].words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 			list.Append(&all_lines[NEXT_ELEMENT])
 			NEXT_ELEMENT += 1
+            scrollbar.CalcPos(NEXT_ELEMENT, TEST_TOKENS_LEN)
 			current := list.head.next
 			for i := 0; i < list.Size(); i++ {
 				current.data.bg_rect.Y = re[i].Y
@@ -523,6 +525,7 @@ func main() {
 				stack.GetLast().texture = make_ttf_texture(renderer, font, strings.Join(stack.GetLast().words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 				list.Prepend(stack.Pop())
 				NEXT_ELEMENT -= 1
+                scrollbar.CalcPos(NEXT_ELEMENT, TEST_TOKENS_LEN)
 				current := list.head.next
 				for i := 0; i < list.Size(); i++ {
 					current.data.bg_rect.Y = re[i].Y
@@ -1084,4 +1087,11 @@ func TestClearTexture(renderer *sdl.Renderer, texture *sdl.Texture, font *ttf.Fo
     fmt.Free()
     surface.Free()
     converted.Free()
+}
+
+func (sc *Scrollbar) CalcPos(current int, total int) {
+	sc.rect.Y = int32(float64(current)/float64(total)*float64(WIN_H)) - sc.rect.H
+    if sc.rect.Y < 0 {
+        sc.rect.Y = 0
+    }
 }
