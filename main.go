@@ -18,7 +18,6 @@ import (
 )
 
 // GENERAL
-// [ ] add guards in list.go PopFromTail/PopFromHead
 // [ ] fmt.Println(runtime.Caller(0)) use this to get a LINENR when calculating unique ID's for IMGUI
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
 // [ ] add *sdl.Texture to the list structure, to avoid allocating *sdl.Texture pointers in type Line struct?
@@ -292,6 +291,7 @@ func main() {
 	//viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
 	//renderer.SetViewport(&viewport_rect)
     TEST_TOKENS_LEN := len(test_tokens)
+    println(TEST_TOKENS_LEN)
 
 	qsize := int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
 	stack := NewStack(len(all_lines))
@@ -364,6 +364,7 @@ func main() {
                 scrollbar.selected = check_collision(t, &scrollbar.rect)
                 if scrollbar.drag {
                     scrollbar.rect.Y += t.YRel
+                    scrollbar.CalcPosDuringAction(int(scrollbar.rect.Y), TEST_TOKENS_LEN)
                     if scrollbar.rect.Y <= 0 {
                         scrollbar.rect.Y = 0
                     }
@@ -1094,4 +1095,8 @@ func (sc *Scrollbar) CalcPos(current int, total int) {
     if sc.rect.Y < 0 {
         sc.rect.Y = 0
     }
+}
+
+func (sc *Scrollbar) CalcPosDuringAction(current int, total int) {
+    println(int((float64(current+int(sc.rect.H))/float64(WIN_H)) * float64(total)))
 }
