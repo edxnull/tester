@@ -128,7 +128,6 @@ type Line struct {
 	words           []string
 	word_rects      []sdl.Rect
 	mouse_over_word []bool
-	slice           []Line
 }
 
 type DebugWrapLine struct {
