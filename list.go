@@ -83,3 +83,20 @@ func (L *List) PopFromTail() *Node {
 func (L *List) Size() int {
 	return L.size
 }
+
+func (L *List) IsEmpty() bool {
+    if L.Size() == 0 {
+        return true
+    }
+    return false
+}
+
+func (L *List) MakeNULL() bool {
+    if L.IsEmpty() {
+        return false
+    }
+    for i := L.Size(); i > 0; i-- {
+        _ = L.PopFromTail()
+    }
+    return true
+}
