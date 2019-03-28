@@ -1,3 +1,5 @@
+// +build windows
+// +build 386
 package main
 
 import (
@@ -79,6 +81,7 @@ import (
 // AUDIO
 // [ ] loading and playing audio files
 // [ ] recording audio?
+// [ ] needs to support tags/breakpoints for situations where you can't hear clearly or don't understand
 
 // TESTING
 // [ ] automated visual tests

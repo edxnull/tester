@@ -8,6 +8,7 @@ REM go build ./
 go build -i main.go stack.go queue.go list.go trie.go cmd.go
 echo "Finished...."
 
+REM go build -i -ldflags "-H windowsgui"
 REM go build -gcflags=m main.go
 REM go tool pprof --alloc_space main.exe mem.prof
 REM go tool pprof --alloc_objects main.exe mem.prof
