@@ -1033,47 +1033,6 @@ func genY(font *ttf.Font, size int) []int {
 	return result
 }
 
-// https://github.com/zielmicha/SDL2/blob/master/src/render/SDL_render.c
-// refactor this function!
-func TestMakeTexture(renderer *sdl.Renderer, font *ttf.Font, text string, color *sdl.Color) *sdl.Texture {
-	var surface *sdl.Surface
-	var ttf_texture *sdl.Texture
-	surface, _ = font.RenderUTF8Blended(text, *color)
-	ttf_texture, _ = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_STREAMING, int32(LINE_LENGTH), surface.H)
-	fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
-	converted, _ := surface.Convert(fmt, 0)
-	ttf_texture.Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
-	ttf_texture.SetBlendMode(sdl.BLENDMODE_BLEND)
-	fmt.Free()
-	surface.Free()
-	converted.Free()
-	return ttf_texture
-}
-
-func TestUpdateTexture(renderer *sdl.Renderer, texture *sdl.Texture, font *ttf.Font, text string, color *sdl.Color) {
-	var surface *sdl.Surface
-	surface, _ = font.RenderUTF8Blended(text, *color)
-	fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
-	converted, _ := surface.Convert(fmt, 0)
-	texture.Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
-	fmt.Free()
-	surface.Free()
-	converted.Free()
-}
-
-func TestClearTexture(renderer *sdl.Renderer, texture *sdl.Texture, font *ttf.Font, color *sdl.Color) {
-	var surface *sdl.Surface
-	surface, _ = font.RenderUTF8Blended(" ", *color)
-	fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
-	converted, _ := surface.Convert(fmt, 0)
-	bytes, _, _ := texture.Lock(nil)
-	copy(bytes, converted.Pixels())
-	texture.Unlock()
-	fmt.Free()
-	surface.Free()
-	converted.Free()
-}
-
 func (sc *Scrollbar) CalcPos(current int, total int) {
 	sc.rect.Y = int32(float64(current)/float64(total)*float64(WIN_H)) - sc.rect.H
 	if sc.rect.Y < 0 {
