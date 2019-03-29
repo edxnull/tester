@@ -2,6 +2,9 @@ package main
 
 // FILO stack
 
+type Line struct {
+}
+
 type Stack struct {
 	data []*Line
 	top  int
@@ -55,9 +58,10 @@ func (s *Stack) MakeNULL() bool {
 		return false
 	}
 	for i := s.top; i > 0; i-- {
-		e := s.Pop()
-		e.texture.Destroy()
-		e.texture = nil
+		s.Pop()
+		//e := s.Pop()
+		//e.texture.Destroy()
+		//e.texture = nil
 	}
 	return true
 }

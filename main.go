@@ -16,19 +16,15 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 )
 
 // GENERAL
 // [ ] fmt.Println(runtime.Caller(0)) use this to get a LINENR when calculating unique ID's for IMGUI
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
-// [ ] add *sdl.Texture to the list structure, to avoid allocating *sdl.Texture pointers in type Line struct?
 // [ ] refactor FontSelector
 // [ ] changing font size
 // [ ] selecting and reloading fonts
-// [ ] refactor wrapping text
 // [ ] make sure that we don't exceed max sdl.texture width
-// [ ] why do we get such a huge GPU commit bump on start/ GPU commit drop after resizing?
 // [ ] should we compress strings?? Huffman encoding?
 // [ ] should we use hash algorithms?
 // [ ] selecting and reloading text
@@ -45,10 +41,6 @@ import (
 // [ ] cmd input commands + parsing
 
 // SDL RELATED
-// [ ] try sdl.UpdateTexture(texture, null, surface.pixels, surface.pitch) instead of alloc/dealloc all the time.
-//     - the pixel format should be in the format of the texture. Use QueryTexture() for that.
-//     - apparently this would be slow, but it's worth a shot in order to avoid allocs/deallocs.
-//     Alternatively, it's possible to use Lock()/Unlock() functions for updating Textures
 // [ ] SDL_ConvertSurface for faster blitting?
 // [ ] try using r.SetScale()
 // [ ] use r.DrawLines() to draw triangles?
@@ -59,7 +51,6 @@ import (
 // [ ] how can we not render everything on every frame?
 
 // VISUAL
-// [ ] scrollbar actual scrolling functionality
 // [ ] http://blog.moagrius.com/actionscript/jsas-understanding-easing/
 // [ ] https://github.com/malkia/ufo/tree/master/samples/SDL
 // [ ] http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/Welcome.html
@@ -124,9 +115,7 @@ type Font struct {
 	width, height int32
 }
 
-type Line struct {
-	texture         *sdl.Texture
-	bg_rect         sdl.Rect
+type LineMetaData struct {
 	words           []string
 	word_rects      []sdl.Rect
 	mouse_over_word []bool
@@ -135,6 +124,7 @@ type Line struct {
 type TextBox struct {
 	data       []*sdl.Texture
 	data_rects []sdl.Rect
+	metadata   []*LineMetaData
 	fmt        *sdl.PixelFormat
 }
 
@@ -190,20 +180,6 @@ func main() {
 	}
 
 	runtime.LockOSThread() // NOTE: not sure I need this here!
-
-	dummy_a := new(int)
-	dummy_b := new(string)
-	dummy_c := string("H")
-	dummy_d := new(int64)
-	dummy_e := new(bool)
-	dummy_f := true
-
-	println(unsafe.Sizeof(dummy_a))
-	println(unsafe.Sizeof(dummy_b))
-	println(unsafe.Sizeof(dummy_c))
-	println(unsafe.Sizeof(dummy_d))
-	println(unsafe.Sizeof(dummy_e))
-	println(unsafe.Sizeof(dummy_f))
 
 	if err := sdl.Init(sdl.INIT_TIMER | sdl.INIT_VIDEO | sdl.INIT_AUDIO); err != nil {
 		panic(err)
@@ -265,10 +241,10 @@ func main() {
 	fmt.Printf("[[do_wrap_lines loop took %s]]\n", end_start.String())
 
 	now_gen := time.Now()
-	all_lines := make([]Line, len(test_tokens))
-	generate_and_populate_lines(renderer, font, &all_lines, &test_tokens)
+	linemeta := make([]LineMetaData, len(test_tokens))
+	generate_line_metadata(renderer, font, &linemeta, &test_tokens)
 	end_gen := time.Now().Sub(now_gen)
-	fmt.Printf("[[generate_and_populate_lines took %s]]\n", end_gen.String())
+	fmt.Printf("[[generate_line_metadata took %s]]\n", end_gen.String())
 
 	cmd := NewCmdConsole(renderer, font)
 
@@ -295,69 +271,44 @@ func main() {
 	page_up := false
 	page_down := false
 
-	_ = page_up
-	_ = page_down
-
 	wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H}
 
 	curr_char_w := 0
 
-	//viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
-	//renderer.SetViewport(&viewport_rect)
 	TEST_TOKENS_LEN := len(test_tokens)
-	println(TEST_TOKENS_LEN)
 
 	qsize := int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
-	stack := NewStack(len(all_lines))
 
-	for i := 0; i < qsize; i++ {
-		all_lines[i].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[i].words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 0})
-	}
-
-	list := NewList()
-	for i := 0; i < qsize; i++ {
-		list.Append(&all_lines[i])
-	}
 	NEXT_ELEMENT := qsize
 	START_ELEMENT := 0
-
-	re := make([]sdl.Rect, qsize)
-	rey := genY(font, qsize)
-	for i := 0; i < qsize; i++ {
-		re[i] = sdl.Rect{X: 0, Y: int32(rey[i]), W: WIN_W, H: int32(font.Height())}
-		all_lines[i].bg_rect.Y = re[i].Y
-		for j := 0; j < len(all_lines[i].word_rects); j++ {
-			all_lines[i].word_rects[j].Y = re[i].Y
-		}
-	}
 
 	textbox := TextBox{
 		data:       make([]*sdl.Texture, qsize),
 		data_rects: make([]sdl.Rect, qsize),
+		metadata:   make([]*LineMetaData, qsize),
 		fmt:        nil,
+	}
+
+	for i := 0; i < len(textbox.data); i++ {
+		textbox.metadata[i] = &linemeta[i]
 	}
 
 	textbox.CreateEmpty(renderer, font, sdl.Color{0, 0, 0, 255})
 	textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{0, 0, 0, 255})
-
-	_ = textbox
 
 	for i := 0; i < len(textbox.data); i++ {
 		defer textbox.data[i].Destroy()
 	}
 	defer textbox.fmt.Free()
 
-	//foobar := TestMakeTexture(renderer, font, "fooba$", &sdl.Color{0,0,0,255})
-	//_, _, fw, fh, _ := foobar.Query()
-	//TestUpdateTexture(renderer, foobar, font, "boo", &sdl.Color{0,0,0,255})
-	//TestUpdateTexture(renderer, foobar, font, "gooz", &sdl.Color{0,0,0,255})
-	//TestUpdateTexture(renderer, foobar, font, "whatever man, this is bullshit", &sdl.Color{0,0,0,255})
-	//TestClearTexture(renderer, foobar, font, &sdl.Color{0, 0, 0, 255})
-	//TestUpdateTexture(renderer, foobar, font, "A wise man once said: ....", &sdl.Color{0,0,0,255})
-	//TestClearTexture(renderer, foobar, font, &sdl.Color{0, 0, 0, 255})
-	//TestUpdateTexture(renderer, foobar, font, "....", &sdl.Color{0,0,0,255})
-	//foobar_rect := sdl.Rect{int32(X_OFFSET), 0, fw, fh}
-	//defer foobar.Destroy()
+	re := make([]sdl.Rect, qsize)
+	rey := genY(font, qsize)
+	for i := 0; i < qsize; i++ {
+		re[i] = sdl.Rect{X: int32(X_OFFSET), Y: int32(rey[i]), W: int32(LINE_LENGTH), H: int32(font.Height())}
+		for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
+			textbox.metadata[i].word_rects[j].Y = re[i].Y
+		}
+	}
 
 	scrollbar := &Scrollbar{drag: false, selected: false, rect: sdl.Rect{int32(LINE_LENGTH + X_OFFSET - 5), 0, 5, 30}}
 
@@ -385,13 +336,11 @@ func main() {
 					}
 				}
 			case *sdl.MouseMotionEvent:
-				//fmt.Println(t.X, t.Y)
-				current := list.head.next
-				for i := 0; i < list.Size(); i++ {
-					check_collision_mouse_over_words(t, &current.data.word_rects, &current.data.mouse_over_word)
-					current = current.next
+				for i := 0; i < len(textbox.data); i++ {
+					check_collision_mouse_over_words(t, &textbox.metadata[i].word_rects, &textbox.metadata[i].mouse_over_word)
 				}
 				check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
+
 				scrollbar.selected = check_collision(t, &scrollbar.rect)
 				if scrollbar.drag {
 					scrollbar.rect.Y += t.YRel
@@ -472,10 +421,8 @@ func main() {
 							move_text_down = true
 						case sdl.K_RIGHT:
 							page_down = true
-							println("page_down")
 						case sdl.K_LEFT:
 							page_up = true
-							println("page_up")
 						}
 					}
 				}
@@ -491,94 +438,72 @@ func main() {
 
 		for i := 0; i < len(textbox.data); i++ {
 			renderer.Copy(textbox.data[i], nil, &textbox.data_rects[i])
-			draw_rect_with_border_filled(renderer, &textbox.data_rects[i], &sdl.Color{0, 0, 0, 0})
+			for j := 0; j < len(textbox.metadata[i].mouse_over_word); j++ {
+				if textbox.metadata[i].mouse_over_word[j] {
+					engage_loop = true
+				}
+			}
 		}
 
 		draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{111, 111, 111, 90})
+
 		if scrollbar.drag || scrollbar.selected {
 			draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{111, 111, 111, 255})
 		}
-
-		//draw_rect_with_border_filled(renderer, &foobar_rect, &sdl.Color{212, 111, 222, 30})
-		//renderer.Copy(foobar, nil, &foobar_rect)
-
-		//current := list.head.next
-		//for i := 0; i < list.Size(); i++ {
-		//	renderer.Copy(current.data.texture, nil, &current.data.bg_rect)
-		//	for j := 0; j < len(current.data.mouse_over_word); j++ {
-		//		if current.data.mouse_over_word[j] {
-		//			engage_loop = true
-		//		}
-		//	}
-		//	current = current.next
-		//}
 
 		if print_word && !engage_loop {
 			print_word = false
 		}
 
 		if engage_loop && !cmd.show {
-			current := list.head.next
-			for i := 0; i < list.Size(); i++ {
-				for j := 0; j < len(current.data.mouse_over_word); j++ {
-					if current.data.mouse_over_word[j] && current.data.words[j] != "\n" {
-						draw_rect_without_border(renderer, &current.data.word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
-						if print_word && current.data.words[j] != "\n" {
-							fmt.Printf("%s\n", current.data.words[j])
+			for i := 0; i < len(textbox.data); i++ {
+				for j := 0; j < len(textbox.metadata[i].mouse_over_word); j++ {
+					if textbox.metadata[i].mouse_over_word[j] && textbox.metadata[i].words[j] != "\n" {
+						draw_rect_without_border(renderer, &textbox.metadata[i].word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
+						if print_word && textbox.metadata[i].words[j] != "\n" {
+							println(textbox.metadata[i].words[j])
 							print_word = false
 						}
 					}
 				}
-				current = current.next
 			}
 			engage_loop = false
 		}
 
 		if move_text_down {
-			textbox.Clear(renderer, font)
-			textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
 			move_text_down = false
-			inc_dbg_str = true
-			stack.Push(list.PopFromHead().data)
-			stack.GetLast().texture.Destroy()
-			stack.GetLast().texture = nil
-			all_lines[NEXT_ELEMENT].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[NEXT_ELEMENT].words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
-			list.Append(&all_lines[NEXT_ELEMENT])
-			NEXT_ELEMENT += 1
-			START_ELEMENT += 1
-			scrollbar.CalcPos(NEXT_ELEMENT, TEST_TOKENS_LEN)
-			current := list.head.next
-			for i := 0; i < list.Size(); i++ {
-				current.data.bg_rect.Y = re[i].Y
-				for j := 0; j < len(current.data.word_rects); j++ {
-					current.data.word_rects[j].Y = re[i].Y
+			if NEXT_ELEMENT <= TEST_TOKENS_LEN {
+				NEXT_ELEMENT += 1
+				START_ELEMENT += 1
+				textbox.Clear(renderer, font)
+				textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
+				scrollbar.CalcPos(NEXT_ELEMENT, TEST_TOKENS_LEN)
+				inc_dbg_str = true
+				for i := 0; i < len(textbox.data); i++ {
+					textbox.metadata[i] = &linemeta[START_ELEMENT+i]
+					for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
+						textbox.metadata[i].word_rects[j].Y = re[i].Y
+					}
 				}
-				current = current.next
 			}
 		}
 
 		if move_text_up {
-			if stack.IsEmpty() != true {
-				move_text_up = false
-				inc_dbg_str = true
-				list.PopFromTail()
-				stack.GetLast().texture = make_ttf_texture(renderer, font, strings.Join(stack.GetLast().words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
-				list.Prepend(stack.Pop())
+			move_text_up = false
+			if START_ELEMENT > 0 {
 				NEXT_ELEMENT -= 1
 				START_ELEMENT -= 1
+				textbox.Clear(renderer, font)
+				textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
 				scrollbar.CalcPos(NEXT_ELEMENT, TEST_TOKENS_LEN)
-				current := list.head.next
-				for i := 0; i < list.Size(); i++ {
-					current.data.bg_rect.Y = re[i].Y
-					for j := 0; j < len(current.data.word_rects); j++ {
-						current.data.word_rects[j].Y = re[i].Y
+				inc_dbg_str = true
+				for i := 0; i < len(textbox.data); i++ {
+					textbox.metadata[i] = &linemeta[START_ELEMENT+i]
+					for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
+						textbox.metadata[i].word_rects[j].Y = re[i].Y
 					}
-					current = current.next
 				}
 			}
-
-			textbox.Clear(renderer, font)
-			textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
 		}
 
 		if page_down {
@@ -588,6 +513,12 @@ func main() {
 			NEXT_ELEMENT += qsize
 			textbox.Clear(renderer, font)
 			textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
+			for i := 0; i < len(textbox.data); i++ {
+				textbox.metadata[i] = &linemeta[START_ELEMENT+i]
+				for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
+					textbox.metadata[i].word_rects[j].Y = re[i].Y
+				}
+			}
 		}
 
 		if page_up {
@@ -597,25 +528,21 @@ func main() {
 			NEXT_ELEMENT -= qsize
 			textbox.Clear(renderer, font)
 			textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
+			for i := 0; i < len(textbox.data); i++ {
+				textbox.metadata[i] = &linemeta[START_ELEMENT+i]
+				for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
+					textbox.metadata[i].word_rects[j].Y = re[i].Y
+				}
+			}
 		}
 
 		if wrap_line {
-			current := list.head.next
-			for i := 0; i < list.Size(); i++ {
-				draw_rect_without_border(renderer, &current.data.bg_rect, &sdl.Color{R: 100, G: 255, B: 255, A: 100})
-				current = current.next
+			for i := 0; i < len(textbox.data); i++ {
+				draw_rect_without_border(renderer, &textbox.data_rects[i], &sdl.Color{R: 100, G: 255, B: 255, A: 100})
 			}
 		}
 
 		if cmd.show {
-			current := list.head.next
-			for i := 0; i < list.Size(); i++ {
-				for j := 0; j < len(current.data.word_rects); j++ {
-					draw_rect_without_border(renderer, &current.data.word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
-				}
-				current = current.next
-			}
-
 			for i := range re {
 				draw_rect_with_border(renderer, &re[i], &sdl.Color{R: 200, G: 100, B: 0, A: 200})
 			}
@@ -628,7 +555,6 @@ func main() {
 			draw_rect_with_border_filled(renderer, &cmd.cursor_rect, &sdl.Color{R: 0, G: 0, B: 0, A: cmd.alpha_value})
 
 			draw_rect_without_border(renderer, &gfonts.bg_rect, &sdl.Color{R: 255, G: 255, B: 255, A: 255})
-			//renderer.SetClipRect(&gfonts.bg_rect) we can make our stuff dissapear
 
 			for i := 0; i < len(gfonts.textures); i++ {
 				renderer.Copy(gfonts.textures[i], nil, &gfonts.ttf_rects[i])
@@ -665,13 +591,6 @@ func main() {
 	ticker.Stop()
 	renderer.Destroy()
 	window.Destroy()
-
-	current := list.head.next
-	for i := 0; i < list.Size(); i++ {
-		current.data.texture.Destroy()
-		current.data.texture = nil
-		current = current.next
-	}
 
 	if cmd.ttf_texture != nil {
 		cmd.ttf_texture.Destroy()
@@ -758,16 +677,14 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
 	return tex
 }
 
-func generate_and_populate_lines(r *sdl.Renderer, font *ttf.Font, dest *[]Line, tokens *[]string) {
+func generate_line_metadata(r *sdl.Renderer, font *ttf.Font, dest *[]LineMetaData, tokens *[]string) {
 	for index := 0; index < len(*tokens); index++ {
-		new_ttf_texture_line(r, font, &(*dest)[index], (*tokens)[index])
+		populate_line_metadata(r, font, &(*dest)[index], (*tokens)[index])
 	}
 }
 
-func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_text string) {
+func populate_line_metadata(rend *sdl.Renderer, font *ttf.Font, line *LineMetaData, line_text string) {
 	assert_if(len(line_text) == 0)
-
-	//line.texture = make_ttf_texture(rend, font, line_text, &sdl.Color{R: 0, G: 0, B: 0, A: 0})
 
 	text := strings.Split(line_text, " ")
 	text_len := len(text)
@@ -780,9 +697,7 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_t
 	copy(line.words, text)
 
 	x, y, _ := font.SizeUTF8(" ")
-	tw := x * len(line_text)
 
-	// TODO danger: gobal vars are bad!
 	move_x := X_OFFSET
 	ix := 0
 	for index := 0; index < text_len; index++ {
@@ -790,7 +705,6 @@ func new_ttf_texture_line(rend *sdl.Renderer, font *ttf.Font, line *Line, line_t
 		line.word_rects[index] = sdl.Rect{X: int32(move_x), Y: int32(-y), W: int32(ix), H: int32(y)}
 		move_x += (ix + x)
 	}
-	line.bg_rect = sdl.Rect{X: int32(X_OFFSET), Y: int32(-y), W: int32(tw), H: int32(y)}
 	text = nil
 }
 
