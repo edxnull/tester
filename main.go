@@ -39,9 +39,10 @@ import (
 // [ ] export/import csv
 // [ ] make sure we handle utf8
 // [ ] cmd input commands + parsing
+// [ ] [bug_icon] in-app file a bug button & menu
 
 // SDL RELATED
-// [ ] SDL_ConvertSurface for faster blitting?
+// [ ] optimize TextBox Update and Clear (somehow)
 // [ ] try using r.SetScale()
 // [ ] use r.DrawLines() to draw triangles?
 // [ ] use r.SetClipRect r.GetClipRect for rendering
@@ -511,6 +512,10 @@ func main() {
 			inc_dbg_str = true
 			START_ELEMENT = NEXT_ELEMENT
 			NEXT_ELEMENT += qsize
+			if NEXT_ELEMENT >= TEST_TOKENS_LEN {
+				START_ELEMENT = TEST_TOKENS_LEN - qsize
+				NEXT_ELEMENT = TEST_TOKENS_LEN
+			}
 			textbox.Clear(renderer, font)
 			textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
 			for i := 0; i < len(textbox.data); i++ {
@@ -526,6 +531,10 @@ func main() {
 			inc_dbg_str = true
 			START_ELEMENT = NEXT_ELEMENT - (qsize * 2)
 			NEXT_ELEMENT -= qsize
+			if START_ELEMENT < 0 {
+				START_ELEMENT = 0
+				NEXT_ELEMENT = qsize
+			}
 			textbox.Clear(renderer, font)
 			textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
 			for i := 0; i < len(textbox.data); i++ {
