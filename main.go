@@ -319,7 +319,7 @@ func main() {
 		list.Append(&all_lines[i])
 	}
 	NEXT_ELEMENT := qsize
-    START_ELEMENT := 0
+	START_ELEMENT := 0
 
 	re := make([]sdl.Rect, qsize)
 	rey := genY(font, qsize)
@@ -535,8 +535,8 @@ func main() {
 		}
 
 		if move_text_down {
-            textbox.Clear(renderer, font)
-            textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
+			textbox.Clear(renderer, font)
+			textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
 			move_text_down = false
 			inc_dbg_str = true
 			stack.Push(list.PopFromHead().data)
@@ -545,7 +545,7 @@ func main() {
 			all_lines[NEXT_ELEMENT].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[NEXT_ELEMENT].words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 			list.Append(&all_lines[NEXT_ELEMENT])
 			NEXT_ELEMENT += 1
-            START_ELEMENT += 1
+			START_ELEMENT += 1
 			scrollbar.CalcPos(NEXT_ELEMENT, TEST_TOKENS_LEN)
 			current := list.head.next
 			for i := 0; i < list.Size(); i++ {
@@ -565,7 +565,7 @@ func main() {
 				stack.GetLast().texture = make_ttf_texture(renderer, font, strings.Join(stack.GetLast().words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 				list.Prepend(stack.Pop())
 				NEXT_ELEMENT -= 1
-                START_ELEMENT -= 1
+				START_ELEMENT -= 1
 				scrollbar.CalcPos(NEXT_ELEMENT, TEST_TOKENS_LEN)
 				current := list.head.next
 				for i := 0; i < list.Size(); i++ {
@@ -577,26 +577,26 @@ func main() {
 				}
 			}
 
-            textbox.Clear(renderer, font)
-            textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
+			textbox.Clear(renderer, font)
+			textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
 		}
 
 		if page_down {
 			page_down = false
 			inc_dbg_str = true
-            START_ELEMENT = NEXT_ELEMENT
-            NEXT_ELEMENT += qsize
-            textbox.Clear(renderer, font)
-            textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
+			START_ELEMENT = NEXT_ELEMENT
+			NEXT_ELEMENT += qsize
+			textbox.Clear(renderer, font)
+			textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
 		}
 
 		if page_up {
 			page_up = false
 			inc_dbg_str = true
-            START_ELEMENT = NEXT_ELEMENT-(qsize*2)
-            NEXT_ELEMENT -= qsize
-            textbox.Clear(renderer, font)
-            textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
+			START_ELEMENT = NEXT_ELEMENT - (qsize * 2)
+			NEXT_ELEMENT -= qsize
+			textbox.Clear(renderer, font)
+			textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{0, 0, 0, 255})
 		}
 
 		if wrap_line {
@@ -1197,11 +1197,11 @@ func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []strin
 func (tbox *TextBox) Clear(renderer *sdl.Renderer, font *ttf.Font) {
 	surface, _ := font.RenderUTF8Blended(" ", sdl.Color{0, 0, 0, 0})
 	converted, _ := surface.Convert(tbox.fmt, 0)
-    for i := 0; i < len(tbox.data); i++ {
-        bytes, _, _ := tbox.data[i].Lock(nil)
-        copy(bytes, converted.Pixels())
-        tbox.data[i].Unlock()
-    }
+	for i := 0; i < len(tbox.data); i++ {
+		bytes, _, _ := tbox.data[i].Lock(nil)
+		copy(bytes, converted.Pixels())
+		tbox.data[i].Unlock()
+	}
 	surface.Free()
 	converted.Free()
 }
