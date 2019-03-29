@@ -51,11 +51,13 @@ func (s *Stack) GetLast() *Line {
 }
 
 func (s *Stack) MakeNULL() bool {
-    if s.IsEmpty() {
-        return false
-    }
-    for i := s.top; i > 0; i-- {
-        s.Pop()
-    }
-    return true
+	if s.IsEmpty() {
+		return false
+	}
+	for i := s.top; i > 0; i-- {
+		e := s.Pop()
+		e.texture.Destroy()
+		e.texture = nil
+	}
+	return true
 }

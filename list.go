@@ -62,9 +62,9 @@ func (L *List) DoPrint() {
 }
 
 func (L *List) PopFromHead() *Node {
-    if L.IsEmpty() {
-        return nil
-    }
+	if L.IsEmpty() {
+		return nil
+	}
 	first := L.head.next
 	L.head.next = L.head.next.next
 	L.head.next.prev = L.head
@@ -75,9 +75,9 @@ func (L *List) PopFromHead() *Node {
 }
 
 func (L *List) PopFromTail() *Node {
-    if L.IsEmpty() {
-        return nil
-    }
+	if L.IsEmpty() {
+		return nil
+	}
 	last := L.tail.next
 	L.tail.next = L.tail.next.prev
 	L.tail.next.next = nil
@@ -91,18 +91,18 @@ func (L *List) Size() int {
 }
 
 func (L *List) IsEmpty() bool {
-    if L.Size() == 0 {
-        return true
-    }
-    return false
+	if L.Size() == 0 {
+		return true
+	}
+	return false
 }
 
 func (L *List) MakeNULL() bool {
-    if L.IsEmpty() {
-        return false
-    }
-    for i := L.Size(); i > 0; i-- {
-        _ = L.PopFromTail()
-    }
-    return true
+	if L.IsEmpty() {
+		return false
+	}
+	for i := L.Size(); i > 0; i-- {
+		_ = L.PopFromTail()
+	}
+	return true
 }

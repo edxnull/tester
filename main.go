@@ -132,15 +132,21 @@ type Line struct {
 	mouse_over_word []bool
 }
 
+type TextBox struct {
+	data       []*sdl.Texture
+	data_rects []sdl.Rect
+	fmt        *sdl.PixelFormat
+}
+
 type DebugWrapLine struct {
 	x1, y1 int32
 	x2, y2 int32
 }
 
 type Scrollbar struct {
-    drag     bool
-    selected bool
-    rect sdl.Rect
+	drag     bool
+	selected bool
+	rect     sdl.Rect
 }
 
 type FontSelector struct {
@@ -286,6 +292,11 @@ func main() {
 
 	move_text_up := false
 	move_text_down := false
+	page_up := false
+	page_down := false
+
+	_ = page_up
+	_ = page_down
 
 	wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H}
 
@@ -293,8 +304,8 @@ func main() {
 
 	//viewport_rect := sdl.Rect{0, 0, WIN_W, WIN_H}
 	//renderer.SetViewport(&viewport_rect)
-    TEST_TOKENS_LEN := len(test_tokens)
-    println(TEST_TOKENS_LEN)
+	TEST_TOKENS_LEN := len(test_tokens)
+	println(TEST_TOKENS_LEN)
 
 	qsize := int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
 	stack := NewStack(len(all_lines))
@@ -319,19 +330,35 @@ func main() {
 		}
 	}
 
-    //foobar := TestMakeTexture(renderer, font, "fooba$", &sdl.Color{0,0,0,255})
-    //_, _, fw, fh, _ := foobar.Query()
-    //TestUpdateTexture(renderer, foobar, font, "boo", &sdl.Color{0,0,0,255})
-    //TestUpdateTexture(renderer, foobar, font, "gooz", &sdl.Color{0,0,0,255})
-    //TestUpdateTexture(renderer, foobar, font, "whatever man, this is bullshit", &sdl.Color{0,0,0,255})
-    //TestClearTexture(renderer, foobar, font, &sdl.Color{0, 0, 0, 255})
-    //TestUpdateTexture(renderer, foobar, font, "A wise man once said: ....", &sdl.Color{0,0,0,255})
-    //TestClearTexture(renderer, foobar, font, &sdl.Color{0, 0, 0, 255})
-    //TestUpdateTexture(renderer, foobar, font, "....", &sdl.Color{0,0,0,255})
-    //foobar_rect := sdl.Rect{int32(X_OFFSET), 0, fw, fh}
-    //defer foobar.Destroy()
+	textbox := TextBox{
+		data:       make([]*sdl.Texture, qsize),
+		data_rects: make([]sdl.Rect, qsize),
+		fmt:        nil,
+	}
 
-    scrollbar := &Scrollbar{drag: false, selected: false, rect: sdl.Rect{int32(LINE_LENGTH+X_OFFSET-5), 0, 5, 30}}
+	textbox.CreateEmpty(renderer, font, sdl.Color{0, 0, 0, 255})
+	textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{0, 0, 0, 255})
+
+	_ = textbox
+
+	for i := 0; i < len(textbox.data); i++ {
+		defer textbox.data[i].Destroy()
+	}
+	defer textbox.fmt.Free()
+
+	//foobar := TestMakeTexture(renderer, font, "fooba$", &sdl.Color{0,0,0,255})
+	//_, _, fw, fh, _ := foobar.Query()
+	//TestUpdateTexture(renderer, foobar, font, "boo", &sdl.Color{0,0,0,255})
+	//TestUpdateTexture(renderer, foobar, font, "gooz", &sdl.Color{0,0,0,255})
+	//TestUpdateTexture(renderer, foobar, font, "whatever man, this is bullshit", &sdl.Color{0,0,0,255})
+	//TestClearTexture(renderer, foobar, font, &sdl.Color{0, 0, 0, 255})
+	//TestUpdateTexture(renderer, foobar, font, "A wise man once said: ....", &sdl.Color{0,0,0,255})
+	//TestClearTexture(renderer, foobar, font, &sdl.Color{0, 0, 0, 255})
+	//TestUpdateTexture(renderer, foobar, font, "....", &sdl.Color{0,0,0,255})
+	//foobar_rect := sdl.Rect{int32(X_OFFSET), 0, fw, fh}
+	//defer foobar.Destroy()
+
+	scrollbar := &Scrollbar{drag: false, selected: false, rect: sdl.Rect{int32(LINE_LENGTH + X_OFFSET - 5), 0, 5, 30}}
 
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -364,17 +391,17 @@ func main() {
 					current = current.next
 				}
 				check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
-                scrollbar.selected = check_collision(t, &scrollbar.rect)
-                if scrollbar.drag {
-                    scrollbar.rect.Y += t.YRel
-                    if scrollbar.rect.Y <= 0 {
-                        scrollbar.rect.Y = 0
-                    }
-                    if (scrollbar.rect.Y+scrollbar.rect.H) >= WIN_H {
-                        scrollbar.rect.Y = WIN_H-scrollbar.rect.H
-                    }
-                    scrollbar.CalcPosDuringAction(int(scrollbar.rect.Y), TEST_TOKENS_LEN)
-                }
+				scrollbar.selected = check_collision(t, &scrollbar.rect)
+				if scrollbar.drag {
+					scrollbar.rect.Y += t.YRel
+					if scrollbar.rect.Y <= 0 {
+						scrollbar.rect.Y = 0
+					}
+					if (scrollbar.rect.Y + scrollbar.rect.H) >= WIN_H {
+						scrollbar.rect.Y = WIN_H - scrollbar.rect.H
+					}
+					scrollbar.CalcPosDuringAction(int(scrollbar.rect.Y), TEST_TOKENS_LEN)
+				}
 			case *sdl.MouseWheelEvent:
 				switch {
 				case t.Y > 0:
@@ -389,11 +416,11 @@ func main() {
 					print_word = true
 				}
 
-                if scrollbar.selected && t.Type == sdl.MOUSEBUTTONDOWN && t.State == sdl.PRESSED {
-                    scrollbar.drag = true
-                } else {
-                    scrollbar.drag = false
-                }
+				if scrollbar.selected && t.Type == sdl.MOUSEBUTTONDOWN && t.State == sdl.PRESSED {
+					scrollbar.drag = true
+				} else {
+					scrollbar.drag = false
+				}
 			case *sdl.TextInputEvent:
 				if cmd.show {
 					cmd.WriteChar(renderer, gfonts, t.Text[0])
@@ -442,17 +469,17 @@ func main() {
 							move_text_up = true
 						case sdl.K_DOWN:
 							move_text_down = true
+						case sdl.K_RIGHT:
+							page_down = true
+							println("page_down")
+						case sdl.K_LEFT:
+							page_up = true
+							println("page_up")
 						}
 					}
 				}
 				if t.Keysym.Sym == sdl.K_ESCAPE {
 					running = false
-				}
-				if t.Keysym.Sym == sdl.K_LEFT {
-					println("SHOULD SCROLL FONT back")
-				}
-				if t.Keysym.Sym == sdl.K_RIGHT {
-					println("SHOULD SCROLL FONT forward")
 				}
 			default:
 				continue
@@ -461,28 +488,33 @@ func main() {
 		renderer.SetDrawColor(255, 255, 255, 0)
 		renderer.Clear()
 
-        draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{111, 111, 111, 90})
-        if scrollbar.drag || scrollbar.selected {
-            draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{111, 111, 111, 255})
-        }
-
-        //draw_rect_with_border_filled(renderer, &foobar_rect, &sdl.Color{212, 111, 222, 30})
-        //renderer.Copy(foobar, nil, &foobar_rect)
-
-		current := list.head.next
-		for i := 0; i < list.Size(); i++ {
-			renderer.Copy(current.data.texture, nil, &current.data.bg_rect)
-			for j := 0; j < len(current.data.mouse_over_word); j++ {
-				if current.data.mouse_over_word[j] {
-					engage_loop = true
-				}
-			}
-			current = current.next
+		for i := 0; i < len(textbox.data); i++ {
+			renderer.Copy(textbox.data[i], nil, &textbox.data_rects[i])
+			draw_rect_with_border_filled(renderer, &textbox.data_rects[i], &sdl.Color{0, 0, 0, 0})
 		}
 
-        if print_word && !engage_loop {
-            print_word = false
-        }
+		draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{111, 111, 111, 90})
+		if scrollbar.drag || scrollbar.selected {
+			draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{111, 111, 111, 255})
+		}
+
+		//draw_rect_with_border_filled(renderer, &foobar_rect, &sdl.Color{212, 111, 222, 30})
+		//renderer.Copy(foobar, nil, &foobar_rect)
+
+		//current := list.head.next
+		//for i := 0; i < list.Size(); i++ {
+		//	renderer.Copy(current.data.texture, nil, &current.data.bg_rect)
+		//	for j := 0; j < len(current.data.mouse_over_word); j++ {
+		//		if current.data.mouse_over_word[j] {
+		//			engage_loop = true
+		//		}
+		//	}
+		//	current = current.next
+		//}
+
+		if print_word && !engage_loop {
+			print_word = false
+		}
 
 		if engage_loop && !cmd.show {
 			current := list.head.next
@@ -510,7 +542,7 @@ func main() {
 			all_lines[NEXT_ELEMENT].texture = make_ttf_texture(renderer, font, strings.Join(all_lines[NEXT_ELEMENT].words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 			list.Append(&all_lines[NEXT_ELEMENT])
 			NEXT_ELEMENT += 1
-            scrollbar.CalcPos(NEXT_ELEMENT, TEST_TOKENS_LEN)
+			scrollbar.CalcPos(NEXT_ELEMENT, TEST_TOKENS_LEN)
 			current := list.head.next
 			for i := 0; i < list.Size(); i++ {
 				current.data.bg_rect.Y = re[i].Y
@@ -529,7 +561,7 @@ func main() {
 				stack.GetLast().texture = make_ttf_texture(renderer, font, strings.Join(stack.GetLast().words, " "), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 				list.Prepend(stack.Pop())
 				NEXT_ELEMENT -= 1
-                scrollbar.CalcPos(NEXT_ELEMENT, TEST_TOKENS_LEN)
+				scrollbar.CalcPos(NEXT_ELEMENT, TEST_TOKENS_LEN)
 				current := list.head.next
 				for i := 0; i < list.Size(); i++ {
 					current.data.bg_rect.Y = re[i].Y
@@ -539,6 +571,16 @@ func main() {
 					current = current.next
 				}
 			}
+		}
+
+		if page_down {
+			page_down = false
+			inc_dbg_str = true
+		}
+
+		if page_up {
+			page_up = false
+			inc_dbg_str = true
 		}
 
 		if wrap_line {
@@ -558,9 +600,9 @@ func main() {
 				current = current.next
 			}
 
-            for i := range re {
-                draw_rect_with_border(renderer, &re[i], &sdl.Color{R: 200, G: 100, B: 0, A: 200})
-            }
+			for i := range re {
+				draw_rect_with_border(renderer, &re[i], &sdl.Color{R: 200, G: 100, B: 0, A: 200})
+			}
 
 			draw_rect_with_border_filled(renderer, &cmd.bg_rect, &sdl.Color{R: 255, G: 10, B: 100, A: cmd.alpha_value + 40})
 			draw_rect_with_border(renderer, &cmd.ttf_rect, &sdl.Color{R: 255, G: 255, B: 255, A: 0})
@@ -576,10 +618,10 @@ func main() {
 				renderer.Copy(gfonts.textures[i], nil, &gfonts.ttf_rects[i])
 				if mouseover_word_texture_FONT[i] == true {
 					draw_rect_without_border(renderer, &gfonts.highlight_rect[i], &sdl.Color{R: 0, G: 0, B: 0, A: 100})
-                    if print_word {
-                        println(gfonts.fonts[i].name)
-                        print_word = false
-                    }
+					if print_word {
+						println(gfonts.fonts[i].name)
+						print_word = false
+					}
 				}
 			}
 
@@ -1052,54 +1094,86 @@ func genY(font *ttf.Font, size int) []int {
 	return result
 }
 
-// https://github.com/zielmicha/SDL2/blob/master/src/render/SDL_render.c 
+// https://github.com/zielmicha/SDL2/blob/master/src/render/SDL_render.c
 // refactor this function!
-func TestMakeTexture(renderer *sdl.Renderer, font *ttf.Font, text string, color *sdl.Color) *sdl.Texture{
-    var surface *sdl.Surface
-    var ttf_texture *sdl.Texture
-    surface, _ = font.RenderUTF8Blended(text, *color)
-    ttf_texture, _ = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_STREAMING, int32(LINE_LENGTH), surface.H)
-    fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
-    converted, _ := surface.Convert(fmt, 0)
-    ttf_texture.Update(&sdl.Rect{0, 0, surface.W, surface.H}, converted.Pixels(), int(converted.Pitch))
-    ttf_texture.SetBlendMode(sdl.BLENDMODE_BLEND)
-    fmt.Free()
-    surface.Free()
-    converted.Free()
-    return ttf_texture
+func TestMakeTexture(renderer *sdl.Renderer, font *ttf.Font, text string, color *sdl.Color) *sdl.Texture {
+	var surface *sdl.Surface
+	var ttf_texture *sdl.Texture
+	surface, _ = font.RenderUTF8Blended(text, *color)
+	ttf_texture, _ = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_STREAMING, int32(LINE_LENGTH), surface.H)
+	fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
+	converted, _ := surface.Convert(fmt, 0)
+	ttf_texture.Update(&sdl.Rect{0, 0, surface.W, surface.H}, converted.Pixels(), int(converted.Pitch))
+	ttf_texture.SetBlendMode(sdl.BLENDMODE_BLEND)
+	fmt.Free()
+	surface.Free()
+	converted.Free()
+	return ttf_texture
 }
 
 func TestUpdateTexture(renderer *sdl.Renderer, texture *sdl.Texture, font *ttf.Font, text string, color *sdl.Color) {
-    var surface *sdl.Surface
-    surface, _ = font.RenderUTF8Blended(text, *color)
-    fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
-    converted, _ := surface.Convert(fmt, 0)
-    texture.Update(&sdl.Rect{0, 0, surface.W, surface.H}, converted.Pixels(), int(converted.Pitch))
-    fmt.Free()
-    surface.Free()
-    converted.Free()
+	var surface *sdl.Surface
+	surface, _ = font.RenderUTF8Blended(text, *color)
+	fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
+	converted, _ := surface.Convert(fmt, 0)
+	texture.Update(&sdl.Rect{0, 0, surface.W, surface.H}, converted.Pixels(), int(converted.Pitch))
+	fmt.Free()
+	surface.Free()
+	converted.Free()
 }
 
 func TestClearTexture(renderer *sdl.Renderer, texture *sdl.Texture, font *ttf.Font, color *sdl.Color) {
-    var surface *sdl.Surface
-    surface, _ = font.RenderUTF8Blended(" ", *color)
-    fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
-    converted, _ := surface.Convert(fmt, 0)
-    bytes, _, _ := texture.Lock(nil)
-    copy(bytes, converted.Pixels())
-    texture.Unlock()
-    fmt.Free()
-    surface.Free()
-    converted.Free()
+	var surface *sdl.Surface
+	surface, _ = font.RenderUTF8Blended(" ", *color)
+	fmt, _ := sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
+	converted, _ := surface.Convert(fmt, 0)
+	bytes, _, _ := texture.Lock(nil)
+	copy(bytes, converted.Pixels())
+	texture.Unlock()
+	fmt.Free()
+	surface.Free()
+	converted.Free()
 }
 
 func (sc *Scrollbar) CalcPos(current int, total int) {
 	sc.rect.Y = int32(float64(current)/float64(total)*float64(WIN_H)) - sc.rect.H
-    if sc.rect.Y < 0 {
-        sc.rect.Y = 0
-    }
+	if sc.rect.Y < 0 {
+		sc.rect.Y = 0
+	}
 }
 
 func (sc *Scrollbar) CalcPosDuringAction(current int, total int) {
-    println(int((float64(current+int(sc.rect.H))/float64(WIN_H)) * float64(total)))
+	println(int((float64(current+int(sc.rect.H)) / float64(WIN_H)) * float64(total)))
+}
+
+func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color sdl.Color) {
+	surface, _ := font.RenderUTF8Blended(" ", color)
+	tbox.fmt, _ = sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
+	converted, _ := surface.Convert(tbox.fmt, 0)
+
+	for i := 0; i < len(tbox.data); i++ {
+		tbox.data[i], _ = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_STREAMING, int32(LINE_LENGTH), surface.H)
+		tbox.data[i].Update(&sdl.Rect{0, 0, surface.W, surface.H}, converted.Pixels(), int(converted.Pitch))
+		tbox.data[i].SetBlendMode(sdl.BLENDMODE_BLEND)
+	}
+
+	_, _, qw, qh, _ := tbox.data[0].Query()
+	accy := int32(0)
+	skip := int32(font.LineSkip())
+	for i := 0; i < len(tbox.data); i++ {
+		tbox.data_rects[i] = sdl.Rect{int32(X_OFFSET), accy, qw, qh}
+		accy += skip
+	}
+	surface.Free()
+	converted.Free()
+}
+
+func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []string, color sdl.Color) {
+	for i := 0; i < len(tbox.data); i++ {
+		surface, _ := font.RenderUTF8Blended(text[i], color)
+		converted, _ := surface.Convert(tbox.fmt, 0)
+		tbox.data[i].Update(&sdl.Rect{0, 0, surface.W, surface.H}, converted.Pixels(), int(converted.Pitch))
+		surface.Free()
+		converted.Free()
+	}
 }
