@@ -208,7 +208,7 @@ func main() {
 	font_dir := "./fonts/"
 	text_dir := "./text/"
 
-	line_tokens := strings.Split(string(get_filedata(text_dir, filename)), "\r\n")
+	line_tokens := strings.Split(string(get_filedata(text_dir, filename)), "\r\n") // "\r\n" instead of "\n"
 
 	ticker := time.NewTicker(time.Second / 40)
 
