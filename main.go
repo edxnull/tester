@@ -30,6 +30,7 @@ import (
 // [ ] selecting and reloading text
 // [ ] proper reloading text on demand
 // [ ] searching
+// [ ] justify text
 // [ ] fuzzy search
 // [ ] copy text
 // [ ] copy & pasting commands
@@ -979,9 +980,9 @@ func allocate_font_space(font *FontSelector, size int) {
 }
 
 func generate_fonts(font *FontSelector, ttf_font_list []string, font_dir string) {
-	CURRENT := 6 // magic number
+	CURRENT := "Inconsolata-Regular.ttf"
 	for index, element := range ttf_font_list {
-		if CURRENT == index {
+		if CURRENT == element {
 			font.current_font = load_font(font_dir+element, TTF_FONT_SIZE)
 			w, h, _ := font.current_font.SizeUTF8(" ")
 			skp := font.current_font.LineSkip()
