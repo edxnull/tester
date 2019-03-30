@@ -41,6 +41,7 @@ import (
 // [ ] make sure we handle utf8
 // [ ] cmd input commands + parsing
 // [ ] [bug_icon] in-app file a bug button & menu
+// [ ] should we keep fonts in memory? or free them instead?
 
 // SDL RELATED
 // [ ] optimize TextBox Update and Clear (somehow)
@@ -207,7 +208,7 @@ func main() {
 	font_dir := "./fonts/"
 	text_dir := "./text/"
 
-	line_tokens := strings.Split(string(get_filedata(text_dir, filename)), "\n")
+	line_tokens := strings.Split(string(get_filedata(text_dir, filename)), "\r\n")
 
 	ticker := time.NewTicker(time.Second / 40)
 
@@ -222,8 +223,6 @@ func main() {
 	font := gfonts.current_font
 
 	generate_rects_for_fonts(renderer, &gfonts)
-
-	// NOTE: should we keep fonts in memory? or free them instead?
 
 	start := time.Now()
 	test_tokens := make([]string, determine_nwrap_lines(line_tokens, LINE_LENGTH, gfonts.current_font_w))
@@ -240,13 +239,13 @@ func main() {
 		}
 	}
 	end_start := time.Now().Sub(start)
-	fmt.Printf("[[do_wrap_lines loop took %s]]\n", end_start.String())
+	println("do_wrap_lines loop took:", end_start.String())
 
 	now_gen := time.Now()
 	linemeta := make([]LineMetaData, len(test_tokens))
 	generate_line_metadata(renderer, font, &linemeta, &test_tokens)
 	end_gen := time.Now().Sub(now_gen)
-	fmt.Printf("[[generate_line_metadata took %s]]\n", end_gen.String())
+	println("generate_line_metadata took:", end_gen.String())
 
 	cmd := NewCmdConsole(renderer, font)
 
@@ -571,9 +570,9 @@ func main() {
 				if mouseover_word_texture_FONT[i] == true {
 					draw_rect_without_border(renderer, &gfonts.highlight_rect[i], &sdl.Color{R: 0, G: 0, B: 0, A: 100})
 					if print_word {
+                        println("current", int32(gfonts.current_font_w), int32(gfonts.current_font_h))
+                        println("selected", gfonts.fonts[i].width, gfonts.fonts[i].height)
                         if int32(gfonts.current_font_w) >= gfonts.fonts[i].width && int32(gfonts.current_font_h) >= gfonts.fonts[i].height {
-                            println(int32(gfonts.current_font_w), gfonts.fonts[i].width)
-                            println(int32(gfonts.current_font_h), gfonts.fonts[i].height)
                             println(gfonts.fonts[i].name)
                             font = gfonts.get_font(gfonts.fonts[i].name)
                             textbox.Clear(renderer, font)
@@ -1005,13 +1004,12 @@ func generate_fonts(font *FontSelector, ttf_font_list []string, font_dir string)
 			font.current_font_h = h
 			font.current_font_skip = skp
 		}
-		font.fonts[index].data = load_font(font_dir+element, TTF_FONT_SIZE-1)
+		font.fonts[index].data = load_font(font_dir+element, TTF_FONT_SIZE_FOR_FONT_LIST)
 		font.fonts[index].name = element
 	}
 }
 
 func generate_rects_for_fonts(renderer *sdl.Renderer, font *FontSelector) {
-	font.bg_rect = sdl.Rect{}
 	adder_y := 0
 	for index, element := range font.fonts {
 		gx, gy, _ := (*font).fonts[index].data.SizeUTF8(" ")
