@@ -571,7 +571,14 @@ func main() {
 				if mouseover_word_texture_FONT[i] == true {
 					draw_rect_without_border(renderer, &gfonts.highlight_rect[i], &sdl.Color{R: 0, G: 0, B: 0, A: 100})
 					if print_word {
-						println(gfonts.fonts[i].name)
+                        if int32(gfonts.current_font_w) >= gfonts.fonts[i].width && int32(gfonts.current_font_h) >= gfonts.fonts[i].height {
+                            println(int32(gfonts.current_font_w), gfonts.fonts[i].width)
+                            println(int32(gfonts.current_font_h), gfonts.fonts[i].height)
+                            println(gfonts.fonts[i].name)
+                            font = gfonts.get_font(gfonts.fonts[i].name)
+                            textbox.Clear(renderer, font)
+                            textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+                        }
 						print_word = false
 					}
 				}
@@ -744,6 +751,14 @@ func check_collision(event *sdl.MouseMotionEvent, rect *sdl.Rect) bool {
 		result = true
 	}
 	return result
+}
+
+func font_fits_into_maxline(font *Font, max_len int) bool {
+    if ((max_len/int(font.width))*int(font.width))+X_OFFSET > max_len {
+        return false
+    }
+    println(font.width)
+    return true
 }
 
 func do_wrap_lines(str string, max_len int, xsize int) []string {
@@ -990,7 +1005,7 @@ func generate_fonts(font *FontSelector, ttf_font_list []string, font_dir string)
 			font.current_font_h = h
 			font.current_font_skip = skp
 		}
-		font.fonts[index].data = load_font(font_dir+element, TTF_FONT_SIZE_FOR_FONT_LIST)
+		font.fonts[index].data = load_font(font_dir+element, TTF_FONT_SIZE-1)
 		font.fonts[index].name = element
 	}
 }
@@ -1001,6 +1016,8 @@ func generate_rects_for_fonts(renderer *sdl.Renderer, font *FontSelector) {
 	for index, element := range font.fonts {
 		gx, gy, _ := (*font).fonts[index].data.SizeUTF8(" ")
 		font.fonts[index].size = gx * len(element.name)
+        font.fonts[index].width = int32(gx)
+        font.fonts[index].height = int32(gy)
 
 		font.textures[index] = make_ttf_texture(renderer, font.fonts[index].data,
 			font.fonts[index].name,
@@ -1023,6 +1040,15 @@ func generate_rects_for_fonts(renderer *sdl.Renderer, font *FontSelector) {
 			}
 		}
 	}
+}
+
+func (fs *FontSelector) get_font(want string) *ttf.Font {
+    for index := range fs.fonts {
+        if fs.fonts[index].name == want {
+            return fs.fonts[index].data
+        }
+    }
+    return nil
 }
 
 func genY(font *ttf.Font, size int) []int {
