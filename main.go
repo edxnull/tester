@@ -150,7 +150,7 @@ type FontSelector struct {
 	current_font_w    int
 	current_font_h    int
 	current_font_skip int
-    current_name      string
+	current_name      string
 	alpha_value       uint8
 	alpha_f32         float32
 	bg_rect           sdl.Rect
@@ -296,9 +296,14 @@ func main() {
 		textbox.metadata[i] = &linemeta[i]
 	}
 
-	textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-	textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+	test_font := load_font(font_dir+gfonts.current_name, 5)
 
+	//textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
+	//textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+
+	textbox.CreateEmpty(renderer, test_font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
+	textbox.Update(renderer, test_font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+	println("outside of Update on line 306")
 
 	re := make([]sdl.Rect, qsize)
 	rey := genY(font, qsize)
@@ -311,8 +316,8 @@ func main() {
 
 	scrollbar := &Scrollbar{drag: false, selected: false, rect: sdl.Rect{X: int32(LINE_LENGTH + X_OFFSET - 5), Y: 0, W: 5, H: 30}}
 
-    test_font_name := gfonts.current_name
-    test_font_size := TTF_FONT_SIZE
+	test_font_name := gfonts.current_name
+	test_font_size := TTF_FONT_SIZE
 
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -425,22 +430,25 @@ func main() {
 							page_down = true
 						case sdl.K_LEFT:
 							page_up = true
-                        case sdl.K_d: // TESTING
-                            test_font_size -= 1
-                            font = reload_font(font, font_dir+test_font_name, test_font_size)
-                            textbox.MakeNULL() // could this be a problem later?
-                            textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-                            textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
-                            textbox.Clear(renderer, font)
-                            textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
-                        case sdl.K_f: // TESTING
-                            test_font_size += 1
-                            font = reload_font(font, font_dir+test_font_name, test_font_size)
-                            textbox.MakeNULL() // could this be a problem later?
-                            textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-                            textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
-                            textbox.Clear(renderer, font)
-                            textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+						case sdl.K_d: // TESTING
+							test_font_size -= 1
+							println(test_font_size)
+							font = reload_font(font, font_dir+test_font_name, test_font_size)
+							textbox.MakeNULL() // could this be a problem later?
+							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
+							textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+							println("...")
+							//textbox.Clear(renderer, font)
+							//textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+						case sdl.K_f: // TESTING
+							test_font_size += 1
+							println(test_font_size)
+							font = reload_font(font, font_dir+test_font_name, test_font_size)
+							textbox.MakeNULL() // could this be a problem later?
+							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
+							textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+							//textbox.Clear(renderer, font)
+							//textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 						}
 					}
 				}
@@ -587,16 +595,16 @@ func main() {
 				if mouseover_word_texture_FONT[i] == true {
 					draw_rect_without_border(renderer, &gfonts.highlight_rect[i], &sdl.Color{R: 0, G: 0, B: 0, A: 100})
 					if print_word {
-                        if int32(gfonts.current_font_w) >= gfonts.fonts[i].width && int32(gfonts.current_font_h) >= gfonts.fonts[i].height {
-                            font = gfonts.get_font(gfonts.fonts[i].name)
-                            test_font_name = gfonts.fonts[i].name
-                            textbox.MakeNULL() // could this be a problem later?
-                            textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-                            textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
-                            textbox.Clear(renderer, font)
-                            textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
-                            test_font_size = TTF_FONT_SIZE_FOR_FONT_LIST
-                        }
+						if int32(gfonts.current_font_w) >= gfonts.fonts[i].width && int32(gfonts.current_font_h) >= gfonts.fonts[i].height {
+							font = gfonts.get_font(gfonts.fonts[i].name)
+							test_font_name = gfonts.fonts[i].name
+							textbox.MakeNULL() // could this be a problem later?
+							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
+							textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+							textbox.Clear(renderer, font)
+							textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+							test_font_size = TTF_FONT_SIZE_FOR_FONT_LIST
+						}
 						print_word = false
 					}
 				}
@@ -627,7 +635,7 @@ func main() {
 	renderer.Destroy()
 	window.Destroy()
 
-    textbox.MakeNULL()
+	textbox.MakeNULL()
 	textbox.fmt.Free()
 
 	if cmd.ttf_texture != nil {
@@ -775,11 +783,11 @@ func check_collision(event *sdl.MouseMotionEvent, rect *sdl.Rect) bool {
 }
 
 func font_fits_into_maxline(font *Font, max_len int) bool {
-    if ((max_len/int(font.width))*int(font.width))+X_OFFSET > max_len {
-        return false
-    }
-    println(font.width)
-    return true
+	if ((max_len/int(font.width))*int(font.width))+X_OFFSET > max_len {
+		return false
+	}
+	println(font.width)
+	return true
 }
 
 func do_wrap_lines(str string, max_len int, xsize int) []string {
@@ -1026,7 +1034,7 @@ func generate_fonts(font *FontSelector, ttf_font_list []string, font_dir string)
 			font.current_font_w = w
 			font.current_font_h = h
 			font.current_font_skip = skp
-            font.current_name = element
+			font.current_name = element
 		}
 		font.fonts[index].data = load_font(font_dir+element, TTF_FONT_SIZE_FOR_FONT_LIST)
 		font.fonts[index].name = element
@@ -1038,8 +1046,8 @@ func generate_rects_for_fonts(renderer *sdl.Renderer, font *FontSelector) {
 	for index, element := range font.fonts {
 		gx, gy, _ := (*font).fonts[index].data.SizeUTF8(" ")
 		font.fonts[index].size = gx * len(element.name)
-        font.fonts[index].width = int32(gx)
-        font.fonts[index].height = int32(gy)
+		font.fonts[index].width = int32(gx)
+		font.fonts[index].height = int32(gy)
 
 		font.textures[index] = make_ttf_texture(renderer, font.fonts[index].data,
 			font.fonts[index].name,
@@ -1065,12 +1073,12 @@ func generate_rects_for_fonts(renderer *sdl.Renderer, font *FontSelector) {
 }
 
 func (fs *FontSelector) get_font(want string) *ttf.Font {
-    for index := range fs.fonts {
-        if fs.fonts[index].name == want {
-            return fs.fonts[index].data
-        }
-    }
-    return nil
+	for index := range fs.fonts {
+		if fs.fonts[index].name == want {
+			return fs.fonts[index].data
+		}
+	}
+	return nil
 }
 
 func genY(font *ttf.Font, size int) []int {
@@ -1096,16 +1104,26 @@ func (sc *Scrollbar) CalcPosDuringAction(current int, total int) {
 // we need to pass a size here in order to support redrawing text
 func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color sdl.Color) {
 	surface, _ := font.RenderUTF8Blended(" ", color)
-	tbox.fmt, _ = sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
+	if tbox.fmt == nil {
+		tbox.fmt, _ = sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
+	}
 	converted, _ := surface.Convert(tbox.fmt, 0)
 
+	var err error
 	for i := 0; i < len(tbox.data); i++ {
-		tbox.data[i], _ = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_STREAMING, int32(LINE_LENGTH), surface.H)
-		tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+		tbox.data[i], err = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_STREAMING, int32(LINE_LENGTH), surface.H)
+		if err != nil {
+			fmt.Println(err)
+		}
+		err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+		if err != nil {
+			fmt.Println(err)
+		}
 		tbox.data[i].SetBlendMode(sdl.BLENDMODE_BLEND)
 	}
 
 	_, _, qw, qh, _ := tbox.data[0].Query()
+	println(qw, qh)
 	accy := int32(0)
 	skip := int32(font.LineSkip())
 	for i := 0; i < len(tbox.data); i++ {
@@ -1113,20 +1131,41 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 		accy += skip
 	}
 	surface.Free()
+	surface = nil
 	converted.Free()
+	converted = nil
 }
 
 func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []string, color sdl.Color) {
+	var err error
+	println("we got here before the exception")
 	for i := 0; i < len(tbox.data); i++ {
+		//if len(text[i]) > 1 { } this should be in (tbox *TextBox) Clear()?
 		surface, _ := font.RenderUTF8Blended(text[i], color)
+		println(i, text[i])
 		converted, _ := surface.Convert(tbox.fmt, 0)
-        if surface.W <= int32(LINE_LENGTH) {
-            tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
-        } else {
-            tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: surface.H}, converted.Pixels(), int(converted.Pitch))
-        }
-		converted.Free()
+		if surface.W <= int32(LINE_LENGTH) {
+			println("pitch:", surface.W, surface.H, converted.Pitch, len(converted.Pixels()))
+			frmt, acc, w, h, xerr := tbox.data[i].Query()
+			println(frmt, acc, w, h, xerr)
+			// TODO: we need to make sure that texture W/H is not less than surface W/H
+			err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: h}, converted.Pixels(), int(converted.Pitch))
+			//err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+			fmt.Println(err)
+		} else {
+			println("we should not get here right now")
+			err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: surface.H}, converted.Pixels(), int(converted.Pitch))
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+		println("before free surface")
 		surface.Free()
+		surface = nil
+		println("after free surface")
+		converted.Free()
+		converted = nil
+		println("after free converted surface")
 	}
 }
 
@@ -1139,12 +1178,14 @@ func (tbox *TextBox) Clear(renderer *sdl.Renderer, font *ttf.Font) {
 		tbox.data[i].Unlock()
 	}
 	surface.Free()
+	surface = nil
 	converted.Free()
+	converted = nil
 }
 
 func (tbox *TextBox) MakeNULL() {
-    for i := 0; i < len(tbox.data); i++ {
-        tbox.data[i].Destroy()
-        tbox.data[i] = nil
-    }
+	for i := 0; i < len(tbox.data); i++ {
+		tbox.data[i].Destroy()
+		tbox.data[i] = nil
+	}
 }
