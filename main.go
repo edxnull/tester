@@ -296,14 +296,8 @@ func main() {
 		textbox.metadata[i] = &linemeta[i]
 	}
 
-	test_font := load_font(font_dir+gfonts.current_name, 5)
-
-	//textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-	//textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
-
-	textbox.CreateEmpty(renderer, test_font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-	textbox.Update(renderer, test_font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
-	println("outside of Update on line 306")
+	textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
+	textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
 	re := make([]sdl.Rect, qsize)
 	rey := genY(font, qsize)
@@ -432,23 +426,16 @@ func main() {
 							page_up = true
 						case sdl.K_d: // TESTING
 							test_font_size -= 1
-							println(test_font_size)
 							font = reload_font(font, font_dir+test_font_name, test_font_size)
 							textbox.MakeNULL() // could this be a problem later?
 							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
 							textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
-							println("...")
-							//textbox.Clear(renderer, font)
-							//textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 						case sdl.K_f: // TESTING
 							test_font_size += 1
-							println(test_font_size)
 							font = reload_font(font, font_dir+test_font_name, test_font_size)
 							textbox.MakeNULL() // could this be a problem later?
 							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
 							textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
-							//textbox.Clear(renderer, font)
-							//textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 						}
 					}
 				}
@@ -1123,7 +1110,6 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 	}
 
 	_, _, qw, qh, _ := tbox.data[0].Query()
-	println(qw, qh)
 	accy := int32(0)
 	skip := int32(font.LineSkip())
 	for i := 0; i < len(tbox.data); i++ {
@@ -1131,41 +1117,32 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 		accy += skip
 	}
 	surface.Free()
-	surface = nil
 	converted.Free()
-	converted = nil
 }
 
 func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []string, color sdl.Color) {
 	var err error
-	println("we got here before the exception")
 	for i := 0; i < len(tbox.data); i++ {
 		//if len(text[i]) > 1 { } this should be in (tbox *TextBox) Clear()?
+        // some lines shouldn't be rendered
 		surface, _ := font.RenderUTF8Blended(text[i], color)
-		println(i, text[i])
 		converted, _ := surface.Convert(tbox.fmt, 0)
 		if surface.W <= int32(LINE_LENGTH) {
-			println("pitch:", surface.W, surface.H, converted.Pitch, len(converted.Pixels()))
-			frmt, acc, w, h, xerr := tbox.data[i].Query()
-			println(frmt, acc, w, h, xerr)
+			_, _, _, h, _ := tbox.data[i].Query() // we need to make sure qe don't Query on every iteration!!!
 			// TODO: we need to make sure that texture W/H is not less than surface W/H
 			err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: h}, converted.Pixels(), int(converted.Pitch))
 			//err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
-			fmt.Println(err)
+            if err != nil {
+                fmt.Println(err)
+            }
 		} else {
-			println("we should not get here right now")
 			err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: surface.H}, converted.Pixels(), int(converted.Pitch))
 			if err != nil {
 				fmt.Println(err)
 			}
 		}
-		println("before free surface")
 		surface.Free()
-		surface = nil
-		println("after free surface")
 		converted.Free()
-		converted = nil
-		println("after free converted surface")
 	}
 }
 
@@ -1178,9 +1155,7 @@ func (tbox *TextBox) Clear(renderer *sdl.Renderer, font *ttf.Font) {
 		tbox.data[i].Unlock()
 	}
 	surface.Free()
-	surface = nil
 	converted.Free()
-	converted = nil
 }
 
 func (tbox *TextBox) MakeNULL() {
