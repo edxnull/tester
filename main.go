@@ -23,12 +23,9 @@ import (
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
 // [ ] refactor FontSelector
 // [ ] changing font size
-// [ ] selecting and reloading fonts
 // [ ] make sure that we don't exceed max sdl.texture width
 // [ ] should we compress strings?? Huffman encoding?
 // [ ] should we use hash algorithms?
-// [ ] selecting and reloading text
-// [ ] proper reloading text on demand
 // [ ] searching
 // [ ] justify text
 // [ ] fuzzy search
