@@ -42,13 +42,14 @@ import (
 
 // SDL RELATED
 // [ ] optimize TextBox Update and Clear (somehow)
-// [ ] try using r.SetScale()
+// [ ] try using r.SetScale() => sdl.SetLogicalSize + sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "linear")
 // [ ] use r.DrawLines() to draw triangles?
 // [ ] use r.SetClipRect r.GetClipRect for rendering
 // [ ] USE sdl.WINDOWEVENT_EXPOSED for proper redrawing
 // [ ] renderer.SetLogicalSize(WIN_W, WIN_H) -> SetLogicalSize is important for device independant rendering!
 // [ ] proper time handling like dt and such
 // [ ] how can we not render everything on every frame?
+// [ ] add error handling code like println(sdl.GetError())?
 
 // VISUAL
 // [ ] http://blog.moagrius.com/actionscript/jsas-understanding-easing/
