@@ -6,31 +6,31 @@ import (
 	"testing"
 )
 
-var gcb [][]byte
-var gcs []string
+var br [][]byte
+var sr []string
 
 func BenchmarkSplitToBytes(b *testing.B) {
+    var r [][]byte
 	filename := "HP01.txt"
 	text_dir := "./text/"
 
-	var line_tokens [][]byte
+    text := get_filedata(text_dir, filename)
 
 	for i := 0; i < b.N; i++ {
-		line_tokens = bytes.Split(get_filedata(text_dir, filename), []byte("\n"))
+		r = bytes.Split(text, []byte("\n"))
 	}
-
-	gcb = line_tokens
+    br = r
 }
 
 func BenchmarkSplitToStrings(b *testing.B) {
+    var r[]string
 	filename := "HP01.txt"
 	text_dir := "./text/"
 
-	var line_tokens []string
+    text := string(get_filedata(text_dir, filename))
 
 	for i := 0; i < b.N; i++ {
-		line_tokens = strings.Split(string(get_filedata(text_dir, filename)), "\n")
+		r = strings.Split(text, "\n")
 	}
-
-	gcs = line_tokens
+    sr = r
 }
