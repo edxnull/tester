@@ -767,14 +767,6 @@ func check_collision(event *sdl.MouseMotionEvent, rect *sdl.Rect) bool {
 	return result
 }
 
-func font_fits_into_maxline(font *Font, max_len int) bool {
-	if ((max_len/int(font.width))*int(font.width))+X_OFFSET > max_len {
-		return false
-	}
-	println(font.width)
-	return true
-}
-
 func do_wrap_lines(str string, max_len int, xsize int) []string {
 	assert_if(len(str) <= 1)
 
