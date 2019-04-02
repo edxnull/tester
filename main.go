@@ -1123,26 +1123,26 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []string, color sdl.Color) {
 	var err error
 	for i := 0; i < len(tbox.data); i++ {
-		//if len(text[i]) > 1 { } this should be in (tbox *TextBox) Clear()?
-        // some lines shouldn't be rendered
-		surface, _ := font.RenderUTF8Blended(text[i], color)
-		converted, _ := surface.Convert(tbox.fmt, 0)
-		if surface.W <= int32(LINE_LENGTH) {
-			_, _, _, h, _ := tbox.data[i].Query() // we need to make sure qe don't Query on every iteration!!!
-			// TODO: we need to make sure that texture W/H is not less than surface W/H
-			err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: h}, converted.Pixels(), int(converted.Pitch))
-			//err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
-            if err != nil {
-                fmt.Println(err)
+        if text[i] != "\n" {
+            surface, _ := font.RenderUTF8Blended(text[i], color)
+            converted, _ := surface.Convert(tbox.fmt, 0)
+            if surface.W <= int32(LINE_LENGTH) {
+                _, _, _, h, _ := tbox.data[i].Query() // we need to make sure qe don't Query on every iteration!!!
+                // TODO: we need to make sure that texture W/H is not less than surface W/H
+                err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: h}, converted.Pixels(), int(converted.Pitch))
+                //err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+                if err != nil {
+                    fmt.Println(err)
+                }
+            } else {
+                err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: surface.H}, converted.Pixels(), int(converted.Pitch))
+                if err != nil {
+                    fmt.Println(err)
+                }
             }
-		} else {
-			err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: surface.H}, converted.Pixels(), int(converted.Pitch))
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-		surface.Free()
-		converted.Free()
+            surface.Free()
+            converted.Free()
+        }
 	}
 }
 
