@@ -127,6 +127,7 @@ type LineMetaData struct {
 
 type TextBox struct {
 	data       []*sdl.Texture
+    texture_h  int32
 	data_rects []sdl.Rect
 	metadata   []*LineMetaData
 	fmt        *sdl.PixelFormat
@@ -287,6 +288,7 @@ func main() {
 
 	textbox := TextBox{
 		data:       make([]*sdl.Texture, qsize),
+        texture_h:  0,
 		data_rects: make([]sdl.Rect, qsize),
 		metadata:   make([]*LineMetaData, qsize),
 		fmt:        nil,
@@ -1110,6 +1112,7 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 	}
 
 	_, _, qw, qh, _ := tbox.data[0].Query()
+    tbox.texture_h = qh
 	accy := int32(0)
 	skip := int32(font.LineSkip())
 	for i := 0; i < len(tbox.data); i++ {
@@ -1127,10 +1130,8 @@ func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []strin
             surface, _ := font.RenderUTF8Blended(text[i], color)
             converted, _ := surface.Convert(tbox.fmt, 0)
             if surface.W <= int32(LINE_LENGTH) {
-                _, _, _, h, _ := tbox.data[i].Query() // we need to make sure qe don't Query on every iteration!!!
-                // TODO: we need to make sure that texture W/H is not less than surface W/H
-                err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: h}, converted.Pixels(), int(converted.Pitch))
-                //err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+                // make sure that texture H >= surface.H
+                err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: tbox.texture_h}, converted.Pixels(), int(converted.Pitch))
                 if err != nil {
                     fmt.Println(err)
                 }
