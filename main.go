@@ -157,6 +157,12 @@ type FontSelector struct {
 	textures          []*sdl.Texture
 }
 
+const (
+    CURSOR_TYPE_ARROW = iota
+    CURSOR_TYPE_HAND
+    CURSOR_TYPE_SIZEWE
+)
+
 func main() {
 	// PROFILING SNIPPET
 	var debug bool
@@ -202,6 +208,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+    cursors := []*sdl.Cursor {
+        sdl.CreateSystemCursor(sdl.SYSTEM_CURSOR_ARROW),
+        sdl.CreateSystemCursor(sdl.SYSTEM_CURSOR_HAND),
+        sdl.CreateSystemCursor(sdl.SYSTEM_CURSOR_SIZEWE),
+    }
+
+    defer sdl.FreeCursor(cursors[CURSOR_TYPE_ARROW])
+    defer sdl.FreeCursor(cursors[CURSOR_TYPE_HAND])
+    defer sdl.FreeCursor(cursors[CURSOR_TYPE_SIZEWE])
+
+    sdl.SetCursor(cursors[CURSOR_TYPE_ARROW])
+    cursor_state := CURSOR_TYPE_ARROW
 
 	filename := "HP01.txt"
 	font_dir := "./fonts/"
@@ -341,6 +360,26 @@ func main() {
 				check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
 
 				scrollbar.selected = check_collision(t, &scrollbar.rect)
+
+
+                wrapline_selected := t.X == (wrapline.x1+int32(X_OFFSET)) && (t.Y >= wrapline.y1 && t.Y <= wrapline.y2)
+                if wrapline_selected  && !scrollbar.selected && !scrollbar.drag {
+                    println("SIZEWE")
+                    sdl.SetCursor(cursors[CURSOR_TYPE_SIZEWE])
+                    cursor_state = CURSOR_TYPE_SIZEWE
+                }
+
+                if scrollbar.selected  && cursor_state != CURSOR_TYPE_HAND {
+                    println("HAND")
+                    sdl.SetCursor(cursors[CURSOR_TYPE_HAND])
+                    cursor_state = CURSOR_TYPE_HAND
+                }
+
+                if !scrollbar.selected && cursor_state != CURSOR_TYPE_ARROW && !scrollbar.drag && !wrapline_selected{
+                    println("ARROW")
+                    sdl.SetCursor(cursors[CURSOR_TYPE_ARROW])
+                    cursor_state = CURSOR_TYPE_ARROW
+                }
 				if scrollbar.drag {
 					scrollbar.rect.Y += t.YRel
 					if scrollbar.rect.Y <= 0 {
