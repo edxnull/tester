@@ -175,10 +175,6 @@ func (trie *TrieNode) Delete(word string) {
 			}
 		}
 	}
-
-	// stack = append(stack, ...)
-	// if we find the word
-	// pop from the stack and set nodes to nil
 }
 
 func (trie *TrieNode) Insert(word string) {
