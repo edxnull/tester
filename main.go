@@ -22,7 +22,6 @@ import (
 // [ ] fmt.Println(runtime.Caller(0)) use this to get a LINENR when calculating unique ID's for IMGUI
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
 // [ ] refactor FontSelector
-// [ ] changing font size
 // [ ] make sure that we don't exceed max sdl.texture width
 // [ ] should we compress strings?? Huffman encoding?
 // [ ] should we use hash algorithms?
