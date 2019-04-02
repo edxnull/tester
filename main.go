@@ -823,8 +823,8 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
 		slice_len := 0
 		for end < len(str) {
 			slice_len = len(slice)
-			if !is_space(string(slice[slice_len-1])) {
-				for !is_space(string(slice[slice_len-1])) {
+			if !is_space(slice[slice_len-1]) {
+				for !is_space(slice[slice_len-1]) {
 					end = end - 1
 					slice_len = slice_len - 1
 				}
@@ -865,8 +865,8 @@ func determine_nwrap_lines(str []string, max_len int, xsize int) int32 {
 			slice_len := 0
 			for end < len(str[index]) {
 				slice_len = len(slice)
-				if !is_space(string(slice[slice_len-1])) {
-					for !is_space(string(slice[slice_len-1])) {
+				if !is_space(slice[slice_len-1]) {
+					for !is_space(slice[slice_len-1]) {
 						end = end - 1
 						slice_len = slice_len - 1
 					}
@@ -898,8 +898,8 @@ func is_alpha(schr string) bool {
 	return (schr >= "A") && (schr <= "z")
 }
 
-func is_space(s string) bool {
-	return s == " "
+func is_space(s byte) bool {
+	return s == byte(' ')
 }
 
 func get_word_lengths(s *string) []int {
@@ -912,7 +912,7 @@ func get_word_lengths(s *string) []int {
 		//if (string((*s)[index]) == "\r") {
 		//    break
 		//}
-		if !is_space(string((*s)[index])) {
+		if !is_space((*s)[index]) {
 			curr += 1
 		} else {
 			result = append(result, curr)
