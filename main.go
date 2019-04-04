@@ -39,6 +39,7 @@ import (
 // [ ] [bug_icon] in-app file a bug button & menu
 // [ ] should we keep fonts in memory? or free them instead?
 // [ ] https://en.wikipedia.org/wiki/Newline
+// [ ] try to implement imgui style widgets: https://sol.gfxile.net/imgui/index.html
 
 // SDL RELATED
 // [ ] optimize TextBox Update and Clear (somehow)
@@ -126,7 +127,7 @@ type TextBox struct {
 	data       []*sdl.Texture
     texture_h  int32
 	data_rects []sdl.Rect
-	metadata   []*LineMetaData
+	metadata   []*LineMetaData // store [START:END] instead?
 	fmt        *sdl.PixelFormat
 }
 
@@ -362,7 +363,6 @@ func main() {
 
 				scrollbar.selected = check_collision(t, &scrollbar.rect)
 
-
                 wrapline_selected := t.X == (wrapline.x1+int32(X_OFFSET)) && (t.Y >= wrapline.y1 && t.Y <= wrapline.y2)
                 if wrapline_selected  && !scrollbar.selected && !scrollbar.drag {
                     println("SIZEWE")
@@ -467,13 +467,13 @@ func main() {
 							font = reload_font(font, font_dir+test_font_name, test_font_size)
 							textbox.MakeNULL() // could this be a problem later?
 							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-							textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+							textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 						case sdl.K_f: // TESTING
 							test_font_size += 1
 							font = reload_font(font, font_dir+test_font_name, test_font_size)
 							textbox.MakeNULL() // could this be a problem later?
 							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-							textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+							textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 						}
 					}
 				}
@@ -619,14 +619,16 @@ func main() {
 				renderer.Copy(gfonts.textures[i], nil, &gfonts.ttf_rects[i])
 				if mouseover_word_texture_FONT[i] == true {
 					draw_rect_without_border(renderer, &gfonts.highlight_rect[i], &sdl.Color{R: 0, G: 0, B: 0, A: 100})
-					if print_word {
+					if print_word { // this is bad, we shouldn't mix vars for states in multiple places
 						if int32(gfonts.current_font_w) >= gfonts.fonts[i].width && int32(gfonts.current_font_h) >= gfonts.fonts[i].height {
 							font = gfonts.get_font(gfonts.fonts[i].name)
 							test_font_name = gfonts.fonts[i].name
+                            // what is going on here?
 							textbox.MakeNULL() // could this be a problem later?
 							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
 							textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 							textbox.Clear(renderer, font)
+                            // what is going on here?
 							textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 							test_font_size = TTF_FONT_SIZE_FOR_FONT_LIST
 						}
@@ -749,27 +751,29 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
 }
 
 func generate_line_metadata(r *sdl.Renderer, font *ttf.Font, dest *[]LineMetaData, tokens *[]string) {
+    //x, y, _ := font.SizeUTF8(" ")
 	for index := 0; index < len(*tokens); index++ {
-		populate_line_metadata(r, font, &(*dest)[index], (*tokens)[index])
+		populate_line_metadata(r, font, &(*dest)[index], (*tokens)[index])//, x, y)
 	}
 }
 
-func populate_line_metadata(rend *sdl.Renderer, font *ttf.Font, line *LineMetaData, line_text string) {
+// we don't need to pass rend here
+func populate_line_metadata(rend *sdl.Renderer, font *ttf.Font, line *LineMetaData, line_text string) {//, x int, y int) {
 	assert_if(len(line_text) == 0)
 
 	text := strings.Split(line_text, " ")
 	text_len := len(text)
 
-	assert_if(text_len == 0)
+	assert_if(text_len == 0) // redundant?
 
 	line.word_rects = make([]sdl.Rect, text_len)
 	line.mouse_over_word = make([]bool, text_len)
 	line.words = make([]string, text_len)
 	copy(line.words, text)
 
-	x, y, _ := font.SizeUTF8(" ")
+	x, y, _ := font.SizeUTF8(" ") // redundant call
 
-	move_x := X_OFFSET
+	move_x := X_OFFSET // get rid of this global value?
 	ix := 0
 	for index := 0; index < text_len; index++ {
 		ix = x * len(text[index])
@@ -816,7 +820,7 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
 	if (len(str)*xsize)+X_OFFSET <= max_len {
 		result[pos] = str
 		return result
-	} else {
+	} else { // we probably don't need an else here
 		start := 0
 		mmax := int(math.RoundToEven(float64(max_len/xsize))) - 1 // use math.Round instead?
 		slice := str[start:mmax]
@@ -845,6 +849,7 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
 			slice = str[start:end]
 		}
 	}
+    // set slices to nil?
 	return result
 }
 
@@ -856,7 +861,7 @@ func determine_nwrap_lines(str []string, max_len int, xsize int) int32 {
 	for index := 0; index < len(str); index++ {
 		if (len(str[index])*xsize)+X_OFFSET <= max_len {
 			result += 1
-		} else {
+		} else { // we probably don't need an else here
 			start := 0
 			mmax := int(math.RoundToEven(float64(max_len/xsize))) - 1 // use math.Round instead?
 			//println(mmax > len(str[index]), "index", index, "strlen", len(str[index]), "mmax", mmax)
@@ -886,6 +891,7 @@ func determine_nwrap_lines(str []string, max_len int, xsize int) int32 {
 			}
 		}
 	}
+    // set slices to nil?
 	return result
 }
 
@@ -895,6 +901,7 @@ func assert_if(cond bool) {
 	}
 }
 
+// pass byte instead of string here in the future
 func is_alpha(schr string) bool {
 	return (schr >= "A") && (schr <= "z")
 }
