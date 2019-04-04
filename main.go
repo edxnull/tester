@@ -623,14 +623,9 @@ func main() {
 						if int32(gfonts.current_font_w) >= gfonts.fonts[i].width && int32(gfonts.current_font_h) >= gfonts.fonts[i].height {
 							font = gfonts.get_font(gfonts.fonts[i].name)
 							test_font_name = gfonts.fonts[i].name
-                            // what is going on here?
-							textbox.MakeNULL() // could this be a problem later?
+							textbox.MakeNULL()
 							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-							textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
-							textbox.Clear(renderer, font)
-                            // what is going on here?
 							textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
-							test_font_size = TTF_FONT_SIZE_FOR_FONT_LIST
 						}
 						print_word = false
 					}
