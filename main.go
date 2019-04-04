@@ -810,35 +810,34 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
 	if (len(str)*xsize)+X_OFFSET <= max_len {
 		result[pos] = str
 		return result
-	} else { // we probably don't need an else here
-		start := 0
-		mmax := int(math.RoundToEven(float64(max_len/xsize))) - 1 // use math.Round instead?
-		slice := str[start:mmax]
-		end := mmax
-		slice_len := 0
-		for end < len(str) {
-			slice_len = len(slice)
-			if !is_space(slice[slice_len-1]) {
-				for !is_space(slice[slice_len-1]) {
-					end = end - 1
-					slice_len = slice_len - 1
-				}
-			}
-			end = end - 1 // remove space
-			slice = str[start:end]
-			result[pos] = slice
-			pos += 1
-			start = end + 1
-			end = (end + mmax)
-			if end > len(str) {
-				slice = str[start : end-(end-len(str))]
-				result[pos] = slice
-				pos += 1
-				break
-			}
-			slice = str[start:end]
-		}
 	}
+    start := 0
+    mmax := int(math.RoundToEven(float64(max_len/xsize))) - 1 // use math.Round instead?
+    slice := str[start:mmax]
+    end := mmax
+    slice_len := 0
+    for end < len(str) {
+        slice_len = len(slice)
+        if !is_space(slice[slice_len-1]) {
+            for !is_space(slice[slice_len-1]) {
+                end = end - 1
+                slice_len = slice_len - 1
+            }
+        }
+        end = end - 1 // remove space
+        slice = str[start:end]
+        result[pos] = slice
+        pos += 1
+        start = end + 1
+        end = (end + mmax)
+        if end > len(str) {
+            slice = str[start : end-(end-len(str))]
+            result[pos] = slice
+            pos += 1
+            break
+        }
+        slice = str[start:end]
+    }
     // set slices to nil?
 	return result
 }
@@ -851,7 +850,7 @@ func determine_nwrap_lines(str []string, max_len int, xsize int) int32 {
 	for index := 0; index < len(str); index++ {
 		if (len(str[index])*xsize)+X_OFFSET <= max_len {
 			result += 1
-		} else { // we probably don't need an else here
+		} else {
 			start := 0
 			mmax := int(math.RoundToEven(float64(max_len/xsize))) - 1 // use math.Round instead?
 			//println(mmax > len(str[index]), "index", index, "strlen", len(str[index]), "mmax", mmax)
