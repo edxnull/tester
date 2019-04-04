@@ -748,11 +748,11 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
 func generate_line_metadata(font *ttf.Font, dest *[]LineMetaData, tokens *[]string) {
     x, y, _ := font.SizeUTF8(" ")
 	for index := 0; index < len(*tokens); index++ {
-		populate_line_metadata(font, &(*dest)[index], (*tokens)[index], x, y)
+		populate_line_metadata(&(*dest)[index], (*tokens)[index], x, y)
 	}
 }
 
-func populate_line_metadata(font *ttf.Font, line *LineMetaData, line_text string, x int, y int) {
+func populate_line_metadata(line *LineMetaData, line_text string, x int, y int) {
 	assert_if(len(line_text) == 0)
 
 	text := strings.Split(line_text, " ")
