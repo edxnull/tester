@@ -263,7 +263,7 @@ func main() {
 
 	now_gen := time.Now()
 	linemeta := make([]LineMetaData, len(test_tokens))
-	generate_line_metadata(renderer, font, &linemeta, &test_tokens)
+	generate_line_metadata(font, &linemeta, &test_tokens)
 	end_gen := time.Now().Sub(now_gen)
 	println("generate_line_metadata took:", end_gen.String())
 
@@ -750,30 +750,25 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
 	return tex
 }
 
-func generate_line_metadata(r *sdl.Renderer, font *ttf.Font, dest *[]LineMetaData, tokens *[]string) {
-    //x, y, _ := font.SizeUTF8(" ")
+func generate_line_metadata(font *ttf.Font, dest *[]LineMetaData, tokens *[]string) {
+    x, y, _ := font.SizeUTF8(" ")
 	for index := 0; index < len(*tokens); index++ {
-		populate_line_metadata(r, font, &(*dest)[index], (*tokens)[index])//, x, y)
+		populate_line_metadata(font, &(*dest)[index], (*tokens)[index], x, y)
 	}
 }
 
-// we don't need to pass rend here
-func populate_line_metadata(rend *sdl.Renderer, font *ttf.Font, line *LineMetaData, line_text string) {//, x int, y int) {
+func populate_line_metadata(font *ttf.Font, line *LineMetaData, line_text string, x int, y int) {
 	assert_if(len(line_text) == 0)
 
 	text := strings.Split(line_text, " ")
 	text_len := len(text)
-
-	assert_if(text_len == 0) // redundant?
 
 	line.word_rects = make([]sdl.Rect, text_len)
 	line.mouse_over_word = make([]bool, text_len)
 	line.words = make([]string, text_len)
 	copy(line.words, text)
 
-	x, y, _ := font.SizeUTF8(" ") // redundant call
-
-	move_x := X_OFFSET // get rid of this global value?
+	move_x := X_OFFSET
 	ix := 0
 	for index := 0; index < text_len; index++ {
 		ix = x * len(text[index])
