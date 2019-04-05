@@ -247,6 +247,7 @@ func main() {
 	generate_rects_for_fonts(renderer, &gfonts)
 
 	test_tokens := WrapLines(line_tokens, LINE_LENGTH, gfonts.current_font_w)
+
 	TEST_TOKENS_LEN := len(test_tokens)
 
 	linemeta := make([]LineMetaData, TEST_TOKENS_LEN)
@@ -442,11 +443,17 @@ func main() {
 					case sdl.K_d: // TESTING RESIZING FONTS
 						test_font_size -= 1
 						font = reload_font(font, font_dir+test_font_name, test_font_size)
+						smallw, _, _ := font.SizeUTF8(" ")
+						test_tokens = nil
+						test_tokens = WrapLines(line_tokens, LINE_LENGTH, smallw)
 						textbox.MakeNULL() // could this be a problem later?
 						textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
 						textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
 						ClearMetadata(&linemeta)
+						linemeta = nil
+						TEST_TOKENS_LEN = len(test_tokens)
+						linemeta = make([]LineMetaData, TEST_TOKENS_LEN)
 						generate_line_metadata(font, &linemeta, &test_tokens)
 
 						for i := 0; i < len(textbox.data); i++ {
@@ -464,11 +471,17 @@ func main() {
 					case sdl.K_f: // TESTING RESIZING FONTS
 						test_font_size += 1
 						font = reload_font(font, font_dir+test_font_name, test_font_size)
+						bigw, _, _ := font.SizeUTF8(" ")
+						test_tokens = nil
+						test_tokens = WrapLines(line_tokens, LINE_LENGTH, bigw)
 						textbox.MakeNULL() // could this be a problem later?
 						textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
 						textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
 						ClearMetadata(&linemeta)
+						linemeta = nil
+						TEST_TOKENS_LEN = len(test_tokens)
+						linemeta = make([]LineMetaData, TEST_TOKENS_LEN)
 						generate_line_metadata(font, &linemeta, &test_tokens)
 
 						for i := 0; i < len(textbox.data); i++ {
@@ -629,11 +642,27 @@ func main() {
 					draw_rect_without_border(renderer, &gfonts.highlight_rect[i], &sdl.Color{R: 0, G: 0, B: 0, A: 100})
 					if print_word { // this is bad, we shouldn't mix vars for states in multiple places
 						if int32(gfonts.current_font_w) >= gfonts.fonts[i].width && int32(gfonts.current_font_h) >= gfonts.fonts[i].height {
-							font = gfonts.get_font(gfonts.fonts[i].name)
+							font = reload_font(font, font_dir+gfonts.fonts[i].name, test_font_size)
 							test_font_name = gfonts.fonts[i].name
 							textbox.MakeNULL()
 							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
 							textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+
+							ClearMetadata(&linemeta)
+							generate_line_metadata(font, &linemeta, &test_tokens)
+
+							for i := 0; i < len(textbox.data); i++ {
+								textbox.metadata[i] = &linemeta[START_ELEMENT+i]
+							}
+
+							rey = nil
+							rey = genY(font, qsize)
+							for i := 0; i < qsize; i++ {
+								re[i] = sdl.Rect{X: int32(X_OFFSET), Y: int32(rey[i]), W: int32(LINE_LENGTH), H: int32(font.Height())}
+								for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
+									textbox.metadata[i].word_rects[j].Y = re[i].Y
+								}
+							}
 						}
 						print_word = false
 					}
@@ -755,6 +784,13 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
 
 func generate_line_metadata(font *ttf.Font, dest *[]LineMetaData, tokens *[]string) {
 	x, y, _ := font.SizeUTF8(" ")
+	cap_x, cap_y, _ := font.SizeUTF8("A")
+	low_x, low_y, _ := font.SizeUTF8("a")
+	println("space:", x, y)
+	println("cap:", cap_x, cap_y)
+	println("low:", low_x, low_y)
+	println("font face is fixed width:", font.FaceIsFixedWidth())
+	println("----------------")
 	for index := 0; index < len(*tokens); index++ {
 		populate_line_metadata(&(*dest)[index], (*tokens)[index], x, y)
 	}
@@ -774,7 +810,7 @@ func populate_line_metadata(line *LineMetaData, line_text string, x int, y int) 
 	move_x := X_OFFSET
 	ix := 0
 	for index := 0; index < text_len; index++ {
-		// TODO: skip if ix is 0
+		// TODO: skip if ix is 0 or text[n] == ""
 		ix = x * len(text[index])
 		line.word_rects[index] = sdl.Rect{X: int32(move_x), Y: int32(-y), W: int32(ix), H: int32(y)}
 		move_x += (ix + x)
