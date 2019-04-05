@@ -39,6 +39,7 @@ import (
 // [ ] [bug_icon] in-app file a bug button & menu
 // [ ] should we keep fonts in memory? or free them instead?
 // [ ] https://en.wikipedia.org/wiki/Newline
+//     use sdl.GetPlatform() || [runtime.GOOS == ""] || [foo_unix.go; foo_windows.go style]
 // [ ] try to implement imgui style widgets: https://sol.gfxile.net/imgui/index.html
 // [ ] add proper error handling
 // [ ] add logs???
