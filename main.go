@@ -852,6 +852,10 @@ func populate_line_metadata(line *LineMetaData, line_text string, x int, y int) 
 	text := strings.Split(line_text, " ")
 	text_len := len(text)
 
+	if text[text_len-1] == "" { // guard agains an empty ""
+		text_len -= 1
+	}
+
 	line.word_rects = make([]sdl.Rect, text_len)
 	line.mouse_over_word = make([]bool, text_len)
 	line.words = make([]string, text_len)
@@ -860,7 +864,6 @@ func populate_line_metadata(line *LineMetaData, line_text string, x int, y int) 
 	move_x := X_OFFSET
 	ix := 0
 	for index := 0; index < text_len; index++ {
-		// TODO: skip if ix is 0 or text[n] == ""
 		ix = x * len(text[index])
 		line.word_rects[index] = sdl.Rect{X: int32(move_x), Y: int32(-y), W: int32(ix), H: int32(y)}
 		move_x += (ix + x)
