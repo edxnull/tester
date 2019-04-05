@@ -419,76 +419,68 @@ func main() {
 				switch t.Type {
 				case sdl.KEYDOWN:
 				case sdl.KEYUP:
-					if t.Keysym.Sym == sdl.K_SPACE {
-						if !cmd.show {
-							cmd.show = true
+					switch t.Keysym.Sym {
+					case sdl.KEYDOWN:
+					case sdl.K_TAB:
+						cmd.show = !cmd.show
+					case sdl.K_BACKSPACE:
+						cmd.Reset(renderer, curr_char_w, gfonts.current_font, gfonts.current_font_w, gfonts.current_font_h)
+					case sdl.K_RETURN:
+						if cmd.show {
+							if len(cmd.input_buffer.String()) > 0 {
+								cmd.MakeNULL()
+							}
 						}
-					} else {
-						switch t.Keysym.Sym {
-						case sdl.KEYDOWN:
-						case sdl.K_TAB:
-							if cmd.show {
-								cmd.show = false
+					case sdl.K_UP:
+						move_text_up = true
+					case sdl.K_DOWN:
+						move_text_down = true
+					case sdl.K_RIGHT:
+						page_down = true
+					case sdl.K_LEFT:
+						page_up = true
+					case sdl.K_d: // TESTING RESIZING FONTS
+						test_font_size -= 1
+						font = reload_font(font, font_dir+test_font_name, test_font_size)
+						textbox.MakeNULL() // could this be a problem later?
+						textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
+						textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+
+						ClearMetadata(&linemeta)
+						generate_line_metadata(font, &linemeta, &test_tokens)
+
+						for i := 0; i < len(textbox.data); i++ {
+							textbox.metadata[i] = &linemeta[START_ELEMENT+i]
+						}
+
+						rey = nil
+						rey = genY(font, qsize)
+						for i := 0; i < qsize; i++ {
+							re[i] = sdl.Rect{X: int32(X_OFFSET), Y: int32(rey[i]), W: int32(LINE_LENGTH), H: int32(font.Height())}
+							for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
+								textbox.metadata[i].word_rects[j].Y = re[i].Y
 							}
-						case sdl.K_BACKSPACE:
-							cmd.Reset(renderer, curr_char_w, gfonts.current_font, gfonts.current_font_w, gfonts.current_font_h)
-						case sdl.K_RETURN:
-							if cmd.show {
-								if len(cmd.input_buffer.String()) > 0 {
-									cmd.MakeNULL()
-								}
-							}
-						case sdl.K_UP:
-							move_text_up = true
-						case sdl.K_DOWN:
-							move_text_down = true
-						case sdl.K_RIGHT:
-							page_down = true
-						case sdl.K_LEFT:
-							page_up = true
-						case sdl.K_d: // TESTING RESIZING FONTS
-							test_font_size -= 1
-							font = reload_font(font, font_dir+test_font_name, test_font_size)
-							textbox.MakeNULL() // could this be a problem later?
-							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-							textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+						}
+					case sdl.K_f: // TESTING RESIZING FONTS
+						test_font_size += 1
+						font = reload_font(font, font_dir+test_font_name, test_font_size)
+						textbox.MakeNULL() // could this be a problem later?
+						textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
+						textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
-							ClearMetadata(&linemeta)
-							generate_line_metadata(font, &linemeta, &test_tokens)
+						ClearMetadata(&linemeta)
+						generate_line_metadata(font, &linemeta, &test_tokens)
 
-							for i := 0; i < len(textbox.data); i++ {
-								textbox.metadata[i] = &linemeta[START_ELEMENT+i]
-							}
+						for i := 0; i < len(textbox.data); i++ {
+							textbox.metadata[i] = &linemeta[START_ELEMENT+i]
+						}
 
-							rey = nil
-							rey = genY(font, qsize)
-							for i := 0; i < qsize; i++ {
-								re[i] = sdl.Rect{X: int32(X_OFFSET), Y: int32(rey[i]), W: int32(LINE_LENGTH), H: int32(font.Height())}
-								for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
-									textbox.metadata[i].word_rects[j].Y = re[i].Y
-								}
-							}
-						case sdl.K_f: // TESTING RESIZING FONTS
-							test_font_size += 1
-							font = reload_font(font, font_dir+test_font_name, test_font_size)
-							textbox.MakeNULL() // could this be a problem later?
-							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-							textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
-
-							ClearMetadata(&linemeta)
-							generate_line_metadata(font, &linemeta, &test_tokens)
-
-							for i := 0; i < len(textbox.data); i++ {
-								textbox.metadata[i] = &linemeta[START_ELEMENT+i]
-							}
-
-							rey = nil
-							rey = genY(font, qsize)
-							for i := 0; i < qsize; i++ {
-								re[i] = sdl.Rect{X: int32(X_OFFSET), Y: int32(rey[i]), W: int32(LINE_LENGTH), H: int32(font.Height())}
-								for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
-									textbox.metadata[i].word_rects[j].Y = re[i].Y
-								}
+						rey = nil
+						rey = genY(font, qsize)
+						for i := 0; i < qsize; i++ {
+							re[i] = sdl.Rect{X: int32(X_OFFSET), Y: int32(rey[i]), W: int32(LINE_LENGTH), H: int32(font.Height())}
+							for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
+								textbox.metadata[i].word_rects[j].Y = re[i].Y
 							}
 						}
 					}
@@ -782,7 +774,7 @@ func populate_line_metadata(line *LineMetaData, line_text string, x int, y int) 
 	move_x := X_OFFSET
 	ix := 0
 	for index := 0; index < text_len; index++ {
-        // TODO: skip if ix is 0
+		// TODO: skip if ix is 0
 		ix = x * len(text[index])
 		line.word_rects[index] = sdl.Rect{X: int32(move_x), Y: int32(-y), W: int32(ix), H: int32(y)}
 		move_x += (ix + x)
@@ -808,7 +800,7 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
 
 		if (mx_gt_rx && mx_lt_rx_rw) && (my_gt_ry && my_lt_ry_rh) {
 			(*mouse_over)[index] = true
-        } else {
+		} else {
 			(*mouse_over)[index] = false
 		}
 	}
