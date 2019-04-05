@@ -610,8 +610,8 @@ func main() {
 		}
 
 		if cmd.show {
-			for i := range re {
-				draw_rect_with_border(renderer, &re[i], &sdl.Color{R: 200, G: 100, B: 0, A: 200})
+			for i := 0; i < len(textbox.metadata); i++ {
+				draw_rect_with_border(renderer, &textbox.data_rects[i], &sdl.Color{R: 200, G: 100, B: 0, A: 200})
 			}
 
 			draw_rect_with_border_filled(renderer, &cmd.bg_rect, &sdl.Color{R: 255, G: 10, B: 100, A: cmd.alpha_value + 40})
