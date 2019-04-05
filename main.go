@@ -395,6 +395,8 @@ func main() {
 				if scrollbar.selected && t.Type == sdl.MOUSEBUTTONDOWN && t.State == sdl.PRESSED {
 					scrollbar.drag = true
 				} else {
+					println("fix this bug!!") // TODO: refactor!!! this could lead to bugs
+					// TODO: we probably have other "leaking" else clauses around
 					scrollbar.drag = false
 				}
 			case *sdl.TextInputEvent:
@@ -1286,6 +1288,7 @@ func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []strin
 				if err != nil {
 					fmt.Println(err)
 				}
+				// TODO: check if we are wes till using this else clause?
 			} else {
 				err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: surface.H}, converted.Pixels(), int(converted.Pitch))
 				if err != nil {
