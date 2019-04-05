@@ -127,6 +127,7 @@ type LineMetaData struct {
 
 type TextBox struct {
 	data       []*sdl.Texture
+	texture_w  int32
 	texture_h  int32
 	data_rects []sdl.Rect
 	metadata   []*LineMetaData // store [START:END] instead?
@@ -290,6 +291,7 @@ func main() {
 
 	textbox := TextBox{
 		data:       make([]*sdl.Texture, qsize),
+		texture_w:  0,
 		texture_h:  0,
 		data_rects: make([]sdl.Rect, qsize),
 		metadata:   make([]*LineMetaData, qsize),
@@ -447,8 +449,6 @@ func main() {
 						test_tokens = nil
 						test_tokens = WrapLines(line_tokens, LINE_LENGTH, qw)
 						textbox.MakeNULL() // could this be a problem later?
-						textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-						textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
 						ClearMetadata(&linemeta)
 						linemeta = nil
@@ -456,10 +456,32 @@ func main() {
 						linemeta = make([]LineMetaData, TEST_TOKENS_LEN)
 						generate_line_metadata(font, &linemeta, &test_tokens)
 
+						qsize = int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
+						NEXT_ELEMENT = qsize
+						println(qsize)
+
+						textbox.data = nil
+						textbox.data_rects = nil
+						textbox.metadata = nil
+						textbox.fmt.Free()
+						textbox = TextBox{
+							data:       make([]*sdl.Texture, qsize),
+							texture_w:  0,
+							texture_h:  0,
+							data_rects: make([]sdl.Rect, qsize),
+							metadata:   make([]*LineMetaData, qsize),
+							fmt:        nil,
+						}
+
 						for i := 0; i < len(textbox.data); i++ {
 							textbox.metadata[i] = &linemeta[START_ELEMENT+i]
 						}
 
+						textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
+						textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+
+						re = nil
+						re = make([]sdl.Rect, qsize)
 						rey = nil
 						rey = genY(font, qsize)
 						for i := 0; i < qsize; i++ {
@@ -475,8 +497,6 @@ func main() {
 						test_tokens = nil
 						test_tokens = WrapLines(line_tokens, LINE_LENGTH, qw)
 						textbox.MakeNULL() // could this be a problem later?
-						textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-						textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
 						ClearMetadata(&linemeta)
 						linemeta = nil
@@ -484,10 +504,32 @@ func main() {
 						linemeta = make([]LineMetaData, TEST_TOKENS_LEN)
 						generate_line_metadata(font, &linemeta, &test_tokens)
 
+						qsize = int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
+						NEXT_ELEMENT = qsize
+						println(qsize)
+
+						textbox.data = nil
+						textbox.data_rects = nil
+						textbox.metadata = nil
+						textbox.fmt.Free()
+						textbox = TextBox{
+							data:       make([]*sdl.Texture, qsize),
+							texture_w:  0,
+							texture_h:  0,
+							data_rects: make([]sdl.Rect, qsize),
+							metadata:   make([]*LineMetaData, qsize),
+							fmt:        nil,
+						}
+
 						for i := 0; i < len(textbox.data); i++ {
 							textbox.metadata[i] = &linemeta[START_ELEMENT+i]
 						}
 
+						textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
+						textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+
+						re = nil
+						re = make([]sdl.Rect, qsize)
 						rey = nil
 						rey = genY(font, qsize)
 						for i := 0; i < qsize; i++ {
@@ -857,6 +899,7 @@ func check_collision(event *sdl.MouseMotionEvent, rect *sdl.Rect) bool {
 
 func WrapLines(tokens []string, length int, font_w int) []string {
 	// TODO: do we need current here? can't we just append to it instead of creating result?
+	// TODO: both of determine_nwrap_lines and do_wrap_lines might be failing when input size is i < n && n > i
 	result := make([]string, determine_nwrap_lines(tokens, length, font_w))
 	for apos, bpos := 0, 0; apos < len(tokens); apos += 1 {
 		if len(tokens[apos]) > 1 {
@@ -1208,6 +1251,7 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 	}
 
 	_, _, qw, qh, _ := tbox.data[0].Query()
+	tbox.texture_w = qw
 	tbox.texture_h = qh
 	accy := int32(0)
 	skip := int32(font.LineSkip())
