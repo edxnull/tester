@@ -456,9 +456,15 @@ func main() {
 						linemeta = make([]LineMetaData, TEST_TOKENS_LEN)
 						generate_line_metadata(font, &linemeta, &test_tokens)
 
+						prev_qsize := qsize
 						qsize = int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
-						NEXT_ELEMENT = qsize
+						//println("prev_qsize", prev_qsize,"start:", START_ELEMENT, "next:", NEXT_ELEMENT, "qsize-prev_qsize:", qsize-prev_qsize)
+						if START_ELEMENT >= prev_qsize {
+							START_ELEMENT -= (qsize - prev_qsize)
+						}
+						NEXT_ELEMENT += (qsize - prev_qsize)
 						println(qsize)
+						println(qsize - prev_qsize)
 
 						textbox.data = nil
 						textbox.data_rects = nil
@@ -504,8 +510,10 @@ func main() {
 						linemeta = make([]LineMetaData, TEST_TOKENS_LEN)
 						generate_line_metadata(font, &linemeta, &test_tokens)
 
+						prev_qsize := qsize
 						qsize = int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
-						NEXT_ELEMENT = qsize
+						//println("start:", START_ELEMENT, "next:", NEXT_ELEMENT, "qsize-prev_qsize:", qsize-prev_qsize)
+						NEXT_ELEMENT += (qsize - prev_qsize)
 						println(qsize)
 
 						textbox.data = nil
