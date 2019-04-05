@@ -127,7 +127,7 @@ type LineMetaData struct {
 
 type TextBox struct {
 	data       []*sdl.Texture
-    texture_h  int32
+	texture_h  int32
 	data_rects []sdl.Rect
 	metadata   []*LineMetaData // store [START:END] instead?
 	fmt        *sdl.PixelFormat
@@ -162,9 +162,9 @@ type FontSelector struct {
 }
 
 const (
-    CURSOR_TYPE_ARROW = iota
-    CURSOR_TYPE_HAND
-    CURSOR_TYPE_SIZEWE
+	CURSOR_TYPE_ARROW = iota
+	CURSOR_TYPE_HAND
+	CURSOR_TYPE_SIZEWE
 )
 
 func main() {
@@ -213,18 +213,18 @@ func main() {
 		panic(err)
 	}
 
-    cursors := []*sdl.Cursor {
-        sdl.CreateSystemCursor(sdl.SYSTEM_CURSOR_ARROW),
-        sdl.CreateSystemCursor(sdl.SYSTEM_CURSOR_HAND),
-        sdl.CreateSystemCursor(sdl.SYSTEM_CURSOR_SIZEWE),
-    }
+	cursors := []*sdl.Cursor{
+		sdl.CreateSystemCursor(sdl.SYSTEM_CURSOR_ARROW),
+		sdl.CreateSystemCursor(sdl.SYSTEM_CURSOR_HAND),
+		sdl.CreateSystemCursor(sdl.SYSTEM_CURSOR_SIZEWE),
+	}
 
-    defer sdl.FreeCursor(cursors[CURSOR_TYPE_ARROW])
-    defer sdl.FreeCursor(cursors[CURSOR_TYPE_HAND])
-    defer sdl.FreeCursor(cursors[CURSOR_TYPE_SIZEWE])
+	defer sdl.FreeCursor(cursors[CURSOR_TYPE_ARROW])
+	defer sdl.FreeCursor(cursors[CURSOR_TYPE_HAND])
+	defer sdl.FreeCursor(cursors[CURSOR_TYPE_SIZEWE])
 
-    sdl.SetCursor(cursors[CURSOR_TYPE_ARROW])
-    cursor_state := CURSOR_TYPE_ARROW
+	sdl.SetCursor(cursors[CURSOR_TYPE_ARROW])
+	cursor_state := CURSOR_TYPE_ARROW
 
 	filename := "HP01.txt"
 	font_dir := "./fonts/"
@@ -246,28 +246,10 @@ func main() {
 
 	generate_rects_for_fonts(renderer, &gfonts)
 
-	start := time.Now()
-	test_tokens := make([]string, determine_nwrap_lines(line_tokens, LINE_LENGTH, gfonts.current_font_w))
-	for apos, bpos := 0, 0; apos < len(line_tokens); apos += 1 {
-		if len(line_tokens[apos]) > 1 {
-			current := do_wrap_lines(line_tokens[apos], LINE_LENGTH, gfonts.current_font_w)
-			for pos := range current {
-				test_tokens[bpos] = current[pos]
-				bpos += 1
-			}
-		} else {
-			test_tokens[bpos] = "\n"
-			bpos += 1
-		}
-	}
-	end_start := time.Now().Sub(start)
-	println("do_wrap_lines loop took:", end_start.String())
+	test_tokens := WrapLines(line_tokens, LINE_LENGTH, gfonts.current_font_w)
 
-	now_gen := time.Now()
 	linemeta := make([]LineMetaData, len(test_tokens))
 	generate_line_metadata(font, &linemeta, &test_tokens)
-	end_gen := time.Now().Sub(now_gen)
-	println("generate_line_metadata took:", end_gen.String())
 
 	cmd := NewCmdConsole(renderer, font)
 
@@ -298,8 +280,10 @@ func main() {
 
 	curr_char_w := 0
 
+	// TODO: make sure we use TEST_TOKENS_LEN where needed
 	TEST_TOKENS_LEN := len(test_tokens)
 
+	// TODO: we need to make sure we can resize qsize as well
 	qsize := int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
 
 	NEXT_ELEMENT := qsize
@@ -307,7 +291,7 @@ func main() {
 
 	textbox := TextBox{
 		data:       make([]*sdl.Texture, qsize),
-        texture_h:  0,
+		texture_h:  0,
 		data_rects: make([]sdl.Rect, qsize),
 		metadata:   make([]*LineMetaData, qsize),
 		fmt:        nil,
@@ -365,24 +349,24 @@ func main() {
 
 				scrollbar.selected = check_collision(t, &scrollbar.rect)
 
-                wrapline_selected := t.X == (wrapline.x1+int32(X_OFFSET)) && (t.Y >= wrapline.y1 && t.Y <= wrapline.y2)
-                if wrapline_selected  && !scrollbar.selected && !scrollbar.drag {
-                    println("SIZEWE")
-                    sdl.SetCursor(cursors[CURSOR_TYPE_SIZEWE])
-                    cursor_state = CURSOR_TYPE_SIZEWE
-                }
+				wrapline_selected := t.X == (wrapline.x1+int32(X_OFFSET)) && (t.Y >= wrapline.y1 && t.Y <= wrapline.y2)
+				if wrapline_selected && !scrollbar.selected && !scrollbar.drag {
+					println("SIZEWE")
+					sdl.SetCursor(cursors[CURSOR_TYPE_SIZEWE])
+					cursor_state = CURSOR_TYPE_SIZEWE
+				}
 
-                if scrollbar.selected  && cursor_state != CURSOR_TYPE_HAND {
-                    println("HAND")
-                    sdl.SetCursor(cursors[CURSOR_TYPE_HAND])
-                    cursor_state = CURSOR_TYPE_HAND
-                }
+				if scrollbar.selected && cursor_state != CURSOR_TYPE_HAND {
+					println("HAND")
+					sdl.SetCursor(cursors[CURSOR_TYPE_HAND])
+					cursor_state = CURSOR_TYPE_HAND
+				}
 
-                if !scrollbar.selected && cursor_state != CURSOR_TYPE_ARROW && !scrollbar.drag && !wrapline_selected{
-                    println("ARROW")
-                    sdl.SetCursor(cursors[CURSOR_TYPE_ARROW])
-                    cursor_state = CURSOR_TYPE_ARROW
-                }
+				if !scrollbar.selected && cursor_state != CURSOR_TYPE_ARROW && !scrollbar.drag && !wrapline_selected {
+					println("ARROW")
+					sdl.SetCursor(cursors[CURSOR_TYPE_ARROW])
+					cursor_state = CURSOR_TYPE_ARROW
+				}
 				if scrollbar.drag {
 					scrollbar.rect.Y += t.YRel
 					if scrollbar.rect.Y <= 0 {
@@ -464,50 +448,50 @@ func main() {
 							page_down = true
 						case sdl.K_LEFT:
 							page_up = true
-						case sdl.K_d: // TESTING
+						case sdl.K_d: // TESTING RESIZING FONTS
 							test_font_size -= 1
 							font = reload_font(font, font_dir+test_font_name, test_font_size)
 							textbox.MakeNULL() // could this be a problem later?
 							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
 							textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
-                            ClearMetadata(&linemeta)
-                            generate_line_metadata(font, &linemeta, &test_tokens)
+							ClearMetadata(&linemeta)
+							generate_line_metadata(font, &linemeta, &test_tokens)
 
-                            // METADATA shouldn't be [i]
-                            for i := 0; i < len(textbox.data); i++ {
-                                textbox.metadata[i] = &linemeta[START_ELEMENT + i]
-                            }
+							for i := 0; i < len(textbox.data); i++ {
+								textbox.metadata[i] = &linemeta[START_ELEMENT+i]
+							}
 
-                            rey = genY(font, qsize)
-                            for i := 0; i < qsize; i++ {
-                                re[i] = sdl.Rect{X: int32(X_OFFSET), Y: int32(rey[i]), W: int32(LINE_LENGTH), H: int32(font.Height())}
-                                for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
-                                    textbox.metadata[i].word_rects[j].Y = re[i].Y
-                                }
-                            }
-						case sdl.K_f: // TESTING
+							rey = nil
+							rey = genY(font, qsize)
+							for i := 0; i < qsize; i++ {
+								re[i] = sdl.Rect{X: int32(X_OFFSET), Y: int32(rey[i]), W: int32(LINE_LENGTH), H: int32(font.Height())}
+								for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
+									textbox.metadata[i].word_rects[j].Y = re[i].Y
+								}
+							}
+						case sdl.K_f: // TESTING RESIZING FONTS
 							test_font_size += 1
 							font = reload_font(font, font_dir+test_font_name, test_font_size)
 							textbox.MakeNULL() // could this be a problem later?
 							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
 							textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
-                            ClearMetadata(&linemeta)
-                            generate_line_metadata(font, &linemeta, &test_tokens)
+							ClearMetadata(&linemeta)
+							generate_line_metadata(font, &linemeta, &test_tokens)
 
-                            // METADATA shouldn't be [i]
-                            for i := 0; i < len(textbox.data); i++ {
-                                textbox.metadata[i] = &linemeta[START_ELEMENT + i]
-                            }
+							for i := 0; i < len(textbox.data); i++ {
+								textbox.metadata[i] = &linemeta[START_ELEMENT+i]
+							}
 
-                            rey = genY(font, qsize)
-                            for i := 0; i < qsize; i++ {
-                                re[i] = sdl.Rect{X: int32(X_OFFSET), Y: int32(rey[i]), W: int32(LINE_LENGTH), H: int32(font.Height())}
-                                for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
-                                    textbox.metadata[i].word_rects[j].Y = re[i].Y
-                                }
-                            }
+							rey = nil
+							rey = genY(font, qsize)
+							for i := 0; i < qsize; i++ {
+								re[i] = sdl.Rect{X: int32(X_OFFSET), Y: int32(rey[i]), W: int32(LINE_LENGTH), H: int32(font.Height())}
+								for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
+									textbox.metadata[i].word_rects[j].Y = re[i].Y
+								}
+							}
 						}
 					}
 				}
@@ -780,9 +764,9 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
 }
 
 func generate_line_metadata(font *ttf.Font, dest *[]LineMetaData, tokens *[]string) {
-    x, y, _ := font.SizeUTF8(" ")
+	x, y, _ := font.SizeUTF8(" ")
 	for index := 0; index < len(*tokens); index++ {
-        populate_line_metadata(&(*dest)[index], (*tokens)[index], x, y)
+		populate_line_metadata(&(*dest)[index], (*tokens)[index], x, y)
 	}
 }
 
@@ -800,6 +784,7 @@ func populate_line_metadata(line *LineMetaData, line_text string, x int, y int) 
 	move_x := X_OFFSET
 	ix := 0
 	for index := 0; index < text_len; index++ {
+        // TODO: skip if ix is 0
 		ix = x * len(text[index])
 		line.word_rects[index] = sdl.Rect{X: int32(move_x), Y: int32(-y), W: int32(ix), H: int32(y)}
 		move_x += (ix + x)
@@ -809,11 +794,11 @@ func populate_line_metadata(line *LineMetaData, line_text string, x int, y int) 
 
 // TODO: refactor later
 func ClearMetadata(line *[]LineMetaData) {
-    for i := 0; i < len((*line)); i++ {
-        (*line)[i].words = nil
-        (*line)[i].word_rects = nil
-        (*line)[i].mouse_over_word = nil
-    }
+	for i := 0; i < len((*line)); i++ {
+		(*line)[i].words = nil
+		(*line)[i].word_rects = nil
+		(*line)[i].mouse_over_word = nil
+	}
 }
 
 func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.Rect, mouse_over *[]bool) {
@@ -825,7 +810,7 @@ func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.
 
 		if (mx_gt_rx && mx_lt_rx_rw) && (my_gt_ry && my_lt_ry_rh) {
 			(*mouse_over)[index] = true
-		} else {
+        } else {
 			(*mouse_over)[index] = false
 		}
 	}
@@ -844,6 +829,24 @@ func check_collision(event *sdl.MouseMotionEvent, rect *sdl.Rect) bool {
 	return result
 }
 
+func WrapLines(tokens []string, length int, font_w int) []string {
+	// TODO: do we need current here? can't we just append to it instead of creating result?
+	result := make([]string, determine_nwrap_lines(tokens, length, font_w))
+	for apos, bpos := 0, 0; apos < len(tokens); apos += 1 {
+		if len(tokens[apos]) > 1 {
+			current := do_wrap_lines(tokens[apos], length, font_w)
+			for pos := range current {
+				result[bpos] = current[pos]
+				bpos += 1
+			}
+		} else {
+			result[bpos] = "\n"
+			bpos += 1
+		}
+	}
+	return result
+}
+
 func do_wrap_lines(str string, max_len int, xsize int) []string {
 	assert_if(len(str) <= 1)
 
@@ -854,34 +857,34 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
 		result[pos] = str
 		return result
 	}
-    start := 0
-    mmax := int(math.RoundToEven(float64(max_len/xsize))) - 1 // use math.Round instead?
-    slice := str[start:mmax]
-    end := mmax
-    slice_len := 0
-    for end < len(str) {
-        slice_len = len(slice)
-        if !is_space(slice[slice_len-1]) {
-            for !is_space(slice[slice_len-1]) {
-                end = end - 1
-                slice_len = slice_len - 1
-            }
-        }
-        end = end - 1 // remove space
-        slice = str[start:end]
-        result[pos] = slice
-        pos += 1
-        start = end + 1
-        end = (end + mmax)
-        if end > len(str) {
-            slice = str[start : end-(end-len(str))]
-            result[pos] = slice
-            pos += 1
-            break
-        }
-        slice = str[start:end]
-    }
-    // set slices to nil?
+	start := 0
+	mmax := int(math.RoundToEven(float64(max_len/xsize))) - 1 // use math.Round instead?
+	slice := str[start:mmax]
+	end := mmax
+	slice_len := 0
+	for end < len(str) {
+		slice_len = len(slice)
+		if !is_space(slice[slice_len-1]) {
+			for !is_space(slice[slice_len-1]) {
+				end = end - 1
+				slice_len = slice_len - 1
+			}
+		}
+		end = end - 1 // remove space
+		slice = str[start:end]
+		result[pos] = slice
+		pos += 1
+		start = end + 1
+		end = (end + mmax)
+		if end > len(str) {
+			slice = str[start : end-(end-len(str))]
+			result[pos] = slice
+			pos += 1
+			break
+		}
+		slice = str[start:end]
+	}
+	// set slices to nil?
 	return result
 }
 
@@ -923,7 +926,7 @@ func determine_nwrap_lines(str []string, max_len int, xsize int) int32 {
 			}
 		}
 	}
-    // set slices to nil?
+	// set slices to nil?
 	return result
 }
 
@@ -1179,7 +1182,7 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 	}
 
 	_, _, qw, qh, _ := tbox.data[0].Query()
-    tbox.texture_h = qh
+	tbox.texture_h = qh
 	accy := int32(0)
 	skip := int32(font.LineSkip())
 	for i := 0; i < len(tbox.data); i++ {
@@ -1193,24 +1196,24 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []string, color sdl.Color) {
 	var err error
 	for i := 0; i < len(tbox.data); i++ {
-        if text[i] != "\n" {
-            surface, _ := font.RenderUTF8Blended(text[i], color)
-            converted, _ := surface.Convert(tbox.fmt, 0)
-            if surface.W <= int32(LINE_LENGTH) {
-                // make sure that texture H >= surface.H
-                err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: tbox.texture_h}, converted.Pixels(), int(converted.Pitch))
-                if err != nil {
-                    fmt.Println(err)
-                }
-            } else {
-                err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: surface.H}, converted.Pixels(), int(converted.Pitch))
-                if err != nil {
-                    fmt.Println(err)
-                }
-            }
-            surface.Free()
-            converted.Free()
-        }
+		if text[i] != "\n" {
+			surface, _ := font.RenderUTF8Blended(text[i], color)
+			converted, _ := surface.Convert(tbox.fmt, 0)
+			if surface.W <= int32(LINE_LENGTH) {
+				// make sure that texture H >= surface.H
+				err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: tbox.texture_h}, converted.Pixels(), int(converted.Pitch))
+				if err != nil {
+					fmt.Println(err)
+				}
+			} else {
+				err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: surface.H}, converted.Pixels(), int(converted.Pitch))
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+			surface.Free()
+			converted.Free()
+		}
 	}
 }
 
