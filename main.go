@@ -247,13 +247,14 @@ func main() {
 	generate_rects_for_fonts(renderer, &gfonts)
 
 	test_tokens := WrapLines(line_tokens, LINE_LENGTH, gfonts.current_font_w)
+	TEST_TOKENS_LEN := len(test_tokens)
 
-	linemeta := make([]LineMetaData, len(test_tokens))
+	linemeta := make([]LineMetaData, TEST_TOKENS_LEN)
 	generate_line_metadata(font, &linemeta, &test_tokens)
 
 	cmd := NewCmdConsole(renderer, font)
 
-	dbg_str := make_console_text(0, len(test_tokens))
+	dbg_str := make_console_text(0, TEST_TOKENS_LEN)
 	dbg_rect := sdl.Rect{X: 0, Y: WIN_H - (cmd.bg_rect.H * 2), W: int32(gfonts.current_font_w * len(dbg_str)), H: int32(gfonts.current_font_h)}
 	dbg_ttf := make_ttf_texture(renderer, gfonts.current_font, dbg_str, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
@@ -279,9 +280,6 @@ func main() {
 	wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H}
 
 	curr_char_w := 0
-
-	// TODO: make sure we use TEST_TOKENS_LEN where needed
-	TEST_TOKENS_LEN := len(test_tokens)
 
 	// TODO: we need to make sure we can resize qsize as well
 	qsize := int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
@@ -652,7 +650,7 @@ func main() {
 
 			if inc_dbg_str { // A DIRTY HACK
 				inc_dbg_str = false
-				dbg_str = make_console_text(NEXT_ELEMENT, len(test_tokens))
+				dbg_str = make_console_text(NEXT_ELEMENT, TEST_TOKENS_LEN)
 				dbg_ttf = reload_ttf_texture(renderer, dbg_ttf, font, dbg_str, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 			}
 
