@@ -443,9 +443,9 @@ func main() {
 					case sdl.K_d: // TESTING RESIZING FONTS
 						test_font_size -= 1
 						font = reload_font(font, font_dir+test_font_name, test_font_size)
-						smallw, _, _ := font.SizeUTF8(" ")
+						qw, _, _ := font.SizeUTF8(" ")
 						test_tokens = nil
-						test_tokens = WrapLines(line_tokens, LINE_LENGTH, smallw)
+						test_tokens = WrapLines(line_tokens, LINE_LENGTH, qw)
 						textbox.MakeNULL() // could this be a problem later?
 						textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
 						textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
@@ -471,9 +471,9 @@ func main() {
 					case sdl.K_f: // TESTING RESIZING FONTS
 						test_font_size += 1
 						font = reload_font(font, font_dir+test_font_name, test_font_size)
-						bigw, _, _ := font.SizeUTF8(" ")
+						qw, _, _ := font.SizeUTF8(" ")
 						test_tokens = nil
-						test_tokens = WrapLines(line_tokens, LINE_LENGTH, bigw)
+						test_tokens = WrapLines(line_tokens, LINE_LENGTH, qw)
 						textbox.MakeNULL() // could this be a problem later?
 						textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
 						textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
