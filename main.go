@@ -40,6 +40,8 @@ import (
 // [ ] should we keep fonts in memory? or free them instead?
 // [ ] https://en.wikipedia.org/wiki/Newline
 // [ ] try to implement imgui style widgets: https://sol.gfxile.net/imgui/index.html
+// [ ] add proper error handling
+// [ ] add logs???
 
 // SDL RELATED
 // [ ] optimize TextBox Update and Clear (somehow)
@@ -468,12 +470,44 @@ func main() {
 							textbox.MakeNULL() // could this be a problem later?
 							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
 							textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+
+                            ClearMetadata(&linemeta)
+                            generate_line_metadata(font, &linemeta, &test_tokens)
+
+                            // METADATA shouldn't be [i]
+                            for i := 0; i < len(textbox.data); i++ {
+                                textbox.metadata[i] = &linemeta[START_ELEMENT + i]
+                            }
+
+                            rey = genY(font, qsize)
+                            for i := 0; i < qsize; i++ {
+                                re[i] = sdl.Rect{X: int32(X_OFFSET), Y: int32(rey[i]), W: int32(LINE_LENGTH), H: int32(font.Height())}
+                                for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
+                                    textbox.metadata[i].word_rects[j].Y = re[i].Y
+                                }
+                            }
 						case sdl.K_f: // TESTING
 							test_font_size += 1
 							font = reload_font(font, font_dir+test_font_name, test_font_size)
 							textbox.MakeNULL() // could this be a problem later?
 							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
 							textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+
+                            ClearMetadata(&linemeta)
+                            generate_line_metadata(font, &linemeta, &test_tokens)
+
+                            // METADATA shouldn't be [i]
+                            for i := 0; i < len(textbox.data); i++ {
+                                textbox.metadata[i] = &linemeta[START_ELEMENT + i]
+                            }
+
+                            rey = genY(font, qsize)
+                            for i := 0; i < qsize; i++ {
+                                re[i] = sdl.Rect{X: int32(X_OFFSET), Y: int32(rey[i]), W: int32(LINE_LENGTH), H: int32(font.Height())}
+                                for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
+                                    textbox.metadata[i].word_rects[j].Y = re[i].Y
+                                }
+                            }
 						}
 					}
 				}
@@ -748,7 +782,7 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
 func generate_line_metadata(font *ttf.Font, dest *[]LineMetaData, tokens *[]string) {
     x, y, _ := font.SizeUTF8(" ")
 	for index := 0; index < len(*tokens); index++ {
-		populate_line_metadata(&(*dest)[index], (*tokens)[index], x, y)
+        populate_line_metadata(&(*dest)[index], (*tokens)[index], x, y)
 	}
 }
 
@@ -771,6 +805,15 @@ func populate_line_metadata(line *LineMetaData, line_text string, x int, y int) 
 		move_x += (ix + x)
 	}
 	text = nil
+}
+
+// TODO: refactor later
+func ClearMetadata(line *[]LineMetaData) {
+    for i := 0; i < len((*line)); i++ {
+        (*line)[i].words = nil
+        (*line)[i].word_rects = nil
+        (*line)[i].mouse_over_word = nil
+    }
 }
 
 func check_collision_mouse_over_words(event *sdl.MouseMotionEvent, rects *[]sdl.Rect, mouse_over *[]bool) {
