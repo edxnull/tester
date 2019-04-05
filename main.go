@@ -283,7 +283,7 @@ func main() {
 
 	curr_char_w := 0
 
-	// TODO: we need to make sure we can resize qsize as well
+	// TODO: this ain't working properly oon zoom out's
 	qsize := int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
 
 	NEXT_ELEMENT := qsize
@@ -1242,7 +1242,6 @@ func (sc *Scrollbar) CalcPosDuringAction(current int, total int) {
 	println(int((float64(current+int(sc.rect.H)) / float64(WIN_H)) * float64(total)))
 }
 
-// we need to pass a size here in order to support redrawing text
 func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color sdl.Color) {
 	surface, _ := font.RenderUTF8Blended(" ", color)
 	if tbox.fmt == nil {
