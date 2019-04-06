@@ -19,6 +19,12 @@ import (
 )
 
 // GENERAL
+
+// [ ] https://dewitters.com/dewitters-gameloop/
+// [ ] http://gameprogrammingpatterns.com/game-loop.html
+// [ ] http://svanimpe.be/blog/game-loops-fx
+// [ ] https://gafferongames.com/post/fix_your_timestep/
+
 // [ ] fmt.Println(runtime.Caller(0)) use this to get a LINENR when calculating unique ID's for IMGUI
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
 // [ ] refactor FontSelector
@@ -393,13 +399,14 @@ func main() {
 					print_word = true
 				}
 
-				if scrollbar.selected && t.Type == sdl.MOUSEBUTTONDOWN && t.State == sdl.PRESSED {
-					scrollbar.drag = true
-				} else {
-					println("fix this bug!!") // TODO: refactor!!! this could lead to bugs
-					// TODO: we probably have other "leaking" else clauses around
+				if scrollbar.drag {
 					scrollbar.drag = false
 				}
+
+				if scrollbar.selected && t.Type == sdl.MOUSEBUTTONDOWN && t.State == sdl.PRESSED {
+					scrollbar.drag = true
+				}
+
 			case *sdl.TextInputEvent:
 				if cmd.show {
 					cmd.WriteChar(renderer, gfonts, t.Text[0])
@@ -572,6 +579,7 @@ func main() {
 
 		draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{R: 111, G: 111, B: 111, A: 90})
 
+		// TODO: test what happens on &&?
 		if scrollbar.drag || scrollbar.selected {
 			draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{R: 111, G: 111, B: 111, A: 255})
 		}
