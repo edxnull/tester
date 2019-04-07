@@ -54,6 +54,8 @@ import (
 // [ ] optimize TextBox Update and Clear (somehow)
 // [ ] try using r.SetScale() => sdl.SetLogicalSize + sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "linear")
 // [ ] use r.DrawLines() to draw triangles?
+// [ ] use r.DrawRects() r.FillRects() for speed?
+// [ ] use (t *sdl.Texture) GLBind/GLUnbind for faster rendering?
 // [ ] use r.SetClipRect r.GetClipRect for rendering
 // [ ] USE sdl.WINDOWEVENT_EXPOSED for proper redrawing
 // [ ] renderer.SetLogicalSize(WIN_W, WIN_H) -> SetLogicalSize is important for device independant rendering!
@@ -930,6 +932,7 @@ func WrapLines(tokens []string, length int, font_w int) []string {
 				result[j] = current[k]
 				j += 1
 			}
+            // should we do current = nil here?
 		} else {
 			result[j] = "\n"
 			j += 1
