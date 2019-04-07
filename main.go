@@ -923,16 +923,16 @@ func WrapLines(tokens []string, length int, font_w int) []string {
 	// TODO: do we need current here? can't we just append to it instead of creating result?
 	// TODO: both of determine_nwrap_lines and do_wrap_lines might be failing when input size is i < n && n > i
 	result := make([]string, determine_nwrap_lines(tokens, length, font_w))
-	for apos, bpos := 0, 0; apos < len(tokens); apos += 1 {
-		if len(tokens[apos]) > 1 {
-			current := do_wrap_lines(tokens[apos], length, font_w)
-			for pos := range current {
-				result[bpos] = current[pos]
-				bpos += 1
+	for i, j := 0, 0; i < len(tokens); i += 1 {
+		if len(tokens[i]) > 1 {
+			current := do_wrap_lines(tokens[i], length, font_w)
+			for k := range current {
+				result[j] = current[k]
+				j += 1
 			}
 		} else {
-			result[bpos] = "\n"
-			bpos += 1
+			result[j] = "\n"
+			j += 1
 		}
 	}
 	return result
