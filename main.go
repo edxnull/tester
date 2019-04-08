@@ -25,6 +25,7 @@ import (
 // [ ] http://gameprogrammingpatterns.com/game-loop.html
 // [ ] http://svanimpe.be/blog/game-loops-fx
 // [ ] https://gafferongames.com/post/fix_your_timestep/
+// [ ] http://blog.moagrius.com/actionscript/jsas-understanding-easing/
 
 // [ ] try in main_loop: t := time.Now() [...] time.Sleep(time.Second/time.Duration(fps) - time.Since(t)) where fps = any num from 10..60
 
@@ -346,6 +347,14 @@ func main() {
 
 	test_font_name := gfonts.current_name
 	test_font_size := TTF_FONT_SIZE
+
+	b := float32(0)
+	d := float32(30)
+	c := float32(d - b)
+	t := float32(0)
+	for tt := t; tt < d+1; tt++ {
+		fmt.Println(EaseInQuart(b, d, c, tt), EaseOutQuart(b, d, c, tt))
+	}
 
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -1138,11 +1147,21 @@ func v2_mag(v *v2) float32 {
 	return float32(math.Sqrt(float64((*v).x*(*v).x) + float64((*v).y*(*v).y)))
 }
 
-func lerp(a float32, b float32, t float32) float32 {
+func lerp(a, b, t float32) float32 {
 	if t > 1 || t < 0 {
 		return 0.0
 	}
 	return (1-t)*a + t*b
+}
+
+func EaseInQuart(b, d, c, t float32) float32 {
+	nt := float32(t / d)
+	return c*(nt)*nt + b
+}
+
+func EaseOutQuart(b, d, c, t float32) float32 {
+	nt := float32(t / d)
+	return -c*(nt)*(nt-2) + b
 }
 
 func normalize(n float32, max float32) float32 {
