@@ -348,17 +348,17 @@ func main() {
 	test_font_name := gfonts.current_name
 	test_font_size := TTF_FONT_SIZE
 
-	b := float32(0)
-	d := float32(30)
-	c := float32(d - b)
-	t := float32(0)
-	for tt := t; tt < d+1; tt++ {
-		fmt.Println(EaseInQuad(b, d, c, tt), EaseOutQuad(b, d, c, tt))
-	}
+	easerout := struct {
+		rect           sdl.Rect
+		animate        bool
+		animation_time float32
+	}{sdl.Rect{0, 50, 100, 100}, true, 0.0}
 
-	test_rect := sdl.Rect{50, 50, 100, 100}
-	anim_rect := true
-	anim_rect_time := float32(0)
+	easerin := struct {
+		rect           sdl.Rect
+		animate        bool
+		animation_time float32
+	}{sdl.Rect{0, 150, 100, 100}, true, 0.0}
 
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -602,13 +602,22 @@ func main() {
 		renderer.SetDrawColor(255, 255, 255, 0)
 		renderer.Clear()
 
-		draw_rect_without_border(renderer, &test_rect, &sdl.Color{R: 100, G: 200, B: 50, A: 100})
+		draw_rect_without_border(renderer, &easerout.rect, &sdl.Color{R: 100, G: 200, B: 50, A: 100})
+		draw_rect_without_border(renderer, &easerin.rect, &sdl.Color{R: 200, G: 20, B: 50, A: 100})
 
-		if anim_rect {
-			test_rect.X = int32(EaseOutQuad(float32(test_rect.X), float32(150), float32(150-test_rect.X), anim_rect_time))
-			anim_rect_time += 2
-			if anim_rect_time > float32(150-1) {
-				anim_rect = false
+		if easerout.animate {
+			easerout.rect.X = int32(EaseOutQuad(float32(easerout.rect.X), float32(400), float32(400-easerout.rect.X), easerout.animation_time))
+			easerout.animation_time += 2
+			if easerout.rect.X >= 400-1 {
+				easerout.animate = false
+			}
+		}
+
+		if easerin.animate {
+			easerin.rect.X = int32(EaseInQuad(float32(easerin.rect.X), float32(400), float32(400-easerin.rect.X), easerin.animation_time))
+			easerin.animation_time += 2
+			if easerin.rect.X >= 400-1 {
+				easerin.animate = false
 			}
 		}
 
