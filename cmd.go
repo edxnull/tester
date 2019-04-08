@@ -1,12 +1,11 @@
 package main
 
 import (
-    "fmt"
 	"bytes"
+	"fmt"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
-
 
 // TODO: we need our own independent *ttf.Font here
 type CmdConsole struct {
@@ -66,7 +65,7 @@ func (cmd *CmdConsole) WriteChar(renderer *sdl.Renderer, font FontSelector, t ui
 		input_char := string(t)
 		cmd.input_buffer.WriteString(input_char)
 		cmd.ttf_texture.Destroy()
-        fmt.Println(font.current_name)
+		fmt.Println(font.current_name)
 		cmd.MakeTexture(renderer, font.current_font, cmd.input_buffer.String(), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 		curr_char_w := font.current_font_w * len(input_char)
 		cmd.ttf_rect.W = int32(font.current_font_w * len(cmd.input_buffer.String()))

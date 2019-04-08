@@ -13,6 +13,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
+	"runtime/trace"
 	"strconv"
 	"strings"
 	"time"
@@ -24,6 +25,8 @@ import (
 // [ ] http://gameprogrammingpatterns.com/game-loop.html
 // [ ] http://svanimpe.be/blog/game-loops-fx
 // [ ] https://gafferongames.com/post/fix_your_timestep/
+
+// [ ] try in main_loop: t := time.Now() [...] time.Sleep(time.Second/time.Duration(fps) - time.Since(t)) where fps = any num from 10..60
 
 // [ ] fmt.Println(runtime.Caller(0)) use this to get a LINENR when calculating unique ID's for IMGUI
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
@@ -179,9 +182,12 @@ const (
 
 func main() {
 	// PROFILING SNIPPET
+
 	var debug bool
+	var do_trace bool
 
 	flag.BoolVar(&debug, "debug", false, "debug needs a bool value: -debug=true")
+	flag.BoolVar(&do_trace, "trace", false, "trace needs a bool value: -trace=true")
 
 	flag.Parse()
 
@@ -195,10 +201,23 @@ func main() {
 		}
 		defer pprof.StopCPUProfile()
 	}
-	// PROFILING SNIPPET
 
 	if debug {
 		println("we can put debug if's everywhere!")
+	}
+
+	if do_trace {
+		tr, err := os.Create("trace.out")
+		if err != nil {
+			panic(err)
+		}
+		defer tr.Close()
+
+		err = trace.Start(tr)
+		if err != nil {
+			panic(err)
+		}
+		defer trace.Stop()
 	}
 
 	runtime.LockOSThread() // NOTE: not sure I need this here!
@@ -932,7 +951,7 @@ func WrapLines(tokens []string, length int, font_w int) []string {
 				result[j] = current[k]
 				j += 1
 			}
-            // should we do current = nil here?
+			// should we do current = nil here?
 		} else {
 			result[j] = "\n"
 			j += 1
