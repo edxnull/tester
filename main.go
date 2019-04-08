@@ -360,6 +360,12 @@ func main() {
 		animation_time float32
 	}{sdl.Rect{0, 150, 100, 100}, true, 0.0}
 
+	easerinout := struct {
+		rect           sdl.Rect
+		animate        bool
+		animation_time float32
+	}{sdl.Rect{0, 250, 100, 100}, true, 0.0}
+
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch t := event.(type) {
@@ -604,12 +610,14 @@ func main() {
 
 		draw_rect_without_border(renderer, &easerout.rect, &sdl.Color{R: 100, G: 200, B: 50, A: 100})
 		draw_rect_without_border(renderer, &easerin.rect, &sdl.Color{R: 200, G: 20, B: 50, A: 100})
+		draw_rect_without_border(renderer, &easerinout.rect, &sdl.Color{R: 20, G: 20, B: 240, A: 100})
 
 		if easerout.animate {
 			easerout.rect.X = int32(EaseOutQuad(float32(easerout.rect.X), float32(400), float32(400-easerout.rect.X), easerout.animation_time))
 			easerout.animation_time += 2
 			if easerout.rect.X >= 400-1 {
 				easerout.animate = false
+				easerout.animation_time = 0.0
 			}
 		}
 
@@ -618,6 +626,16 @@ func main() {
 			easerin.animation_time += 2
 			if easerin.rect.X >= 400-1 {
 				easerin.animate = false
+				easerin.animation_time = 0.0
+			}
+		}
+
+		if easerinout.animate {
+			easerinout.rect.X = int32(EaseInOutQuad(float32(easerinout.rect.X), float32(400), float32(400-easerinout.rect.X), easerinout.animation_time))
+			easerinout.animation_time += 2
+			if easerinout.rect.X >= 400-1 {
+				easerinout.animate = false
+				easerinout.animation_time = 0.0
 			}
 		}
 
@@ -1183,6 +1201,13 @@ func EaseInQuad(b, d, c, t float32) float32 {
 
 func EaseOutQuad(b, d, c, t float32) float32 {
 	return -c*(t/d)*((t/d)-2) + b
+}
+
+func EaseInOutQuad(b, d, c, t float32) float32 {
+	if ((t / d) / 2) < 1 {
+		return c/2*(t/d)*(t/d) + b
+	}
+	return -c/2*((t/d)*((t/d)-2)-1) + b
 }
 
 func normalize(n float32, max float32) float32 {

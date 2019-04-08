@@ -45,6 +45,7 @@ func BenchmarkEaseInQuad(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		out = EaseInQuad(bb, d, c, t)
+		t += 1
 	}
 	_ = out
 }
@@ -59,6 +60,22 @@ func BenchmarkEaseOutQuad(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		in = EaseOutQuad(bb, d, c, t)
+		t += 1
+	}
+	_ = in
+}
+
+//go:noinline
+func BenchmarkEaseInOutQuad(b *testing.B) {
+	var in float32
+	bb := float32(0)
+	d := float32(30)
+	c := float32(d - bb)
+	t := float32(10)
+
+	for i := 0; i < b.N; i++ {
+		in = EaseInOutQuad(bb, d, c, t)
+		t += 1
 	}
 	_ = in
 }
