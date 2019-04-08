@@ -1155,13 +1155,11 @@ func lerp(a, b, t float32) float32 {
 }
 
 func EaseInQuart(b, d, c, t float32) float32 {
-	nt := float32(t / d)
-	return c*(nt)*nt + b
+	return c*(t/d)*(t/d) + b
 }
 
 func EaseOutQuart(b, d, c, t float32) float32 {
-	nt := float32(t / d)
-	return -c*(nt)*(nt-2) + b
+	return -c*(t/d)*((t/d)-2) + b
 }
 
 func normalize(n float32, max float32) float32 {
