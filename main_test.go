@@ -36,7 +36,7 @@ func BenchmarkSplitToStrings(b *testing.B) {
 }
 
 //go:noinline
-func BenchmarkEaseInQuart_v1(b *testing.B) {
+func BenchmarkEaseInQuad(b *testing.B) {
     var out float32
 	bb := float32(0)
 	d := float32(30)
@@ -44,13 +44,13 @@ func BenchmarkEaseInQuart_v1(b *testing.B) {
     t := float32(10)
 
     for i := 0; i < b.N; i++ {
-        out = EaseInQuart(bb, d, c, t)
+        out = EaseInQuad(bb, d, c, t)
     }
     _ = out
 }
 
 //go:noinline
-func BenchmarkEaseOutQuart_v1(b *testing.B) {
+func BenchmarkEaseOutQuad(b *testing.B) {
     var in float32
 	bb := float32(0)
 	d := float32(30)
@@ -58,7 +58,7 @@ func BenchmarkEaseOutQuart_v1(b *testing.B) {
     t := float32(10)
 
     for i := 0; i < b.N; i++ {
-        in = EaseOutQuart(bb, d, c, t)
+        in = EaseOutQuad(bb, d, c, t)
     }
     _ = in
 }

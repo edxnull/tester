@@ -353,7 +353,7 @@ func main() {
 	c := float32(d - b)
 	t := float32(0)
 	for tt := t; tt < d+1; tt++ {
-		fmt.Println(EaseInQuart(b, d, c, tt), EaseOutQuart(b, d, c, tt))
+		fmt.Println(EaseInQuad(b, d, c, tt), EaseOutQuad(b, d, c, tt))
 	}
 
 	for running {
@@ -1154,11 +1154,11 @@ func lerp(a, b, t float32) float32 {
 	return (1-t)*a + t*b
 }
 
-func EaseInQuart(b, d, c, t float32) float32 {
+func EaseInQuad(b, d, c, t float32) float32 {
 	return c*(t/d)*(t/d) + b
 }
 
-func EaseOutQuart(b, d, c, t float32) float32 {
+func EaseOutQuad(b, d, c, t float32) float32 {
 	return -c*(t/d)*((t/d)-2) + b
 }
 
