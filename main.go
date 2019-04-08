@@ -356,6 +356,10 @@ func main() {
 		fmt.Println(EaseInQuad(b, d, c, tt), EaseOutQuad(b, d, c, tt))
 	}
 
+	test_rect := sdl.Rect{50, 50, 100, 100}
+	anim_rect := true
+	anim_rect_time := float32(0)
+
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch t := event.(type) {
@@ -597,6 +601,16 @@ func main() {
 		}
 		renderer.SetDrawColor(255, 255, 255, 0)
 		renderer.Clear()
+
+		draw_rect_without_border(renderer, &test_rect, &sdl.Color{R: 100, G: 200, B: 50, A: 100})
+
+		if anim_rect {
+			test_rect.X = int32(EaseOutQuad(float32(test_rect.X), float32(150), float32(150-test_rect.X), anim_rect_time))
+			anim_rect_time += 2
+			if anim_rect_time > float32(150-1) {
+				anim_rect = false
+			}
+		}
 
 		for i := 0; i < len(textbox.data); i++ {
 			renderer.Copy(textbox.data[i], nil, &textbox.data_rects[i])

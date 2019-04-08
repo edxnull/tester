@@ -37,28 +37,28 @@ func BenchmarkSplitToStrings(b *testing.B) {
 
 //go:noinline
 func BenchmarkEaseInQuad(b *testing.B) {
-    var out float32
+	var out float32
 	bb := float32(0)
 	d := float32(30)
 	c := float32(d - bb)
-    t := float32(10)
+	t := float32(10)
 
-    for i := 0; i < b.N; i++ {
-        out = EaseInQuad(bb, d, c, t)
-    }
-    _ = out
+	for i := 0; i < b.N; i++ {
+		out = EaseInQuad(bb, d, c, t)
+	}
+	_ = out
 }
 
 //go:noinline
 func BenchmarkEaseOutQuad(b *testing.B) {
-    var in float32
+	var in float32
 	bb := float32(0)
 	d := float32(30)
 	c := float32(d - bb)
-    t := float32(10)
+	t := float32(10)
 
-    for i := 0; i < b.N; i++ {
-        in = EaseOutQuad(bb, d, c, t)
-    }
-    _ = in
+	for i := 0; i < b.N; i++ {
+		in = EaseOutQuad(bb, d, c, t)
+	}
+	_ = in
 }
