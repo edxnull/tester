@@ -705,7 +705,7 @@ func main() {
 			}
 		}
 
-		if engage_loop {
+		if print_word {
 			color_picker.show = true
 		}
 		if !engage_loop {
