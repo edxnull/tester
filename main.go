@@ -180,15 +180,19 @@ type FontSelector struct {
 	textures          []*sdl.Texture
 }
 
+const CPN = 5
+
 type ColorPicker struct {
-	bg_rect      sdl.Rect
-	bg_color     sdl.Color
-	show         bool
-	font         *ttf.Font
-	texture      *sdl.Texture
-	texture_rect sdl.Rect
-	color        [5]sdl.Color
-	rects        [5]sdl.Rect
+	bg_rect       sdl.Rect
+	bg_color      sdl.Color
+	show          bool
+	font          *ttf.Font
+	texture       *sdl.Texture
+	texture_rect  sdl.Rect
+	color         [CPN]sdl.Color
+	rects         [CPN]sdl.Rect
+	rect_textures [CPN]*sdl.Texture
+	rect_bgs      [CPN]sdl.Rect
 }
 
 const (
@@ -387,7 +391,6 @@ func main() {
 		bg_color:     sdl.Color{R: 100, G: 100, B: 255, A: 255},
 		show:         false,
 		font:         load_font(font_dir+"Inconsolata-Regular.ttf", 9),
-		texture:      nil,
 		texture_rect: sdl.Rect{X: 0, Y: 0, W: 80, H: 40},
 		color: [5]sdl.Color{
 			sdl.Color{R: 100, G: 160, B: 50, A: 160},
@@ -399,17 +402,29 @@ func main() {
 	}
 	color_picker.texture = make_ttf_texture(renderer, color_picker.font, "this is our demo popup", &sdl.Color{R: 0, G: 0, B: 0, A: 0})
 
+	for i := 0; i < len(color_picker.rects); i++ {
+		color_picker.rect_textures[i] = make_ttf_texture(renderer, color_picker.font, strconv.Itoa(i), &sdl.Color{R: 0, G: 0, B: 0, A: 0})
+	}
+
 	_, _, qw, qh, _ := color_picker.texture.Query()
 	color_picker.bg_rect.W = qw
 	color_picker.texture_rect.W = qw
 	color_picker.texture_rect.H = qh
 
+	_, _, clrqw, clrqh, _ := color_picker.rect_textures[0].Query()
 	acc := int32(0)
-	MAGIC_PICKER_W := int32(10)
-	MAGIC_PICKER_SKIP := int32(10 + 2)
+	MAGIC_PICKER_W := int32(clrqw)
+	MAGIC_PICKER_SKIP := int32(clrqw + 7)
 	for i := 0; i < len(color_picker.rects); i++ {
-		color_picker.rects[i] = sdl.Rect{X: acc, Y: qh + 10, W: MAGIC_PICKER_W, H: qh}
+		color_picker.rects[i] = sdl.Rect{X: acc, Y: clrqh + 10, W: MAGIC_PICKER_W, H: clrqh}
+		color_picker.rect_bgs[i] = sdl.Rect{X: acc, Y: clrqh + 10, W: MAGIC_PICKER_W + 5, H: clrqh + 5}
 		acc += MAGIC_PICKER_SKIP
+	}
+
+	// TODO: REMOVE THIS TEMP HACK
+	for i := 0; i < len(color_picker.rects); i++ {
+		color_picker.rects[i].X = color_picker.rects[i].X + (color_picker.rect_bgs[i].W / 2) - (color_picker.rects[i].W / 2)
+		color_picker.rects[i].Y = color_picker.rects[i].Y + (color_picker.rect_bgs[i].H / 2) - (color_picker.rects[i].H / 2)
 	}
 
 	for running {
@@ -725,7 +740,15 @@ func main() {
 							for r := 0; r < len(color_picker.rects); r++ {
 								color_picker.rects[r].X = (textbox.metadata[i].word_rects[j].X) + acc
 								color_picker.rects[r].Y = (textbox.metadata[i].word_rects[j].Y) + 10 + textbox.metadata[i].word_rects[j].H
+								color_picker.rect_bgs[r].X = (textbox.metadata[i].word_rects[j].X) + acc
+								color_picker.rect_bgs[r].Y = (textbox.metadata[i].word_rects[j].Y) + 10 + textbox.metadata[i].word_rects[j].H
 								acc += MAGIC_PICKER_SKIP
+							}
+
+							// TODO: REMOVE THIS TEMP HACK
+							for i := 0; i < len(color_picker.rects); i++ {
+								color_picker.rects[i].X = color_picker.rects[i].X + (color_picker.rect_bgs[i].W / 2) - (color_picker.rects[i].W / 2)
+								color_picker.rects[i].Y = color_picker.rects[i].Y + (color_picker.rect_bgs[i].H / 2) - (color_picker.rects[i].H / 2)
 							}
 						}
 						draw_rect_without_border(renderer, &textbox.metadata[i].word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
@@ -743,7 +766,9 @@ func main() {
 			draw_rect_with_border_filled(renderer, &color_picker.bg_rect, &color_picker.bg_color)
 			renderer.Copy(color_picker.texture, nil, &color_picker.texture_rect)
 			for i := 0; i < len(color_picker.rects); i++ {
+				draw_rect_without_border(renderer, &color_picker.rect_bgs[i], &color_picker.color[i])
 				draw_rect_without_border(renderer, &color_picker.rects[i], &color_picker.color[i])
+				renderer.Copy(color_picker.rect_textures[i], nil, &color_picker.rects[i])
 			}
 		}
 
@@ -903,6 +928,9 @@ func main() {
 	textbox.MakeNULL()
 	textbox.fmt.Free()
 
+	for i := 0; i < len(color_picker.rects); i++ {
+		color_picker.rect_textures[i].Destroy()
+	}
 	color_picker.texture.Destroy()
 	color_picker.font.Close()
 
