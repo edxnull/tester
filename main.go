@@ -26,6 +26,7 @@ import (
 // [ ] http://svanimpe.be/blog/game-loops-fx
 // [ ] https://gafferongames.com/post/fix_your_timestep/
 // [ ] http://blog.moagrius.com/actionscript/jsas-understanding-easing/
+// [ ] use https://godoc.org/github.com/fsnotify/fsnotify for checking if our settings file has been changed?
 
 // [ ] try in main_loop: t := time.Now() [...] time.Sleep(time.Second/time.Duration(fps) - time.Since(t)) where fps = any num from 10..60
 
@@ -186,8 +187,8 @@ type ColorPicker struct {
 	font         *ttf.Font
 	texture      *sdl.Texture
 	texture_rect sdl.Rect
-	//color   [5]sdl.Color
-	//rects   [5]sdl.Rect
+	color        [5]sdl.Color
+	rects        [5]sdl.Rect
 }
 
 const (
@@ -388,6 +389,13 @@ func main() {
 		font:         load_font(font_dir+"Inconsolata-Regular.ttf", 9),
 		texture:      nil,
 		texture_rect: sdl.Rect{X: 0, Y: 0, W: 80, H: 40},
+		color: [5]sdl.Color{
+			sdl.Color{R: 100, G: 160, B: 50, A: 160},
+			sdl.Color{R: 100, G: 180, B: 50, A: 180},
+			sdl.Color{R: 100, G: 200, B: 50, A: 200},
+			sdl.Color{R: 100, G: 220, B: 50, A: 220},
+			sdl.Color{R: 100, G: 240, B: 50, A: 240},
+		},
 	}
 	color_picker.texture = make_ttf_texture(renderer, color_picker.font, "this is our demo popup", &sdl.Color{R: 0, G: 0, B: 0, A: 0})
 
@@ -395,6 +403,14 @@ func main() {
 	color_picker.bg_rect.W = qw
 	color_picker.texture_rect.W = qw
 	color_picker.texture_rect.H = qh
+
+	acc := int32(0)
+	MAGIC_PICKER_W := int32(10)
+	MAGIC_PICKER_SKIP := int32(10 + 2)
+	for i := 0; i < len(color_picker.rects); i++ {
+		color_picker.rects[i] = sdl.Rect{X: acc, Y: qh + 10, W: MAGIC_PICKER_W, H: qh}
+		acc += MAGIC_PICKER_SKIP
+	}
 
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -678,11 +694,6 @@ func main() {
 			}
 		}
 
-		if color_picker.show {
-			draw_rect_with_border_filled(renderer, &color_picker.bg_rect, &color_picker.bg_color)
-			renderer.Copy(color_picker.texture, nil, &color_picker.texture_rect)
-		}
-
 		if engage_loop {
 			color_picker.show = true
 		}
@@ -707,9 +718,15 @@ func main() {
 					if textbox.metadata[i].mouse_over_word[j] && textbox.metadata[i].words[j] != "\n" {
 						if color_picker.show {
 							color_picker.bg_rect.X = textbox.metadata[i].word_rects[j].X
-							color_picker.bg_rect.Y = textbox.metadata[i].word_rects[j].Y
+							color_picker.bg_rect.Y = textbox.metadata[i].word_rects[j].Y + textbox.metadata[i].word_rects[j].H
 							color_picker.texture_rect.X = textbox.metadata[i].word_rects[j].X
-							color_picker.texture_rect.Y = textbox.metadata[i].word_rects[j].Y
+							color_picker.texture_rect.Y = textbox.metadata[i].word_rects[j].Y + textbox.metadata[i].word_rects[j].H
+							acc = 0
+							for r := 0; r < len(color_picker.rects); r++ {
+								color_picker.rects[r].X = (textbox.metadata[i].word_rects[j].X) + acc
+								color_picker.rects[r].Y = (textbox.metadata[i].word_rects[j].Y) + 10 + textbox.metadata[i].word_rects[j].H
+								acc += MAGIC_PICKER_SKIP
+							}
 						}
 						draw_rect_without_border(renderer, &textbox.metadata[i].word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
 						if print_word && textbox.metadata[i].words[j] != "\n" {
@@ -720,6 +737,14 @@ func main() {
 				}
 			}
 			engage_loop = false
+		}
+
+		if color_picker.show {
+			draw_rect_with_border_filled(renderer, &color_picker.bg_rect, &color_picker.bg_color)
+			renderer.Copy(color_picker.texture, nil, &color_picker.texture_rect)
+			for i := 0; i < len(color_picker.rects); i++ {
+				draw_rect_without_border(renderer, &color_picker.rects[i], &color_picker.color[i])
+			}
 		}
 
 		if move_text_down {
