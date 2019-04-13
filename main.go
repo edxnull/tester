@@ -665,10 +665,6 @@ func main() {
 		renderer.SetDrawColor(255, 255, 255, 0)
 		renderer.Clear()
 
-		draw_rect_without_border(renderer, &easerout.rect, &sdl.Color{R: 100, G: 200, B: 50, A: 100})
-		draw_rect_without_border(renderer, &easerin.rect, &sdl.Color{R: 200, G: 20, B: 50, A: 100})
-		draw_rect_without_border(renderer, &easerinout.rect, &sdl.Color{R: 20, G: 20, B: 240, A: 100})
-
 		if easerout.animate {
 			easerout.rect.X = int32(EaseOutQuad(float32(easerout.rect.X), float32(400), float32(400-easerout.rect.X), easerout.animation_time))
 			easerout.animation_time += 2
@@ -676,6 +672,7 @@ func main() {
 				easerout.animate = false
 				easerout.animation_time = 0.0
 			}
+			draw_rect_without_border(renderer, &easerout.rect, &sdl.Color{R: 100, G: 200, B: 50, A: 100})
 		}
 
 		if easerin.animate {
@@ -685,6 +682,7 @@ func main() {
 				easerin.animate = false
 				easerin.animation_time = 0.0
 			}
+			draw_rect_without_border(renderer, &easerin.rect, &sdl.Color{R: 200, G: 20, B: 50, A: 100})
 		}
 
 		if easerinout.animate {
@@ -694,6 +692,7 @@ func main() {
 				easerinout.animate = false
 				easerinout.animation_time = 0.0
 			}
+			draw_rect_without_border(renderer, &easerinout.rect, &sdl.Color{R: 20, G: 20, B: 240, A: 100})
 		}
 
 		for i := 0; i < len(textbox.data); i++ {
