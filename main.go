@@ -668,7 +668,7 @@ func main() {
 		if easerout.animate {
 			easerout.rect.X = int32(EaseOutQuad(float32(easerout.rect.X), float32(400), float32(400-easerout.rect.X), easerout.animation_time))
 			easerout.animation_time += 2
-			if easerout.rect.X >= 400-1 {
+			if easerout.rect.X >= 400-10 {
 				easerout.animate = false
 				easerout.animation_time = 0.0
 			}
@@ -678,7 +678,7 @@ func main() {
 		if easerin.animate {
 			easerin.rect.X = int32(EaseInQuad(float32(easerin.rect.X), float32(400), float32(400-easerin.rect.X), easerin.animation_time))
 			easerin.animation_time += 2
-			if easerin.rect.X >= 400-1 {
+			if easerin.rect.X >= 400-10 {
 				easerin.animate = false
 				easerin.animation_time = 0.0
 			}
@@ -688,7 +688,7 @@ func main() {
 		if easerinout.animate {
 			easerinout.rect.X = int32(EaseInOutQuad(float32(easerinout.rect.X), float32(400), float32(400-easerinout.rect.X), easerinout.animation_time))
 			easerinout.animation_time += 2
-			if easerinout.rect.X >= 400-1 {
+			if easerinout.rect.X >= 400-10 {
 				easerinout.animate = false
 				easerinout.animation_time = 0.0
 			}
