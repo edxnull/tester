@@ -417,11 +417,12 @@ func main() {
 	MAGIC_PICKER_SKIP := int32(clrqw + 7)
 	for i := 0; i < len(color_picker.rects); i++ {
 		color_picker.rects[i] = sdl.Rect{X: acc, Y: clrqh + 10, W: MAGIC_PICKER_W, H: clrqh}
-		color_picker.rect_bgs[i] = sdl.Rect{X: acc, Y: clrqh + 10, W: MAGIC_PICKER_W + 5, H: clrqh}
+		color_picker.rect_bgs[i] = sdl.Rect{X: acc, Y: clrqh + 10, W: MAGIC_PICKER_W + 6, H: clrqh}
 		acc += MAGIC_PICKER_SKIP
 	}
 
 	color_picker.CenterRectAB() // TODO: REMOVE THIS TEMP HACK
+	color_picker.CenterRects()  // TODO: REMOVE THIS TEMP HACK
 
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -741,6 +742,7 @@ func main() {
 							}
 
 							color_picker.CenterRectAB() // TODO: REMOVE THIS TEMP HACK
+							color_picker.CenterRects()  // TODO: REMOVE THIS TEMP HACK
 						}
 						draw_rect_without_border(renderer, &textbox.metadata[i].word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
 						if print_word && textbox.metadata[i].words[j] != "\n" {
@@ -757,6 +759,7 @@ func main() {
 			draw_rect_with_border_filled(renderer, &color_picker.bg_rect, &color_picker.bg_color)
 			renderer.Copy(color_picker.texture, nil, &color_picker.texture_rect)
 			for i := 0; i < len(color_picker.rects); i++ {
+				//draw_rect_without_border(renderer, &color_picker.rect_bgs[i], &sdl.Color{255, 255, 255, 255})
 				draw_rect_without_border(renderer, &color_picker.rect_bgs[i], &color_picker.color[i])
 				draw_rect_without_border(renderer, &color_picker.rects[i], &color_picker.color[i])
 				renderer.Copy(color_picker.rect_textures[i], nil, &color_picker.rects[i])
@@ -1515,5 +1518,14 @@ func (CP *ColorPicker) CenterRectAB() {
 	for i := 0; i < len(CP.rects); i++ {
 		CP.rects[i].X = CP.rects[i].X + (CP.rect_bgs[i].W / 2) - (CP.rects[i].W / 2)
 		CP.rects[i].Y = CP.rects[i].Y + (CP.rect_bgs[i].H / 2) - (CP.rects[i].H / 2)
+	}
+}
+
+func (CP *ColorPicker) CenterRects() {
+	for i := 0; i < len(CP.rects); i++ {
+		CP.rects[i].X = (CP.rects[i].X + (CP.bg_rect.W / 2)) - CP.rects[i].W*int32(len(CP.rects)+1)
+		CP.rects[i].Y = (CP.rects[i].Y + (CP.bg_rect.H / 2)) - (CP.rects[i].H + (10 / 2)) // TODO: remove magic numbers
+		CP.rect_bgs[i].X = (CP.rects[i].X - (CP.rects[i].W / 2)) - 1
+		CP.rect_bgs[i].Y = CP.rects[i].Y
 	}
 }
