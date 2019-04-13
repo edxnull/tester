@@ -79,3 +79,28 @@ func BenchmarkEaseInOutQuad(b *testing.B) {
 	}
 	_ = in
 }
+
+func TestCustomTrim(t *testing.T) {
+    // TODO: fix test fail on "...word"
+	str := []string{"one,", "two...", "three'd", "four", "five", "six-o-clock"}
+	want := []string{"one", "two", "three", "four", "five", "six-o-clock"}
+	trim := make([]int, len(str))
+
+	for i := 0; i < len(str); i++ {
+		for j := 0; j < len(str[i]); j++ {
+			if !(str[i][j] >= byte('A') && str[i][j] <= byte('z')) && str[i][j] != byte('-') {
+				trim[i] = j
+				break
+			}
+			if j == len(str[i])-1 {
+				trim[i] = j + 1
+			}
+		}
+	}
+
+	for i, s := range str {
+		if s[:trim[i]] != want[i] {
+			t.Errorf("custom trim failure (got: %s, want: %s)", s[:trim[i]], want[i])
+		}
+	}
+}

@@ -20,7 +20,7 @@ import (
 )
 
 // GENERAL
-
+// [ ] https://bell0bytes.eu/the-game-loop/
 // [ ] https://dewitters.com/dewitters-gameloop/
 // [ ] http://gameprogrammingpatterns.com/game-loop.html
 // [ ] http://svanimpe.be/blog/game-loops-fx
@@ -29,6 +29,7 @@ import (
 
 // [ ] try in main_loop: t := time.Now() [...] time.Sleep(time.Second/time.Duration(fps) - time.Since(t)) where fps = any num from 10..60
 
+// [ ] separate updating and rendering?
 // [ ] fmt.Println(runtime.Caller(0)) use this to get a LINENR when calculating unique ID's for IMGUI
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
 // [ ] refactor FontSelector
@@ -53,6 +54,9 @@ import (
 // [ ] try to implement imgui style widgets: https://sol.gfxile.net/imgui/index.html
 // [ ] add proper error handling
 // [ ] add logs???
+
+// DB RELATED
+// [ ] use bbolt key/value store as a database?
 
 // SDL RELATED
 // [ ] optimize TextBox Update and Clear (somehow)
@@ -820,6 +824,7 @@ func main() {
 		//NOTE: it's probably also slower than calling SDL_Timer/SDL_Delay functions
 		//NOTE: OR try using sdl2_gfx package functions like: FramerateDelay...
 		<-ticker.C
+		// fmt.Println(time.Now().Second())
 	}
 
 	ticker.Stop()
