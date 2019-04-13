@@ -417,15 +417,11 @@ func main() {
 	MAGIC_PICKER_SKIP := int32(clrqw + 7)
 	for i := 0; i < len(color_picker.rects); i++ {
 		color_picker.rects[i] = sdl.Rect{X: acc, Y: clrqh + 10, W: MAGIC_PICKER_W, H: clrqh}
-		color_picker.rect_bgs[i] = sdl.Rect{X: acc, Y: clrqh + 10, W: MAGIC_PICKER_W + 5, H: clrqh + 5}
+		color_picker.rect_bgs[i] = sdl.Rect{X: acc, Y: clrqh + 10, W: MAGIC_PICKER_W + 5, H: clrqh}
 		acc += MAGIC_PICKER_SKIP
 	}
 
-	// TODO: REMOVE THIS TEMP HACK
-	for i := 0; i < len(color_picker.rects); i++ {
-		color_picker.rects[i].X = color_picker.rects[i].X + (color_picker.rect_bgs[i].W / 2) - (color_picker.rects[i].W / 2)
-		color_picker.rects[i].Y = color_picker.rects[i].Y + (color_picker.rect_bgs[i].H / 2) - (color_picker.rects[i].H / 2)
-	}
+	color_picker.CenterRectAB() // TODO: REMOVE THIS TEMP HACK
 
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -745,11 +741,7 @@ func main() {
 								acc += MAGIC_PICKER_SKIP
 							}
 
-							// TODO: REMOVE THIS TEMP HACK
-							for i := 0; i < len(color_picker.rects); i++ {
-								color_picker.rects[i].X = color_picker.rects[i].X + (color_picker.rect_bgs[i].W / 2) - (color_picker.rects[i].W / 2)
-								color_picker.rects[i].Y = color_picker.rects[i].Y + (color_picker.rect_bgs[i].H / 2) - (color_picker.rects[i].H / 2)
-							}
+							color_picker.CenterRectAB() // TODO: REMOVE THIS TEMP HACK
 						}
 						draw_rect_without_border(renderer, &textbox.metadata[i].word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
 						if print_word && textbox.metadata[i].words[j] != "\n" {
@@ -1517,5 +1509,12 @@ func (tbox *TextBox) MakeNULL() {
 	for i := 0; i < len(tbox.data); i++ {
 		tbox.data[i].Destroy()
 		tbox.data[i] = nil
+	}
+}
+
+func (CP *ColorPicker) CenterRectAB() {
+	for i := 0; i < len(CP.rects); i++ {
+		CP.rects[i].X = CP.rects[i].X + (CP.rect_bgs[i].W / 2) - (CP.rects[i].W / 2)
+		CP.rects[i].Y = CP.rects[i].Y + (CP.rect_bgs[i].H / 2) - (CP.rects[i].H / 2)
 	}
 }
