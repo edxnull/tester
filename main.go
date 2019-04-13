@@ -179,6 +179,17 @@ type FontSelector struct {
 	textures          []*sdl.Texture
 }
 
+type ColorPicker struct {
+	bg_rect      sdl.Rect
+	bg_color     sdl.Color
+	show         bool
+	font         *ttf.Font
+	texture      *sdl.Texture
+	texture_rect sdl.Rect
+	//color   [5]sdl.Color
+	//rects   [5]sdl.Rect
+}
+
 const (
 	CURSOR_TYPE_ARROW = iota
 	CURSOR_TYPE_HAND
@@ -369,6 +380,21 @@ func main() {
 		animate        bool
 		animation_time float32
 	}{sdl.Rect{0, 250, 100, 100}, true, 0.0}
+
+	color_picker := ColorPicker{
+		bg_rect:      sdl.Rect{X: 0, Y: 0, W: 80, H: 40},
+		bg_color:     sdl.Color{R: 100, G: 100, B: 255, A: 255},
+		show:         false,
+		font:         load_font(font_dir+"Inconsolata-Regular.ttf", 9),
+		texture:      nil,
+		texture_rect: sdl.Rect{X: 0, Y: 0, W: 80, H: 40},
+	}
+	color_picker.texture = make_ttf_texture(renderer, color_picker.font, "this is our demo popup", &sdl.Color{R: 0, G: 0, B: 0, A: 0})
+
+	_, _, qw, qh, _ := color_picker.texture.Query()
+	color_picker.bg_rect.W = qw
+	color_picker.texture_rect.W = qw
+	color_picker.texture_rect.H = qh
 
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -652,6 +678,18 @@ func main() {
 			}
 		}
 
+		if color_picker.show {
+			draw_rect_with_border_filled(renderer, &color_picker.bg_rect, &color_picker.bg_color)
+			renderer.Copy(color_picker.texture, nil, &color_picker.texture_rect)
+		}
+
+		if engage_loop {
+			color_picker.show = true
+		}
+		if !engage_loop {
+			color_picker.show = false
+		}
+
 		draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{R: 111, G: 111, B: 111, A: 90})
 
 		// TODO: test what happens on &&?
@@ -667,6 +705,12 @@ func main() {
 			for i := 0; i < len(textbox.data); i++ {
 				for j := 0; j < len(textbox.metadata[i].mouse_over_word); j++ {
 					if textbox.metadata[i].mouse_over_word[j] && textbox.metadata[i].words[j] != "\n" {
+						if color_picker.show {
+							color_picker.bg_rect.X = textbox.metadata[i].word_rects[j].X
+							color_picker.bg_rect.Y = textbox.metadata[i].word_rects[j].Y
+							color_picker.texture_rect.X = textbox.metadata[i].word_rects[j].X
+							color_picker.texture_rect.Y = textbox.metadata[i].word_rects[j].Y
+						}
 						draw_rect_without_border(renderer, &textbox.metadata[i].word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
 						if print_word && textbox.metadata[i].words[j] != "\n" {
 							println(textbox.metadata[i].words[j])
@@ -833,6 +877,9 @@ func main() {
 
 	textbox.MakeNULL()
 	textbox.fmt.Free()
+
+	color_picker.texture.Destroy()
+	color_picker.font.Close()
 
 	if cmd.ttf_texture != nil {
 		cmd.ttf_texture.Destroy()

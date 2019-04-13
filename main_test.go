@@ -81,7 +81,7 @@ func BenchmarkEaseInOutQuad(b *testing.B) {
 }
 
 func TestCustomTrim(t *testing.T) {
-    // TODO: fix test fail on "...word"
+	// TODO: fix test fail on "...word"
 	str := []string{"one,", "two...", "three'd", "four", "five", "six-o-clock"}
 	want := []string{"one", "two", "three", "four", "five", "six-o-clock"}
 	trim := make([]int, len(str))
