@@ -180,12 +180,23 @@ type FontSelector struct {
 	textures          []*sdl.Texture
 }
 
+// [      [o][x]]
+const NB = 2
+
+type Toolbar struct {
+	bg_rect      sdl.Rect
+	bg_color     sdl.Color
+	texture      [NB]*sdl.Texture
+	texture_rect [NB]sdl.Rect
+}
+
 const CPN = 5
 
 type ColorPicker struct {
 	bg_rect       sdl.Rect
 	bg_color      sdl.Color
 	show          bool
+	clicked       bool
 	font          *ttf.Font
 	texture       *sdl.Texture
 	texture_rect  sdl.Rect
@@ -193,6 +204,7 @@ type ColorPicker struct {
 	rects         [CPN]sdl.Rect
 	rect_textures [CPN]*sdl.Texture
 	rect_bgs      [CPN]sdl.Rect
+	toolbar       Toolbar
 }
 
 const (
@@ -389,7 +401,6 @@ func main() {
 	color_picker := ColorPicker{
 		bg_rect:      sdl.Rect{X: 0, Y: 0, W: 80, H: 40},
 		bg_color:     sdl.Color{R: 100, G: 100, B: 255, A: 255},
-		show:         false,
 		font:         load_font(font_dir+"Inconsolata-Regular.ttf", 9),
 		texture_rect: sdl.Rect{X: 0, Y: 0, W: 80, H: 40},
 		color: [5]sdl.Color{
@@ -402,6 +413,17 @@ func main() {
 	}
 	color_picker.texture = make_ttf_texture(renderer, color_picker.font, "this is our demo popup", &sdl.Color{R: 0, G: 0, B: 0, A: 0})
 
+	color_picker.toolbar = Toolbar{
+		bg_rect:  sdl.Rect{color_picker.bg_rect.X, color_picker.bg_rect.Y, color_picker.bg_rect.W, 10},
+		bg_color: sdl.Color{color_picker.bg_color.R, color_picker.bg_color.G - 22, color_picker.bg_color.B, color_picker.bg_color.A - 10},
+	}
+
+	color_picker.toolbar.texture[0] = make_ttf_texture(renderer, color_picker.font, "o", &sdl.Color{R: 0, G: 0, B: 0, A: 0})
+	color_picker.toolbar.texture[1] = make_ttf_texture(renderer, color_picker.font, "x", &sdl.Color{R: 0, G: 0, B: 0, A: 0})
+
+	_, _, cptw_0, cpth_0, _ := color_picker.toolbar.texture[0].Query()
+	_, _, cptw_1, cpth_1, _ := color_picker.toolbar.texture[1].Query()
+
 	for i := 0; i < len(color_picker.rects); i++ {
 		color_picker.rect_textures[i] = make_ttf_texture(renderer, color_picker.font, strconv.Itoa(i), &sdl.Color{R: 0, G: 0, B: 0, A: 0})
 	}
@@ -410,6 +432,10 @@ func main() {
 	color_picker.bg_rect.W = qw
 	color_picker.texture_rect.W = qw
 	color_picker.texture_rect.H = qh
+
+	color_picker.toolbar.bg_rect.W = qw
+	color_picker.toolbar.texture_rect[0] = sdl.Rect{X: color_picker.bg_rect.W - (cptw_0 * 2) - 1, Y: 0, W: cptw_0, H: cpth_0}
+	color_picker.toolbar.texture_rect[1] = sdl.Rect{X: color_picker.bg_rect.W - (cptw_1), Y: 0, W: cptw_1, H: cpth_1}
 
 	_, _, clrqw, clrqh, _ := color_picker.rect_textures[0].Query()
 	acc := int32(0)
@@ -705,12 +731,14 @@ func main() {
 			}
 		}
 
+		// TODO: REMOVE THIS TEMP HACK
 		if print_word {
 			color_picker.show = true
 		}
 		if !engage_loop {
 			color_picker.show = false
 		}
+		// TODO: REMOVE THIS TEMP HACK
 
 		draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{R: 111, G: 111, B: 111, A: 90})
 
@@ -728,16 +756,24 @@ func main() {
 				for j := 0; j < len(textbox.metadata[i].mouse_over_word); j++ {
 					if textbox.metadata[i].mouse_over_word[j] && textbox.metadata[i].words[j] != "\n" {
 						if color_picker.show {
+							// TOOLBAR
+							color_picker.toolbar.bg_rect.X = textbox.metadata[i].word_rects[j].X
+							color_picker.toolbar.bg_rect.Y = textbox.metadata[i].word_rects[j].Y + textbox.metadata[i].word_rects[j].H
+							for r := 0; r < len(color_picker.toolbar.texture_rect); r++ {
+								color_picker.toolbar.texture_rect[r].X = color_picker.toolbar.bg_rect.X + color_picker.toolbar.bg_rect.W - (color_picker.toolbar.texture_rect[r].W * int32((r + 1))) - (int32(r))
+								color_picker.toolbar.texture_rect[r].Y = color_picker.toolbar.bg_rect.Y
+							}
+							// WINDOW
 							color_picker.bg_rect.X = textbox.metadata[i].word_rects[j].X
-							color_picker.bg_rect.Y = textbox.metadata[i].word_rects[j].Y + textbox.metadata[i].word_rects[j].H
+							color_picker.bg_rect.Y = textbox.metadata[i].word_rects[j].Y + textbox.metadata[i].word_rects[j].H + color_picker.toolbar.bg_rect.H
 							color_picker.texture_rect.X = textbox.metadata[i].word_rects[j].X
-							color_picker.texture_rect.Y = textbox.metadata[i].word_rects[j].Y + textbox.metadata[i].word_rects[j].H
+							color_picker.texture_rect.Y = textbox.metadata[i].word_rects[j].Y + textbox.metadata[i].word_rects[j].H + color_picker.toolbar.bg_rect.H
 							acc = 0
 							for r := 0; r < len(color_picker.rects); r++ {
 								color_picker.rects[r].X = (textbox.metadata[i].word_rects[j].X) + acc
-								color_picker.rects[r].Y = (textbox.metadata[i].word_rects[j].Y) + 10 + textbox.metadata[i].word_rects[j].H
+								color_picker.rects[r].Y = (textbox.metadata[i].word_rects[j].Y) + 10 + textbox.metadata[i].word_rects[j].H + color_picker.toolbar.bg_rect.H
 								color_picker.rect_bgs[r].X = (textbox.metadata[i].word_rects[j].X) + acc
-								color_picker.rect_bgs[r].Y = (textbox.metadata[i].word_rects[j].Y) + 10 + textbox.metadata[i].word_rects[j].H
+								color_picker.rect_bgs[r].Y = (textbox.metadata[i].word_rects[j].Y) + 10 + textbox.metadata[i].word_rects[j].H + color_picker.toolbar.bg_rect.H
 								acc += MAGIC_PICKER_SKIP
 							}
 
@@ -763,6 +799,10 @@ func main() {
 				draw_rect_without_border(renderer, &color_picker.rect_bgs[i], &color_picker.color[i])
 				draw_rect_without_border(renderer, &color_picker.rects[i], &color_picker.color[i])
 				renderer.Copy(color_picker.rect_textures[i], nil, &color_picker.rects[i])
+			}
+			draw_rect_with_border_filled(renderer, &color_picker.toolbar.bg_rect, &color_picker.toolbar.bg_color)
+			for i := 0; i < len(color_picker.toolbar.texture); i++ {
+				renderer.Copy(color_picker.toolbar.texture[i], nil, &color_picker.toolbar.texture_rect[i])
 			}
 		}
 
@@ -924,6 +964,9 @@ func main() {
 
 	for i := 0; i < len(color_picker.rects); i++ {
 		color_picker.rect_textures[i].Destroy()
+	}
+	for i := 0; i < len(color_picker.toolbar.texture); i++ {
+		color_picker.toolbar.texture[i].Destroy()
 	}
 	color_picker.texture.Destroy()
 	color_picker.font.Close()
