@@ -137,6 +137,14 @@ type Font struct {
 	width, height int32
 }
 
+var (
+	COLOR_WHITE = sdl.Color{R: 255, G: 255, B: 255, A: 255}
+	COLOR_BLACK = sdl.Color{R: 0, G: 0, B: 0, A: 255}
+	COLOR_RED   = sdl.Color{R: 255, G: 0, B: 0, A: 255}
+	COLOR_GREEN = sdl.Color{R: 0, G: 255, B: 0, A: 255}
+	COLOR_BLUE  = sdl.Color{R: 0, G: 0, B: 255, A: 255}
+)
+
 type LineMetaData struct {
 	words           []string
 	word_rects      []sdl.Rect
@@ -413,13 +421,14 @@ func main() {
 	}
 	color_picker.texture = make_ttf_texture(renderer, color_picker.font, "this is our demo popup", &sdl.Color{R: 0, G: 0, B: 0, A: 0})
 
+	cp := color_picker.bg_color // ! only used here
 	color_picker.toolbar = Toolbar{
 		bg_rect:  sdl.Rect{color_picker.bg_rect.X, color_picker.bg_rect.Y, color_picker.bg_rect.W, 10},
-		bg_color: sdl.Color{color_picker.bg_color.R, color_picker.bg_color.G - 22, color_picker.bg_color.B, color_picker.bg_color.A - 10},
+		bg_color: sdl.Color{cp.R, cp.G - 22, cp.B - 50, cp.A - 10},
 	}
 
-	color_picker.toolbar.texture[0] = make_ttf_texture(renderer, color_picker.font, "o", &sdl.Color{R: 0, G: 0, B: 0, A: 0})
-	color_picker.toolbar.texture[1] = make_ttf_texture(renderer, color_picker.font, "x", &sdl.Color{R: 0, G: 0, B: 0, A: 0})
+	color_picker.toolbar.texture[0] = make_ttf_texture(renderer, color_picker.font, "o", &COLOR_WHITE)
+	color_picker.toolbar.texture[1] = make_ttf_texture(renderer, color_picker.font, "x", &COLOR_WHITE)
 
 	_, _, cptw_0, cpth_0, _ := color_picker.toolbar.texture[0].Query()
 	_, _, cptw_1, cpth_1, _ := color_picker.toolbar.texture[1].Query()
@@ -802,6 +811,7 @@ func main() {
 			}
 			draw_rect_with_border_filled(renderer, &color_picker.toolbar.bg_rect, &color_picker.toolbar.bg_color)
 			for i := 0; i < len(color_picker.toolbar.texture); i++ {
+				//draw_rect_without_border(renderer, &color_picker.toolbar.texture_rect[i], &color_picker.bg_color)
 				renderer.Copy(color_picker.toolbar.texture[i], nil, &color_picker.toolbar.texture_rect[i])
 			}
 		}
