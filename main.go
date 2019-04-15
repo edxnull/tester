@@ -736,12 +736,6 @@ func main() {
 			}
 		}
 
-		// TODO: this won't work on selecting color_picker elements
-		if print_word {
-			color_picker.show = !color_picker.show
-			color_picker.updated = false
-		}
-
 		draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{R: 111, G: 111, B: 111, A: 90})
 
 		// TODO: test what happens on &&?
@@ -751,6 +745,12 @@ func main() {
 
 		if print_word && !engage_loop {
 			print_word = false
+		}
+
+		// TODO: this won't work on selecting color_picker elements
+		if print_word {
+			color_picker.show = !color_picker.show
+			color_picker.updated = false
 		}
 
 		if engage_loop && !cmd.show {
