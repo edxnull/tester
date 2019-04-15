@@ -20,6 +20,7 @@ import (
 )
 
 // GENERAL
+// [ ] use maps for callbacks? map[string]func or map[bool]func
 // [ ] use https://godoc.org/github.com/fsnotify/fsnotify for checking if our settings file has been changed?
 // [ ] separate updating and rendering?
 // [ ] fmt.Println(runtime.Caller(0)) use this to get a LINENR when calculating unique ID's for IMGUI
@@ -757,29 +758,11 @@ func main() {
 				for j := 0; j < len(textbox.metadata[i].mouse_over_word); j++ {
 					if textbox.metadata[i].mouse_over_word[j] && textbox.metadata[i].words[j] != "\n" {
 						if color_picker.show && color_picker.updated == false {
-							// TOOLBAR
-							color_picker.toolbar.bg_rect.X = textbox.metadata[i].word_rects[j].X
-							color_picker.toolbar.bg_rect.Y = textbox.metadata[i].word_rects[j].Y + textbox.metadata[i].word_rects[j].H
-							for r := 0; r < len(color_picker.toolbar.texture_rect); r++ {
-								color_picker.toolbar.texture_rect[r].X = color_picker.toolbar.bg_rect.X + color_picker.toolbar.bg_rect.W - (color_picker.toolbar.texture_rect[r].W * int32((r + 1))) - (int32(r))
-								color_picker.toolbar.texture_rect[r].Y = color_picker.toolbar.bg_rect.Y
-							}
-							// WINDOW
-							color_picker.bg_rect.X = textbox.metadata[i].word_rects[j].X
-							color_picker.bg_rect.Y = textbox.metadata[i].word_rects[j].Y + textbox.metadata[i].word_rects[j].H + color_picker.toolbar.bg_rect.H
-							color_picker.texture_rect.X = textbox.metadata[i].word_rects[j].X
-							color_picker.texture_rect.Y = textbox.metadata[i].word_rects[j].Y + textbox.metadata[i].word_rects[j].H + color_picker.toolbar.bg_rect.H
-							acc = 0
-							for r := 0; r < len(color_picker.rects); r++ {
-								color_picker.rects[r].X = (textbox.metadata[i].word_rects[j].X) + acc
-								color_picker.rects[r].Y = (textbox.metadata[i].word_rects[j].Y) + 10 + textbox.metadata[i].word_rects[j].H + color_picker.toolbar.bg_rect.H
-								color_picker.rect_bgs[r].X = (textbox.metadata[i].word_rects[j].X) + acc
-								color_picker.rect_bgs[r].Y = (textbox.metadata[i].word_rects[j].Y) + 10 + textbox.metadata[i].word_rects[j].H + color_picker.toolbar.bg_rect.H
-								acc += MAGIC_PICKER_SKIP
-							}
-
-							color_picker.CenterRectAB() // TODO: REMOVE THIS TEMP HACK
-							color_picker.CenterRects()  // TODO: REMOVE THIS TEMP HACK
+							current_rect := textbox.metadata[i].word_rects[j]
+							color_picker.UpdateToolbarPos(current_rect)                   // TOOLBAR
+							color_picker.UpdateWindowPos(current_rect, MAGIC_PICKER_SKIP) // WINDOW
+							color_picker.CenterRectAB()                                   // TODO: REMOVE THIS TEMP HACK
+							color_picker.CenterRects()                                    // TODO: REMOVE THIS TEMP HACK
 						}
 						color_picker.updated = true
 						draw_rect_without_border(renderer, &textbox.metadata[i].word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
@@ -1573,5 +1556,29 @@ func (CP *ColorPicker) CenterRects() {
 		CP.rects[i].Y = (CP.rects[i].Y + (CP.bg_rect.H / 2)) - (CP.rects[i].H + (10 / 2)) // TODO: remove magic numbers
 		CP.rect_bgs[i].X = (CP.rects[i].X - (CP.rects[i].W / 2)) - 1
 		CP.rect_bgs[i].Y = CP.rects[i].Y
+	}
+}
+
+func (CP *ColorPicker) UpdateToolbarPos(r sdl.Rect) {
+	CP.toolbar.bg_rect.X = r.X
+	CP.toolbar.bg_rect.Y = r.Y + r.H
+	for i := 0; i < len(CP.toolbar.texture_rect); i++ {
+		CP.toolbar.texture_rect[i].X = CP.toolbar.bg_rect.X + CP.toolbar.bg_rect.W - (CP.toolbar.texture_rect[i].W * int32((i + 1))) - (int32(i))
+		CP.toolbar.texture_rect[i].Y = CP.toolbar.bg_rect.Y
+	}
+}
+
+func (CP *ColorPicker) UpdateWindowPos(r sdl.Rect, skip int32) {
+	CP.bg_rect.X = r.X
+	CP.bg_rect.Y = r.Y + r.H + CP.toolbar.bg_rect.H
+	CP.texture_rect.X = r.X
+	CP.texture_rect.Y = r.Y + r.H + CP.toolbar.bg_rect.H
+	acc := int32(0)
+	for i := 0; i < len(CP.rects); i++ {
+		CP.rects[i].X = (r.X) + acc
+		CP.rects[i].Y = (r.Y) + 10 + r.H + CP.toolbar.bg_rect.H
+		CP.rect_bgs[i].X = (r.X) + acc
+		CP.rect_bgs[i].Y = (r.Y) + 10 + r.H + CP.toolbar.bg_rect.H
+		acc += skip
 	}
 }
