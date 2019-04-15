@@ -20,16 +20,7 @@ import (
 )
 
 // GENERAL
-// [ ] https://bell0bytes.eu/the-game-loop/
-// [ ] https://dewitters.com/dewitters-gameloop/
-// [ ] http://gameprogrammingpatterns.com/game-loop.html
-// [ ] http://svanimpe.be/blog/game-loops-fx
-// [ ] https://gafferongames.com/post/fix_your_timestep/
-// [ ] http://blog.moagrius.com/actionscript/jsas-understanding-easing/
 // [ ] use https://godoc.org/github.com/fsnotify/fsnotify for checking if our settings file has been changed?
-
-// [ ] try in main_loop: t := time.Now() [...] time.Sleep(time.Second/time.Duration(fps) - time.Since(t)) where fps = any num from 10..60
-
 // [ ] separate updating and rendering?
 // [ ] fmt.Println(runtime.Caller(0)) use this to get a LINENR when calculating unique ID's for IMGUI
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
