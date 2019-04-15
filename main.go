@@ -181,6 +181,7 @@ type FontSelector struct {
 
 // [      [o][x]]
 const NB = 2
+
 type Toolbar struct {
 	bg_rect      sdl.Rect
 	bg_color     sdl.Color
@@ -189,6 +190,7 @@ type Toolbar struct {
 }
 
 const CPN = 5
+
 type ColorPicker struct {
 	bg_rect       sdl.Rect
 	bg_color      sdl.Color
@@ -734,9 +736,9 @@ func main() {
 			color_picker.show = !color_picker.show
 			color_picker.updated = false
 		}
-		if !engage_loop && color_picker.show != false {
-			color_picker.show = false
-		}
+		//if !engage_loop && color_picker.show != false {
+		//	color_picker.show = false
+		//}
 		// TODO: REMOVE THIS TEMP HACK
 
 		draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{R: 111, G: 111, B: 111, A: 90})
