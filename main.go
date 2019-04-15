@@ -190,7 +190,6 @@ type FontSelector struct {
 
 // [      [o][x]]
 const NB = 2
-
 type Toolbar struct {
 	bg_rect      sdl.Rect
 	bg_color     sdl.Color
@@ -199,12 +198,11 @@ type Toolbar struct {
 }
 
 const CPN = 5
-
 type ColorPicker struct {
 	bg_rect       sdl.Rect
 	bg_color      sdl.Color
 	show          bool
-	clicked       bool
+	updated       bool
 	font          *ttf.Font
 	texture       *sdl.Texture
 	texture_rect  sdl.Rect
@@ -742,9 +740,10 @@ func main() {
 
 		// TODO: REMOVE THIS TEMP HACK
 		if print_word {
-			color_picker.show = true
+			color_picker.show = !color_picker.show
+			color_picker.updated = false
 		}
-		if !engage_loop {
+		if !engage_loop && color_picker.show != false {
 			color_picker.show = false
 		}
 		// TODO: REMOVE THIS TEMP HACK
@@ -764,7 +763,8 @@ func main() {
 			for i := 0; i < len(textbox.data); i++ {
 				for j := 0; j < len(textbox.metadata[i].mouse_over_word); j++ {
 					if textbox.metadata[i].mouse_over_word[j] && textbox.metadata[i].words[j] != "\n" {
-						if color_picker.show {
+						if color_picker.show && color_picker.updated == false {
+							println("OK")
 							// TOOLBAR
 							color_picker.toolbar.bg_rect.X = textbox.metadata[i].word_rects[j].X
 							color_picker.toolbar.bg_rect.Y = textbox.metadata[i].word_rects[j].Y + textbox.metadata[i].word_rects[j].H
@@ -789,6 +789,7 @@ func main() {
 							color_picker.CenterRectAB() // TODO: REMOVE THIS TEMP HACK
 							color_picker.CenterRects()  // TODO: REMOVE THIS TEMP HACK
 						}
+						color_picker.updated = true
 						draw_rect_without_border(renderer, &textbox.metadata[i].word_rects[j], &sdl.Color{R: 255, G: 100, B: 200, A: 100})
 						if print_word && textbox.metadata[i].words[j] != "\n" {
 							println(textbox.metadata[i].words[j])
