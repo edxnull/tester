@@ -129,11 +129,15 @@ type Font struct {
 }
 
 var (
-	COLOR_WHITE = sdl.Color{R: 255, G: 255, B: 255, A: 255}
-	COLOR_BLACK = sdl.Color{R: 0, G: 0, B: 0, A: 255}
-	COLOR_RED   = sdl.Color{R: 255, G: 0, B: 0, A: 255}
-	COLOR_GREEN = sdl.Color{R: 0, G: 255, B: 0, A: 255}
-	COLOR_BLUE  = sdl.Color{R: 0, G: 0, B: 255, A: 255}
+	COLOR_WHITE       = sdl.Color{R: 255, G: 255, B: 255, A: 255}
+	COLOR_BLACK       = sdl.Color{R: 0, G: 0, B: 0, A: 255}
+	COLOR_RED         = sdl.Color{R: 255, G: 0, B: 0, A: 255}
+	COLOR_GREEN       = sdl.Color{R: 0, G: 255, B: 0, A: 255}
+	COLOR_BLUE        = sdl.Color{R: 0, G: 0, B: 255, A: 255}
+	COLOR_WISTERIA    = sdl.Color{R: 155, G: 89, B: 182, A: 255}
+	COLOR_WISTFUL     = sdl.Color{R: 174, G: 168, B: 211, A: 255}
+	COLOR_LIGHT_GREEN = sdl.Color{R: 123, G: 239, B: 178, A: 255}
+	COLOR_IRON        = sdl.Color{R: 218, G: 223, B: 225, A: 255}
 )
 
 type LineMetaData struct {
