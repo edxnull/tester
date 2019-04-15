@@ -873,9 +873,7 @@ func main() {
 		}
 
 		if cmd.show {
-			for i := 0; i < len(textbox.metadata); i++ {
-				draw_rect_with_border(renderer, &textbox.data_rects[i], &sdl.Color{R: 200, G: 100, B: 0, A: 200})
-			}
+			draw_multiple_rects_with_border(renderer, textbox.data_rects, &sdl.Color{R: 200, G: 100, B: 0, A: 200})
 
 			draw_rect_with_border_filled(renderer, &cmd.bg_rect, &sdl.Color{R: 255, G: 10, B: 100, A: cmd.alpha_value + 40})
 			draw_rect_with_border(renderer, &cmd.ttf_rect, &sdl.Color{R: 255, G: 255, B: 255, A: 0})
@@ -1281,6 +1279,22 @@ func draw_rect_with_border_filled(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl
 func draw_rect_without_border(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl.Color) {
 	renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
 	renderer.FillRect(rect)
+}
+
+func draw_multiple_rects_with_border(renderer *sdl.Renderer, rects []sdl.Rect, c *sdl.Color) {
+	renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
+	renderer.DrawRects(rects)
+}
+
+func draw_multiple_rects_with_border_filled(renderer *sdl.Renderer, rects []sdl.Rect, c *sdl.Color) {
+	renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
+	renderer.FillRects(rects)
+	renderer.DrawRects(rects)
+}
+
+func draw_multiple_rects_without_border(renderer *sdl.Renderer, rects []sdl.Rect, c *sdl.Color) {
+	renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
+	renderer.FillRects(rects)
 }
 
 func number_as_string(n int) string {
