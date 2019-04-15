@@ -731,15 +731,11 @@ func main() {
 			}
 		}
 
-		// TODO: REMOVE THIS TEMP HACK
+		// TODO: this won't work on selecting color_picker elements
 		if print_word {
 			color_picker.show = !color_picker.show
 			color_picker.updated = false
 		}
-		//if !engage_loop && color_picker.show != false {
-		//	color_picker.show = false
-		//}
-		// TODO: REMOVE THIS TEMP HACK
 
 		draw_rect_with_border_filled(renderer, &scrollbar.rect, &sdl.Color{R: 111, G: 111, B: 111, A: 90})
 
@@ -757,7 +753,6 @@ func main() {
 				for j := 0; j < len(textbox.metadata[i].mouse_over_word); j++ {
 					if textbox.metadata[i].mouse_over_word[j] && textbox.metadata[i].words[j] != "\n" {
 						if color_picker.show && color_picker.updated == false {
-							println("OK")
 							// TOOLBAR
 							color_picker.toolbar.bg_rect.X = textbox.metadata[i].word_rects[j].X
 							color_picker.toolbar.bg_rect.Y = textbox.metadata[i].word_rects[j].Y + textbox.metadata[i].word_rects[j].H
