@@ -20,6 +20,7 @@ import (
 )
 
 // GENERAL
+// [ ] use asciinema.org for inspiration!
 // [ ] use maps for callbacks? map[string]func or map[bool]func
 // [ ] use https://godoc.org/github.com/fsnotify/fsnotify for checking if our settings file has been changed?
 // [ ] separate updating and rendering?
@@ -597,6 +598,7 @@ func main() {
 
 						prev_qsize := qsize
 						qsize = int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
+						//TODO: we should only MAKENULL textbox when prev qsize has changed
 						//println("prev_qsize", prev_qsize,"start:", START_ELEMENT, "next:", NEXT_ELEMENT, "qsize-prev_qsize:", qsize-prev_qsize)
 						if START_ELEMENT >= prev_qsize {
 							START_ELEMENT -= (qsize - prev_qsize)
@@ -651,6 +653,7 @@ func main() {
 
 						prev_qsize := qsize
 						qsize = int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
+						//TODO: we should only MAKENULL textbox when prev qsize has changed
 						//println("start:", START_ELEMENT, "next:", NEXT_ELEMENT, "qsize-prev_qsize:", qsize-prev_qsize)
 						NEXT_ELEMENT += (qsize - prev_qsize)
 						println(qsize)
@@ -790,6 +793,9 @@ func main() {
 				//draw_rect_without_border(renderer, &color_picker.toolbar.texture_rect[i], &color_picker.bg_color)
 				renderer.Copy(color_picker.toolbar.texture[i], nil, &color_picker.toolbar.texture_rect[i])
 			}
+
+			// TODO: use this to fade in and out text
+			draw_rect_without_border(renderer, &sdl.Rect{0, 0, WIN_W, WIN_W}, &sdl.Color{255, 255, 255, 100})
 		}
 
 		if move_text_down {
