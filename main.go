@@ -1130,11 +1130,11 @@ func check_collision(event *sdl.MouseMotionEvent, rect *sdl.Rect) bool {
 
 func WrapLines(tokens []string, length int, font_w int) []string {
 	// TODO: do we need current here? can't we just append to it instead of creating result?
-	// TODO: both of determine_nwrap_lines and do_wrap_lines might be failing when input size is i < n && n > i
-	result := make([]string, determine_nwrap_lines(tokens, length, font_w))
+	// TODO: both of NumWrappedLines and DoWrapLines might be failing when input size is i < n && n > i
+	result := make([]string, NumWrappedLines(tokens, length, font_w))
 	for i, j := 0, 0; i < len(tokens); i += 1 {
 		if len(tokens[i]) > 1 {
-			current := do_wrap_lines(tokens[i], length, font_w)
+			current := DoWrapLines(tokens[i], length, font_w)
 			for k := range current {
 				result[j] = current[k]
 				j += 1
@@ -1148,10 +1148,10 @@ func WrapLines(tokens []string, length int, font_w int) []string {
 	return result
 }
 
-func do_wrap_lines(str string, max_len int, xsize int) []string {
+func DoWrapLines(str string, max_len int, xsize int) []string {
 	assert_if(len(str) <= 1)
 
-	result := make([]string, determine_nwrap_lines([]string{str}, max_len, xsize))
+	result := make([]string, NumWrappedLines([]string{str}, max_len, xsize))
 
 	pos := 0
 	if (len(str)*xsize)+X_OFFSET <= max_len {
@@ -1192,7 +1192,7 @@ func do_wrap_lines(str string, max_len int, xsize int) []string {
 // TODO
 // This function will fail if MAX_LEN
 // is small enough to trigger is_space ifinite loop!
-func determine_nwrap_lines(str []string, max_len int, xsize int) int32 {
+func NumWrappedLines(str []string, max_len int, xsize int) int32 {
 	var result int32
 	for index := 0; index < len(str); index++ {
 		if (len(str[index])*xsize)+X_OFFSET <= max_len {
