@@ -52,9 +52,6 @@ import (
 // [ ] add proper error handling
 // [ ] add logs???
 
-// DB RELATED
-// [ ] use bbolt key/value store as a database?
-
 // SDL RELATED
 // [ ] optimize TextBox Update and Clear (somehow)
 // [ ] try using r.SetScale() => sdl.SetLogicalSize + sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "linear")
@@ -324,7 +321,7 @@ func main() {
 	TEST_TOKENS_LEN := len(test_tokens)
 
 	linemeta := make([]LineMetaData, TEST_TOKENS_LEN)
-	generate_line_metadata(font, &linemeta, &test_tokens)
+	println(font, &linemeta, &test_tokens)
 
 	cmd := NewCmdConsole(renderer, font)
 
@@ -336,6 +333,19 @@ func main() {
 	sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "1")
 
 	renderer.SetDrawBlendMode(sdl.BLENDMODE_BLEND)
+
+	known_word_data := GetUniqueWords(line_tokens)
+	// DB stuff
+	if err = DBInit(db, known_word_data); err != nil {
+		fmt.Errorf("Something went wrong %v", err)
+	}
+
+	if err = DBInsert(db, "hobbit"); err != nil {
+		fmt.Errorf("Something went wrong %v", err)
+	}
+	found, _ := DBView(db, "hobbit")
+	println("the word 'hobbit' was found: ", found)
+	// DB stuff
 
 	running := true
 	print_word := false
