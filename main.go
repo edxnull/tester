@@ -321,7 +321,7 @@ func main() {
 	TEST_TOKENS_LEN := len(test_tokens)
 
 	linemeta := make([]LineMetaData, TEST_TOKENS_LEN)
-	println(font, &linemeta, &test_tokens)
+	generate_line_metadata(font, &linemeta, &test_tokens)
 
 	cmd := NewCmdConsole(renderer, font)
 
