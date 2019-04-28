@@ -20,6 +20,9 @@ import (
 )
 
 // GENERAL
+// [ ] maybe try using github.com/golang/freetype/truetype package instead of sdl2 ttf one!
+// [ ] https://stackoverflow.com/questions/29105540/aligning-text-in-golang-with-truetype
+// [ ] checkout github.com/fatih/structs
 // [ ] use asciinema.org for inspiration!
 // [ ] use maps for callbacks? map[string]func or map[bool]func
 // [ ] use https://godoc.org/github.com/fsnotify/fsnotify for checking if our settings file has been changed?
@@ -279,6 +282,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	db := DBOpen()
+	defer db.Close()
 
 	cursors := []*sdl.Cursor{
 		sdl.CreateSystemCursor(sdl.SYSTEM_CURSOR_ARROW),
