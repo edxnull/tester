@@ -5,6 +5,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 	"io/ioutil"
@@ -17,9 +18,18 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf16"
+	"unicode/utf8"
 )
 
+// TODO
+// Added a custom GlyphIsProvided to C:\Users\Edgaras\go\src\github.com\veandco\go-sdl2\ttf
+// Should we submit that to the actual repo?
+// Q: what happens when we pass in a value bigger than uint16?
+
 // GENERAL
+// [ ] I'm sure that the app needs to have a modal way of execution, otherwise it's a nightmare to maintain.
 // [ ] maybe try using github.com/golang/freetype/truetype package instead of sdl2 ttf one!
 // [ ] https://stackoverflow.com/questions/29105540/aligning-text-in-golang-with-truetype
 // [ ] checkout github.com/fatih/structs
@@ -27,7 +37,6 @@ import (
 // [ ] use maps for callbacks? map[string]func or map[bool]func
 // [ ] use https://godoc.org/github.com/fsnotify/fsnotify for checking if our settings file has been changed?
 // [ ] separate updating and rendering?
-// [ ] fmt.Println(runtime.Caller(0)) use this to get a LINENR when calculating unique ID's for IMGUI
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
 // [ ] refactor FontSelector
 // [ ] make sure that we don't exceed max sdl.texture width
@@ -48,7 +57,6 @@ import (
 // [ ] should we keep fonts in memory? or free them instead?
 // [ ] https://en.wikipedia.org/wiki/Newline
 //     use sdl.GetPlatform() || [runtime.GOOS == ""] || [foo_unix.go; foo_windows.go style]
-// [ ] try to implement imgui style widgets: https://sol.gfxile.net/imgui/index.html
 // [ ] add proper error handling
 // [ ] add logs???
 
@@ -81,7 +89,6 @@ import (
 // [ ] smooth scrolling
 // [ ] bezier curve easing functions
 // [ ] taskbar / menu bar
-// [ ] experiment with imgui style widgets
 // [ ] grapical popup error messages like: error => your command is too long, etc...
 
 // AUDIO
@@ -98,7 +105,6 @@ import (
 // [ ] test struct padding?
 // [ ] list.go should we set data to nil everytime?
 // [ ] get rid of int (because on 64-bit systems it would become 64 bit and waste memory) or not???? maybe use int16 in some cases
-// [ ] compare method call vs. function call overhead in golang: asm?
 
 // DEBUGERS
 // [ ] try github aarzilli/gdlv
@@ -268,6 +274,10 @@ func main() {
 		panic(err)
 	}
 
+	if img.Init(img.INIT_PNG) == 0 {
+		panic("img.Init failed!")
+	}
+
 	window, err := sdl.CreateWindow(WIN_TITLE, sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, WIN_W, WIN_H,
 		sdl.WINDOW_SHOWN|sdl.WINDOW_RESIZABLE)
 	if err != nil {
@@ -279,6 +289,20 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	img_surf, err := img.Load("./img/cube2.png")
+	if err != nil {
+		fmt.Errorf("Something went wrong with img.Load():", err)
+	}
+	//key, err := img_surf.GetColorKey()
+	//println("COLOR KEY:", key)
+	img_surf.SetColorKey(true, 0x0)
+	img_tx, _ := renderer.CreateTextureFromSurface(img_surf)
+
+	img_surf.Free()
+	defer img_tx.Destroy()
+	//img_tx.SetBlendMode(sdl.BLENDMODE_BLEND)
+	img_tx_rect := sdl.Rect{int32(LINE_LENGTH) - 100, 0, 40, 40}
 
 	db := DBOpen()
 	defer db.Close()
@@ -296,6 +320,8 @@ func main() {
 	sdl.SetCursor(cursors[CURSOR_TYPE_ARROW])
 	cursor_state := CURSOR_TYPE_ARROW
 
+	//filename := "Russian.txt"
+	//filename := "French.txt"
 	filename := "HP01.txt"
 	font_dir := "./fonts/"
 	text_dir := "./text/"
@@ -316,6 +342,8 @@ func main() {
 
 	generate_rects_for_fonts(renderer, &gfonts)
 
+	//FontHasGlyphsFromRangeTable(font, unicode.Latin)
+
 	test_tokens := WrapLines(line_tokens, LINE_LENGTH, gfonts.current_font_w)
 
 	TEST_TOKENS_LEN := len(test_tokens)
@@ -323,7 +351,7 @@ func main() {
 	linemeta := make([]LineMetaData, TEST_TOKENS_LEN)
 	generate_line_metadata(font, &linemeta, &test_tokens)
 
-	cmd := NewCmdConsole(renderer, font)
+	cmd := NewCmdConsole(renderer)
 
 	dbg_str := make_console_text(0, TEST_TOKENS_LEN)
 	dbg_rect := sdl.Rect{X: 0, Y: WIN_H - (cmd.bg_rect.H * 2), W: int32(gfonts.current_font_w * len(dbg_str)), H: int32(gfonts.current_font_h)}
@@ -335,6 +363,7 @@ func main() {
 	renderer.SetDrawBlendMode(sdl.BLENDMODE_BLEND)
 
 	known_word_data := GetUniqueWords(line_tokens)
+
 	// DB stuff
 	if err = DBInit(db, known_word_data); err != nil {
 		fmt.Errorf("Something went wrong %v", err)
@@ -363,10 +392,17 @@ func main() {
 
 	wrapline := DebugWrapLine{int32(LINE_LENGTH), 0, int32(LINE_LENGTH), WIN_H}
 
-	curr_char_w := 0
-
 	// TODO: this ain't working properly oon zoom out's
 	qsize := int(math.RoundToEven(float64(WIN_H)/float64(font.Height()))) + 1
+
+	println("qsize :: ", qsize, len(linemeta))
+	// TODO: This is a temporary hack!
+	// We need it in order not to break/panic every time we have less lines than qsize.
+	// This is not a solution, however. The real solution lies in Line Update function, where we should not lines
+	// with no data in them. Or something like that. It's been a while since I've looked at this codebase.
+	if len(linemeta) < qsize {
+		qsize = len(linemeta)
+	}
 
 	NEXT_ELEMENT := qsize
 	START_ELEMENT := 0
@@ -380,16 +416,24 @@ func main() {
 		fmt:        nil,
 	}
 
-	for i := 0; i < len(textbox.data); i++ {
-		textbox.metadata[i] = &linemeta[i]
+	if len(textbox.metadata) > len(linemeta) {
+		for i := 0; i < len(linemeta); i++ {
+			textbox.metadata[i] = &linemeta[i]
+		}
+	} else {
+		for i := 0; i < len(textbox.data); i++ {
+			textbox.metadata[i] = &linemeta[i]
+		}
 	}
 
 	textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-	textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+	//textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+	textbox.Update(renderer, font, test_tokens[0:textbox.MetadataSize()], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
 	re := make([]sdl.Rect, qsize)
 	rey := genY(font, qsize)
-	for i := 0; i < qsize; i++ {
+	//for i := 0; i < qsize; i++ {
+	for i := 0; i < textbox.MetadataSize(); i++ {
 		re[i] = sdl.Rect{X: int32(X_OFFSET), Y: int32(rey[i]), W: int32(LINE_LENGTH), H: int32(font.Height())}
 		for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
 			textbox.metadata[i].word_rects[j].Y = re[i].Y
@@ -496,7 +540,7 @@ func main() {
 					}
 				}
 			case *sdl.MouseMotionEvent:
-				for i := 0; i < len(textbox.data); i++ {
+				for i := 0; i < textbox.MetadataSize(); i++ {
 					check_collision_mouse_over_words(t, &textbox.metadata[i].word_rects, &textbox.metadata[i].mouse_over_word)
 				}
 				check_collision_mouse_over_words(t, &gfonts.ttf_rects, &mouseover_word_texture_FONT)
@@ -555,13 +599,13 @@ func main() {
 
 			case *sdl.TextInputEvent:
 				if cmd.show {
-					cmd.WriteChar(renderer, gfonts, t.Text[0])
+					cmd.WriteChar(renderer, t.Text[0])
 				}
 			case *sdl.KeyboardEvent:
 				if cmd.show {
 					if t.Keysym.Sym == sdl.K_BACKSPACE {
 						if t.Repeat > 0 {
-							cmd.Reset(renderer, curr_char_w, gfonts.current_font, gfonts.current_font_w, gfonts.current_font_h)
+							cmd.Reset(renderer)
 						}
 					}
 					switch t.Type {
@@ -570,7 +614,7 @@ func main() {
 						if t.Keysym.Mod == sdl.KMOD_LCTRL && t.Keysym.Sym == sdl.K_v {
 							if sdl.HasClipboardText() {
 								str, _ := sdl.GetClipboardText()
-								cmd.WriteString(renderer, gfonts, str)
+								cmd.WriteString(renderer, str)
 							}
 						}
 					}
@@ -583,7 +627,7 @@ func main() {
 					case sdl.K_TAB:
 						cmd.show = !cmd.show
 					case sdl.K_BACKSPACE:
-						cmd.Reset(renderer, curr_char_w, gfonts.current_font, gfonts.current_font_w, gfonts.current_font_h)
+						cmd.Reset(renderer)
 					case sdl.K_RETURN:
 						if cmd.show {
 							if len(cmd.input_buffer.String()) > 0 {
@@ -746,7 +790,7 @@ func main() {
 			draw_rect_without_border(renderer, &easerinout.rect, &sdl.Color{R: 20, G: 20, B: 240, A: 100})
 		}
 
-		for i := 0; i < len(textbox.data); i++ {
+		for i := 0; i < textbox.MetadataSize(); i++ {
 			renderer.Copy(textbox.data[i], nil, &textbox.data_rects[i])
 			for j := 0; j < len(textbox.metadata[i].mouse_over_word); j++ {
 				if textbox.metadata[i].mouse_over_word[j] {
@@ -772,8 +816,11 @@ func main() {
 			color_picker.updated = false
 		}
 
+		//draw_rect_with_border_filled(renderer, &img_tx_rect, &sdl.Color{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF})
+		renderer.Copy(img_tx, nil, &img_tx_rect)
+
 		if engage_loop && !cmd.show {
-			for i := 0; i < len(textbox.data); i++ {
+			for i := 0; i < textbox.MetadataSize(); i++ {
 				for j := 0; j < len(textbox.metadata[i].mouse_over_word); j++ {
 					if textbox.metadata[i].mouse_over_word[j] && textbox.metadata[i].words[j] != "\n" {
 						if color_picker.show && color_picker.updated == false {
@@ -811,7 +858,7 @@ func main() {
 			}
 
 			// TODO: use this to fade in and out text
-			draw_rect_without_border(renderer, &sdl.Rect{0, 0, WIN_W, WIN_W}, &sdl.Color{255, 255, 255, 100})
+			//draw_rect_without_border(renderer, &sdl.Rect{0, 0, WIN_W, WIN_W}, &sdl.Color{255, 255, 255, 100})
 		}
 
 		if move_text_down {
@@ -981,6 +1028,7 @@ func main() {
 		cmd.ttf_texture.Destroy()
 		cmd.ttf_texture = nil
 	}
+	cmd.font.Close()
 
 	dbg_ttf.Destroy()
 
@@ -994,6 +1042,7 @@ func main() {
 
 	ttf.Quit()
 	sdl.Quit()
+	img.Quit()
 
 	// PROFILING SNIPPET
 	if *memprofile != "" {
@@ -1072,17 +1121,17 @@ func generate_line_metadata(font *ttf.Font, dest *[]LineMetaData, tokens *[]stri
 	println("font face is fixed width:", font.FaceIsFixedWidth())
 	println("----------------")
 	for index := 0; index < len(*tokens); index++ {
-		populate_line_metadata(&(*dest)[index], (*tokens)[index], x, y)
+		populate_line_metadata(&(*dest)[index], (*tokens)[index], font, x, y)
 	}
 }
 
-func populate_line_metadata(line *LineMetaData, line_text string, x int, y int) {
+func populate_line_metadata(line *LineMetaData, line_text string, font *ttf.Font, x int, y int) {
 	assert_if(len(line_text) == 0)
 
 	text := strings.Split(line_text, " ")
 	text_len := len(text)
 
-	if text[text_len-1] == "" { // guard agains an empty ""
+	if text[text_len-1] == "" { // guard against an empty ""
 		text_len -= 1
 	}
 
@@ -1091,9 +1140,34 @@ func populate_line_metadata(line *LineMetaData, line_text string, x int, y int) 
 	line.words = make([]string, text_len)
 	copy(line.words, text)
 
+	//f := func(r rune) bool { //   return r < 'A' || r > 'z' //}
+	//f := func(r rune) bool { //	return r > 0x7F // 127 //}
+
+	//switch ret := strings.IndexFunc(foo, bar) {
+	//    case -1: //    // ASCII
+	//    case >= 0: //    // NonASCII?
+	//    default: //    // NonASCII?
+	//}
+
 	move_x := X_OFFSET
 	ix := 0
 	for index := 0; index < text_len; index++ {
+		// we should probably get the position of the element here
+		// if pos := strings.IndexFunc(text[index], f); pos != -1 { //-1 is none is found
+		str := text[index]
+		for len(str) > 0 {
+			r, size := utf8.DecodeRuneInString(str)
+			_ = r
+			//font_has_glyph := font.GlyphIsProvided(uint16(r)) // 0 equals to NOT_FOUND
+			//fmt.Printf("%c %v %d \n", r, size, font_has_glyph)
+			str = str[size:]
+		}
+		if strings.IndexFunc(text[index], func(r rune) bool { return r > 0x7f }) != -1 { //-1 is none is found
+			//r, size := utf8.DecodeRune(text[index][pos]) //println(r, size)
+			//fmt.Println("non-Ascii found: ", text[index])
+		} else {
+			//fmt.Println("This should be ASCII then", text[index])
+		}
 		ix = x * len(text[index])
 		line.word_rects[index] = sdl.Rect{X: int32(move_x), Y: int32(-y), W: int32(ix), H: int32(y)}
 		move_x += (ix + x)
@@ -1427,6 +1501,7 @@ func allocate_font_space(font *FontSelector, size int) {
 func generate_fonts(font *FontSelector, ttf_font_list []string, font_dir string) {
 	CURRENT := "Inconsolata-Regular.ttf"
 	//CURRENT := "DejaVuSansMono.ttf"
+	//CURRENT := "Miroslav.ttf"
 	for index, element := range ttf_font_list {
 		if CURRENT == element {
 			font.current_font = load_font(font_dir+element, TTF_FONT_SIZE)
@@ -1502,6 +1577,17 @@ func (sc *Scrollbar) CalcPosDuringAction(current int, total int) {
 	println(int((float64(current+int(sc.rect.H)) / float64(WIN_H)) * float64(total)))
 }
 
+func (tbox *TextBox) MetadataSize() int {
+	result := 0
+	for i := 0; i < len(tbox.metadata); i++ {
+		if tbox.metadata[i] == nil {
+			break
+		}
+		result += 1
+	}
+	return result
+}
+
 func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color sdl.Color) {
 	surface, _ := font.RenderUTF8Blended(" ", color)
 	if tbox.fmt == nil {
@@ -1537,7 +1623,7 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 
 func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []string, color sdl.Color) {
 	var err error
-	for i := 0; i < len(tbox.data); i++ {
+	for i := 0; i < tbox.MetadataSize(); i++ {
 		if text[i] != "\n" {
 			surface, _ := font.RenderUTF8Blended(text[i], color)
 			converted, _ := surface.Convert(tbox.fmt, 0)
@@ -1616,5 +1702,36 @@ func (CP *ColorPicker) UpdateWindowPos(r sdl.Rect, skip int32) {
 		CP.rect_bgs[i].X = (r.X) + acc
 		CP.rect_bgs[i].Y = (r.Y) + 10 + r.H + CP.toolbar.bg_rect.H
 		acc += skip
+	}
+}
+
+//TODO: add .R32
+func FontHasGlyphsFromRangeTable(font *ttf.Font, rtable *unicode.RangeTable) {
+	for current := 0; current < len(rtable.R16); current += 1 {
+		delta := rtable.R16[current].Hi - rtable.R16[current].Lo
+
+		if delta > 0 {
+			//print(current) //print(" ")
+			//print(delta) //print(" ")
+			mk := make([]uint16, delta)
+
+			i := 0
+			for rng := rtable.R16[current].Lo; rng < rtable.R16[current].Hi; rng += rtable.R16[current].Stride {
+				mk[i] = rng
+				i++
+			}
+
+			r := utf16.Decode(mk)
+			for _, x := range r {
+				//if unicode.IsLetter(x) && font.GlyphIsProvided(uint16(x)) > 0 {
+				if font.GlyphIsProvided(uint16(x)) > 0 {
+					print(string(x))
+				} else {
+					println("not provided: ", string(x), x)
+				}
+			}
+			println("")
+			mk = nil
+		}
 	}
 }

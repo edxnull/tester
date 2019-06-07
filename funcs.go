@@ -29,6 +29,19 @@ func GetUniqueWords(s []string) map[string]struct{} {
 	return mk
 }
 
+// This function should be used with font.GlyphIsProvided
+// that way we can query font for supported characters that we need
+func GetUniqueChars(s string) map[string]struct{} {
+	mk := make(map[string]struct{})
+	for _, ch := range strings.ReplaceAll(s, " ", "") {
+		strch := string(ch)
+		if _, ok := mk[strch]; !ok {
+			mk[strch] = struct{}{}
+		}
+	}
+	return mk
+}
+
 func HasNonAlpha(str string) bool {
 	for _, c := range []byte(str) {
 		if !IsAlpha(c) {

@@ -6,6 +6,7 @@ import (
 )
 
 //TODO: write tests where retrieve values from map[string]struct{}
+//TODO: write tests for func GetUniqueChars(s string) map[string]struct{}
 
 var tests = []struct {
 	input  string

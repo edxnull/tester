@@ -2,12 +2,13 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	_ "fmt"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
 
-// TODO: we need our own independent *ttf.Font here
+// TODO: create one texture and just draw into it instead of create/delete calls
+
 type CmdConsole struct {
 	show         bool
 	move_left    bool
@@ -15,32 +16,45 @@ type CmdConsole struct {
 	bg_rect      sdl.Rect
 	ttf_rect     sdl.Rect
 	cursor_rect  sdl.Rect
+	font         *ttf.Font
+	font_w       int
+	font_h       int
 	ttf_texture  *sdl.Texture
 	input_buffer bytes.Buffer
 }
 
-func NewCmdConsole(renderer *sdl.Renderer, font *ttf.Font) CmdConsole {
+func NewCmdConsole(renderer *sdl.Renderer) CmdConsole {
 	cmd := CmdConsole{}
 	cmd.alpha_value = 100
-	fw, fh, _ := font.SizeUTF8(" ")
-	cmd.ttf_texture = make_ttf_texture(renderer, font, " ", &sdl.Color{R: 0, G: 0, B: 0, A: 255})
+
+	font_dir := "./fonts/"
+	font_name := "Inconsolata-Regular.ttf"
+	font_size := 14
+
+	var err error
+	if cmd.font, err = ttf.OpenFont(font_dir+font_name, font_size); err != nil {
+		panic(err)
+	}
+
+	cmd.font_w, cmd.font_h, _ = cmd.font.SizeUTF8(" ")
+	cmd.ttf_texture = make_ttf_texture(renderer, cmd.font, " ", &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 	cmd.ttf_rect = sdl.Rect{
 		X: 0,
-		Y: WIN_H - int32(fh),
-		W: int32(fw * len(" ")),
-		H: int32(fh),
+		Y: WIN_H - int32(cmd.font_h),
+		W: int32(cmd.font_w * len(" ")),
+		H: int32(cmd.font_h),
 	}
 	cmd.bg_rect = sdl.Rect{
 		X: 0,
-		Y: WIN_H - int32(fh),
+		Y: WIN_H - int32(cmd.font_h),
 		W: WIN_W,
-		H: int32(fh),
+		H: int32(cmd.font_h),
 	}
 	cmd.cursor_rect = sdl.Rect{
 		X: 0,
-		Y: WIN_H - int32(fh),
-		W: int32(fw),
-		H: int32(fh),
+		Y: WIN_H - int32(cmd.font_h),
+		W: int32(cmd.font_w),
+		H: int32(cmd.font_h),
 	}
 	cmd.input_buffer.Grow(64)
 	return cmd
@@ -53,44 +67,42 @@ func (cmd *CmdConsole) Resize(new_win_w int32, new_win_h int32) {
 	cmd.cursor_rect.Y = new_win_h - cmd.cursor_rect.H
 }
 
-func (cmd *CmdConsole) MakeTexture(renderer *sdl.Renderer, font *ttf.Font, text string, color *sdl.Color) {
+func (cmd *CmdConsole) MakeTexture(renderer *sdl.Renderer, text string, color *sdl.Color) {
 	var surface *sdl.Surface
-	surface, _ = font.RenderUTF8Blended(text, *color)
+	surface, _ = cmd.font.RenderUTF8Blended(text, *color)
 	cmd.ttf_texture, _ = renderer.CreateTextureFromSurface(surface)
 	surface.Free()
 }
 
-func (cmd *CmdConsole) WriteChar(renderer *sdl.Renderer, font FontSelector, t uint8) {
+func (cmd *CmdConsole) WriteChar(renderer *sdl.Renderer, t uint8) {
 	if cmd.input_buffer.Len() <= (cmd.input_buffer.Cap() - 1) {
 		input_char := string(t)
 		cmd.input_buffer.WriteString(input_char)
 		cmd.ttf_texture.Destroy()
-		fmt.Println(font.current_name)
-		cmd.MakeTexture(renderer, font.current_font, cmd.input_buffer.String(), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
-		curr_char_w := font.current_font_w * len(input_char)
-		cmd.ttf_rect.W = int32(font.current_font_w * len(cmd.input_buffer.String()))
-		cmd.ttf_rect.H = int32(font.current_font_h)
+		cmd.MakeTexture(renderer, cmd.input_buffer.String(), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
+		curr_char_w := cmd.font_w * len(input_char)
+		cmd.ttf_rect.W = int32(cmd.font_w * len(cmd.input_buffer.String()))
+		cmd.ttf_rect.H = int32(cmd.font_h)
 		cmd.cursor_rect.X += int32(curr_char_w)
 	}
 }
 
-func (cmd *CmdConsole) WriteString(renderer *sdl.Renderer, font FontSelector, str string) {
+func (cmd *CmdConsole) WriteString(renderer *sdl.Renderer, str string) {
 	for i := range str {
 		if cmd.input_buffer.Len() >= (cmd.input_buffer.Cap() - 1) {
 			break
 		}
 		cmd.input_buffer.WriteString(string(str[i]))
-		curr_char_w := font.current_font_w * len(str)
-		cmd.ttf_rect.W = int32(font.current_font_w * len(cmd.input_buffer.String()))
-		cmd.ttf_rect.H = int32(font.current_font_h)
+		curr_char_w := cmd.font_w * len(str)
+		cmd.ttf_rect.W = int32(cmd.font_w * len(cmd.input_buffer.String()))
+		cmd.ttf_rect.H = int32(cmd.font_h)
 		cmd.cursor_rect.X += int32(curr_char_w)
 	}
 	cmd.ttf_texture.Destroy()
-	cmd.MakeTexture(renderer, font.current_font, cmd.input_buffer.String(), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
-	println("OK")
+	cmd.MakeTexture(renderer, cmd.input_buffer.String(), &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 }
 
-func (cmd *CmdConsole) Reset(renderer *sdl.Renderer, curr_char_w int, font *ttf.Font, fontw int, fonth int) {
+func (cmd *CmdConsole) Reset(renderer *sdl.Renderer) {
 	if cmd.cursor_rect.X <= 0 {
 		cmd.cursor_rect.X = 0
 	} else {
@@ -101,16 +113,14 @@ func (cmd *CmdConsole) Reset(renderer *sdl.Renderer, curr_char_w int, font *ttf.
 		cmd.ttf_texture.Destroy()
 
 		if len(cmd.input_buffer.String()) > 0 {
-			cmd.ttf_texture = make_ttf_texture(renderer, font, temp_string, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
+			cmd.ttf_texture = make_ttf_texture(renderer, cmd.font, temp_string, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 		}
 
 		if len(temp_string) != 0 {
-			curr_char_w = fontw * len(string(temp_string[len(temp_string)-1]))
-
+			curr_char_w := cmd.font_w * len(string(temp_string[len(temp_string)-1]))
 			cmd.cursor_rect.X -= int32(curr_char_w)
-
-			cmd.ttf_rect.W = int32(fontw * len(cmd.input_buffer.String()))
-			cmd.ttf_rect.H = int32(fonth)
+			cmd.ttf_rect.W = int32(cmd.font_w * len(cmd.input_buffer.String()))
+			cmd.ttf_rect.H = int32(cmd.font_h)
 		} else {
 			cmd.cursor_rect.X = 0
 		}
