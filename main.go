@@ -320,9 +320,14 @@ func main() {
 	sdl.SetCursor(cursors[CURSOR_TYPE_ARROW])
 	cursor_state := CURSOR_TYPE_ARROW
 
-	//filename := "Russian.txt"
+	//filename := "rus_bal_hiwnikov.txt"
+	filename := "Russian.txt"
 	//filename := "French.txt"
-	filename := "HP01.txt"
+	//filename := "Mandarin.txt" // //TODO: we are crashing!
+	// TODO: proper Wrapping for non ASCII texts!
+	//filename := "HP01.txt"
+	//filename := "hobbit_rus.txt" //TODO: we are crashing!
+	// TODO: proper Wrapping for non ASCII texts!
 	font_dir := "./fonts/"
 	text_dir := "./text/"
 
@@ -1154,25 +1159,42 @@ func populate_line_metadata(line *LineMetaData, line_text string, font *ttf.Font
 	for index := 0; index < text_len; index++ {
 		// we should probably get the position of the element here
 		// if pos := strings.IndexFunc(text[index], f); pos != -1 { //-1 is none is found
-		str := text[index]
-		for len(str) > 0 {
-			r, size := utf8.DecodeRuneInString(str)
-			_ = r
-			//font_has_glyph := font.GlyphIsProvided(uint16(r)) // 0 equals to NOT_FOUND
-			//fmt.Printf("%c %v %d \n", r, size, font_has_glyph)
-			str = str[size:]
-		}
+		//str := text[index]
+		//for len(str) > 0 {
+		//	r, size := utf8.DecodeRuneInString(str)
+		//	_ = r
+		//	//font_has_glyph := font.GlyphIsProvided(uint16(r)) // 0 equals to NOT_FOUND
+		//	//fmt.Printf("%c %v %d \n", r, size, font_has_glyph)
+		//	str = str[size:]
+		//}
 		if strings.IndexFunc(text[index], func(r rune) bool { return r > 0x7f }) != -1 { //-1 is none is found
 			//r, size := utf8.DecodeRune(text[index][pos]) //println(r, size)
 			//fmt.Println("non-Ascii found: ", text[index])
+			//fmt.Println(text[index], UTF8_CharCount(text[index]))
+			ix = x * UTF8_CharCount(text[index])
+			line.word_rects[index] = sdl.Rect{X: int32(move_x), Y: int32(-y), W: int32(ix), H: int32(y)}
+			move_x += (ix + x)
 		} else {
 			//fmt.Println("This should be ASCII then", text[index])
+			ix = x * len(text[index])
+			line.word_rects[index] = sdl.Rect{X: int32(move_x), Y: int32(-y), W: int32(ix), H: int32(y)}
+			move_x += (ix + x)
 		}
-		ix = x * len(text[index])
-		line.word_rects[index] = sdl.Rect{X: int32(move_x), Y: int32(-y), W: int32(ix), H: int32(y)}
-		move_x += (ix + x)
+		//ix = x * len(text[index])
+		//line.word_rects[index] = sdl.Rect{X: int32(move_x), Y: int32(-y), W: int32(ix), H: int32(y)}
+		//move_x += (ix + x)
 	}
 	text = nil
+}
+
+func UTF8_CharCount(text string) int {
+	result := 0
+	for len(text) > 0 {
+		_, size := utf8.DecodeRuneInString(text)
+		text = text[size:]
+		result += 1
+	}
+	return result
 }
 
 // TODO: refactor later
@@ -1499,7 +1521,8 @@ func allocate_font_space(font *FontSelector, size int) {
 }
 
 func generate_fonts(font *FontSelector, ttf_font_list []string, font_dir string) {
-	CURRENT := "Inconsolata-Regular.ttf"
+	//CURRENT := "Inconsolata-Regular.ttf"
+	CURRENT := "AnonymousPro-Regular.ttf"
 	//CURRENT := "DejaVuSansMono.ttf"
 	//CURRENT := "Miroslav.ttf"
 	for index, element := range ttf_font_list {

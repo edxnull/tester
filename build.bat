@@ -7,6 +7,7 @@ REM go build -gcflags="-N -l" main.go
 REM go build ./
 REM go fmt ./
 go build -i ./
+REM go build -i -gcflags="-N -l" ./
 tester.exe
 echo "Finished...."
 
