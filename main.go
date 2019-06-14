@@ -59,6 +59,7 @@ import (
 //     use sdl.GetPlatform() || [runtime.GOOS == ""] || [foo_unix.go; foo_windows.go style]
 // [ ] add proper error handling
 // [ ] add logs???
+// [ ] try proper font resizing -> resize the rect first and then reload ? or it's just enough to resize the rect by using font query?
 
 // SDL RELATED
 // [ ] optimize TextBox Update and Clear (somehow)
@@ -99,6 +100,7 @@ import (
 // TESTING
 // [ ] automated visual tests
 // [ ] create automated tests to scroll through the page from top to bottom checking if we ever fail to allocate/deallocate *Line
+// [ ] add a way to submit github tickets within the app for alpha/beta testing?
 
 // GO RELATED
 // [ ] move to a 64-bit version of golang and sdl2 (needed for DELVE debugger)
@@ -779,9 +781,7 @@ func main() {
 		}
 
 		if foobar_animation != nil {
-			if foobar_animation() {
-				println("OK")
-			} else {
+			if !foobar_animation() {
 				foobar_animation = nil
 				println("END of animation")
 			}
