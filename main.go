@@ -292,7 +292,7 @@ func main() {
 
 	img_surf, err := img.Load("./img/cube2.png")
 	if err != nil {
-		fmt.Errorf("Something went wrong with img.Load():", err)
+		fmt.Errorf("Something went wrong with img.Load(): %v", err)
 	}
 	//key, err := img_surf.GetColorKey()
 	//println("COLOR KEY:", key)
@@ -321,11 +321,12 @@ func main() {
 	cursor_state := CURSOR_TYPE_ARROW
 
 	//filename := "rus_bal_hiwnikov.txt"
-	filename := "Russian.txt"
+	//filename := "Russian.txt"
 	//filename := "French.txt"
 	//filename := "Mandarin.txt" // //TODO: we are crashing!
+	//filename := "Hanyu.txt"
 	// TODO: proper Wrapping for non ASCII texts!
-	//filename := "HP01.txt"
+	filename := "HP01.txt"
 	//filename := "hobbit_rus.txt" //TODO: we are crashing!
 	// TODO: proper Wrapping for non ASCII texts!
 	font_dir := "./fonts/"
@@ -467,6 +468,8 @@ func main() {
 		animate        bool
 		animation_time float32
 	}{sdl.Rect{0, 250, 100, 100}, true, 0.0}
+
+	foobar_animation := FoobarEaserOut(renderer, sdl.Rect{0, 350, 100, 100}, EaseInQuad)
 
 	color_picker := ColorPicker{
 		bg_rect:      sdl.Rect{X: 0, Y: 0, W: 80, H: 40},
@@ -773,6 +776,15 @@ func main() {
 				easerout.animation_time = 0.0
 			}
 			draw_rect_without_border(renderer, &easerout.rect, &sdl.Color{R: 100, G: 200, B: 50, A: 100})
+		}
+
+		if foobar_animation != nil {
+			if foobar_animation() {
+				println("OK")
+			} else {
+				foobar_animation = nil
+				println("END of animation")
+			}
 		}
 
 		if easerin.animate {
@@ -1237,6 +1249,7 @@ func check_collision(event *sdl.MouseMotionEvent, rect *sdl.Rect) bool {
 func WrapLines(tokens []string, length int, font_w int) []string {
 	// TODO: do we need current here? can't we just append to it instead of creating result?
 	// TODO: both of NumWrappedLines and DoWrapLines might be failing when input size is i < n && n > i
+	// TODO: handle UTF8
 	result := make([]string, NumWrappedLines(tokens, length, font_w))
 	for i, j := 0, 0; i < len(tokens); i += 1 {
 		if len(tokens[i]) > 1 {
@@ -1301,6 +1314,9 @@ func DoWrapLines(str string, max_len int, xsize int) []string {
 func NumWrappedLines(str []string, max_len int, xsize int) int32 {
 	var result int32
 	for index := 0; index < len(str); index++ {
+		//if strings.IndexFunc(str[index], func(r rune) bool { return r > 0x7f }) != -1 { //-1 is none is found
+		//    println("we found some unicode")
+		//}
 		if (len(str[index])*xsize)+X_OFFSET <= max_len {
 			result += 1
 		} else {
@@ -1741,7 +1757,7 @@ func FontHasGlyphsFromRangeTable(font *ttf.Font, rtable *unicode.RangeTable) {
 			i := 0
 			for rng := rtable.R16[current].Lo; rng < rtable.R16[current].Hi; rng += rtable.R16[current].Stride {
 				mk[i] = rng
-				i++
+				i++ // move this i++
 			}
 
 			r := utf16.Decode(mk)
@@ -1755,6 +1771,28 @@ func FontHasGlyphsFromRangeTable(font *ttf.Font, rtable *unicode.RangeTable) {
 			}
 			println("")
 			mk = nil
+		}
+	}
+}
+
+func FoobarEaserOut(renderer *sdl.Renderer, r sdl.Rect, f func(b, d, c, t float32) float32) func() bool {
+	easerout := struct {
+		rect           sdl.Rect
+		animate        bool
+		animation_time float32
+	}{r, true, 0.0}
+	return func() bool {
+		if easerout.animate {
+			easerout.rect.X = int32(f(float32(easerout.rect.X), float32(400), float32(400-easerout.rect.X), easerout.animation_time))
+			easerout.animation_time += 2
+			if easerout.rect.X >= 400-10 {
+				easerout.animate = false
+				easerout.animation_time = 0.0
+			}
+			draw_rect_without_border(renderer, &easerout.rect, &sdl.Color{R: 100, G: 200, B: 50, A: 100})
+			return true
+		} else {
+			return false
 		}
 	}
 }
