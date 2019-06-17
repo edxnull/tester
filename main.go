@@ -29,6 +29,9 @@ import (
 // Q: what happens when we pass in a value bigger than uint16?
 
 // GENERAL
+// [ ] instead of having images saved in a application folder, maybe we could generate img and then just load it up into a texture?
+       - use fogleman/gg or golang/image for that
+// [ ] use C:\Windows\fonts for fonts?
 // [ ] I'm sure that the app needs to have a modal way of execution, otherwise it's a nightmare to maintain.
 // [ ] maybe try using github.com/golang/freetype/truetype package instead of sdl2 ttf one!
 // [ ] https://stackoverflow.com/questions/29105540/aligning-text-in-golang-with-truetype
