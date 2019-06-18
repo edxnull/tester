@@ -29,8 +29,9 @@ import (
 // Q: what happens when we pass in a value bigger than uint16?
 
 // GENERAL
+// [ ] https://github.com/golang-standarts/project-layout
 // [ ] instead of having images saved in a application folder, maybe we could generate img and then just load it up into a texture?
-       - use fogleman/gg or golang/image for that
+//     - use fogleman/gg or golang/image for that
 // [ ] use C:\Windows\fonts for fonts?
 // [ ] I'm sure that the app needs to have a modal way of execution, otherwise it's a nightmare to maintain.
 // [ ] maybe try using github.com/golang/freetype/truetype package instead of sdl2 ttf one!
@@ -1778,6 +1779,8 @@ func FontHasGlyphsFromRangeTable(font *ttf.Font, rtable *unicode.RangeTable) {
 	}
 }
 
+// TODO: refactor this later to take an int instead of sdl.Rect
+//       that way i'll be able to use it for X, Y, W, H and R, G, B, A
 func FoobarEaserOut(renderer *sdl.Renderer, r sdl.Rect, f func(b, d, c, t float32) float32) func() bool {
 	easerout := struct {
 		rect           sdl.Rect
