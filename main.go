@@ -780,7 +780,7 @@ func main() {
 		renderer.SetDrawColor(255, 255, 255, 0)
 		renderer.Clear()
 
-		draw_rounded_rect_with_thick_border_filled(renderer, &sdl.Rect{100, 100, 200, 200}, &COLOR_WISTFUL)
+		draw_rounded_rect_with_border_filled(renderer, &sdl.Rect{100, 100, 200, 200}, &COLOR_WISTFUL)
 
 		if easerout.animate {
 			easerout.rect.X = int32(EaseOutQuad(float32(easerout.rect.X), float32(400), float32(400-easerout.rect.X), easerout.animation_time))
@@ -1428,19 +1428,6 @@ func draw_rect_without_border(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl.Col
 }
 
 func draw_rounded_rect_with_border_filled(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl.Color) {
-	renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
-	renderer.FillRect(rect)
-	renderer.DrawRect(rect)
-	renderer.SetDrawColor(255, 255, 255, 255) // temporary
-	renderer.DrawPoints([]sdl.Point{
-		sdl.Point{rect.X, rect.Y},                           // top
-		sdl.Point{rect.X, rect.Y + rect.H - 1},              // bottom
-		sdl.Point{rect.X + rect.W - 1, rect.Y},              // top
-		sdl.Point{rect.X + rect.W - 1, rect.Y + rect.H - 1}, // bottom
-	})
-}
-
-func draw_rounded_rect_with_thick_border_filled(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl.Color) {
 	renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
 	renderer.FillRect(rect)
 	renderer.DrawRect(rect)
