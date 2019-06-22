@@ -29,6 +29,12 @@ import (
 // Q: what happens when we pass in a value bigger than uint16?
 
 // GENERAL
+// [ ] https://github.com/dlion/modularLocalization
+// [ ] https://arslan.io/2017/09/14/the-ultimate-guide-to-writing-a-go-tool/
+// [ ] https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html
+// [ ] https://www.youtube.com/user/dotconferences/videos
+// [ ] add "runtime" for if runtime.GOOS == "windows" { println("blah") } else { println("blah") }
+// [ ] use sdl.GetPlatform() || [runtime.GOOS == ""] || [foo_unix.go; foo_windows.go style]
 // [ ] https://github.com/golang-standarts/project-layout
 // [ ] instead of having images saved in a application folder, maybe we could generate img and then just load it up into a texture?
 //     - use fogleman/gg or golang/image for that
@@ -60,12 +66,12 @@ import (
 // [ ] [bug_icon] in-app file a bug button & menu
 // [ ] should we keep fonts in memory? or free them instead?
 // [ ] https://en.wikipedia.org/wiki/Newline
-//     use sdl.GetPlatform() || [runtime.GOOS == ""] || [foo_unix.go; foo_windows.go style]
 // [ ] add proper error handling
 // [ ] add logs???
 // [ ] try proper font resizing -> resize the rect first and then reload ? or it's just enough to resize the rect by using font query?
 
 // SDL RELATED
+// [ ] !batch optimize Cgo calls
 // [ ] optimize TextBox Update and Clear (somehow)
 // [ ] try using r.SetScale() => sdl.SetLogicalSize + sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "linear")
 // [ ] use r.DrawLines() to draw triangles?
@@ -774,6 +780,8 @@ func main() {
 		renderer.SetDrawColor(255, 255, 255, 0)
 		renderer.Clear()
 
+		draw_rounded_rect_with_border_filled(renderer, &sdl.Rect{100, 100, 200, 200}, &COLOR_WISTFUL)
+
 		if easerout.animate {
 			easerout.rect.X = int32(EaseOutQuad(float32(easerout.rect.X), float32(400), float32(400-easerout.rect.X), easerout.animation_time))
 			easerout.animation_time += 2
@@ -1134,8 +1142,8 @@ func reload_ttf_texture(r *sdl.Renderer, tex *sdl.Texture, f *ttf.Font, s string
 
 func generate_line_metadata(font *ttf.Font, dest *[]LineMetaData, tokens *[]string) {
 	x, y, _ := font.SizeUTF8(" ")
-	cap_x, cap_y, _ := font.SizeUTF8("A")
-	low_x, low_y, _ := font.SizeUTF8("a")
+	cap_x, cap_y, _ := font.SizeUTF8("A") // BAD
+	low_x, low_y, _ := font.SizeUTF8("a") // BAD
 	println("space:", x, y)
 	println("cap:", cap_x, cap_y)
 	println("low:", low_x, low_y)
@@ -1419,6 +1427,19 @@ func draw_rect_without_border(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl.Col
 	renderer.FillRect(rect)
 }
 
+func draw_rounded_rect_with_border_filled(renderer *sdl.Renderer, rect *sdl.Rect, c *sdl.Color) {
+	renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
+	renderer.FillRect(rect)
+	renderer.DrawRect(rect)
+	renderer.SetDrawColor(255, 255, 255, 255) // Temporary
+	renderer.DrawPoints([]sdl.Point{
+		sdl.Point{rect.X, rect.Y},                           // top
+		sdl.Point{rect.X, rect.Y + rect.H - 1},              // bottom
+		sdl.Point{rect.X + rect.W - 1, rect.Y},              // top
+		sdl.Point{rect.X + rect.W - 1, rect.Y + rect.H - 1}, // bottom
+	})
+}
+
 func draw_multiple_rects_with_border(renderer *sdl.Renderer, rects []sdl.Rect, c *sdl.Color) {
 	renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
 	renderer.DrawRects(rects)
@@ -1604,7 +1625,7 @@ func genY(font *ttf.Font, size int) []int {
 	result := make([]int, size)
 
 	for i := 0; i < size; i++ {
-		result[i] = i * font.LineSkip()
+		result[i] = i * font.LineSkip() // NOTE(Edgar) no need to font.LineSkip() on every iteration
 	}
 	return result
 }
