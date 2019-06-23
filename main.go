@@ -40,6 +40,8 @@ import (
 //     - use fogleman/gg or golang/image for that
 // [ ] use C:\Windows\fonts for fonts?
 // [ ] I'm sure that the app needs to have a modal way of execution, otherwise it's a nightmare to maintain.
+// [ ] create a telegram bot for this app?
+// [ ] use telegram for saving messages/audio and stuff?
 // [ ] maybe try using github.com/golang/freetype/truetype package instead of sdl2 ttf one!
 // [ ] https://stackoverflow.com/questions/29105540/aligning-text-in-golang-with-truetype
 // [ ] checkout github.com/fatih/structs
@@ -48,6 +50,7 @@ import (
 // [ ] use https://godoc.org/github.com/fsnotify/fsnotify for checking if our settings file has been changed?
 // [ ] separate updating and rendering?
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
+// [ ] predefined colors in a .settings file?
 // [ ] refactor FontSelector
 // [ ] make sure that we don't exceed max sdl.texture width
 // [ ] should we compress strings?? Huffman encoding?
@@ -228,6 +231,13 @@ type ColorPicker struct {
 	rect_textures [CPN]*sdl.Texture
 	rect_bgs      [CPN]sdl.Rect
 	toolbar       Toolbar
+}
+
+type MultiLine struct {
+	texture  *sdl.Texture
+	bg_rect  sdl.Rect
+	fmt      *sdl.PixelFormat
+	lineskip int32
 }
 
 const (
@@ -481,6 +491,13 @@ func main() {
 		animation_time float32
 	}{sdl.Rect{0, 250, 100, 100}, true, 0.0}
 
+	test_smooth_scroll := struct {
+		rect           sdl.Rect
+		animate        bool
+		animation_time float32
+		new_max_dest   int32
+	}{sdl.Rect{int32(X_OFFSET), 0, int32(LINE_LENGTH), 15}, false, 0.0, 10}
+
 	foobar_animation := FoobarEaserOut(renderer, sdl.Rect{0, 350, 100, 100}, EaseInQuad)
 
 	color_picker := ColorPicker{
@@ -496,6 +513,24 @@ func main() {
 			sdl.Color{R: 100, G: 240, B: 50, A: 240},
 		},
 	}
+
+	// test shit
+	var multiline_texture MultiLine
+	multiline_texture.New(renderer, color_picker.font)
+
+	multiline_texture.Write(color_picker.font, "foobar", COLOR_BLACK, 0, 0)
+	multiline_texture.Write(color_picker.font, "cooonoobar", COLOR_BLACK, 0, multiline_texture.lineskip)
+	MLSkip := multiline_texture.lineskip
+	rm_px := int32(0)
+	multiline_texture.ClearAndWrite(
+		renderer,
+		color_picker.font,
+		[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
+		[]int32{0, 0, 0},
+		[]int32{0, 1*MLSkip - rm_px, 2*MLSkip - rm_px},
+	)
+	// test shit
+
 	color_picker.texture = make_ttf_texture(renderer, color_picker.font, "this is our demo popup", &sdl.Color{R: 0, G: 0, B: 0, A: 0})
 
 	cp := color_picker.bg_color // ! only used here
@@ -780,8 +815,6 @@ func main() {
 		renderer.SetDrawColor(255, 255, 255, 0)
 		renderer.Clear()
 
-		draw_rounded_rect_with_border_filled(renderer, &sdl.Rect{100, 100, 200, 200}, &COLOR_WISTFUL)
-
 		if easerout.animate {
 			easerout.rect.X = int32(EaseOutQuad(float32(easerout.rect.X), float32(400), float32(400-easerout.rect.X), easerout.animation_time))
 			easerout.animation_time += 2
@@ -818,6 +851,33 @@ func main() {
 			}
 			draw_rect_without_border(renderer, &easerinout.rect, &sdl.Color{R: 20, G: 20, B: 240, A: 100})
 		}
+
+		// TESTING
+		if test_smooth_scroll.animate {
+			test_smooth_scroll.rect.Y = int32(EaseInOutQuad(float32(test_smooth_scroll.rect.Y), float32(400), float32(400), test_smooth_scroll.animation_time))
+			test_smooth_scroll.animation_time += 2
+			if test_smooth_scroll.rect.Y >= test_smooth_scroll.new_max_dest {
+				test_smooth_scroll.animate = false
+				test_smooth_scroll.animation_time = 0.0
+			}
+
+			// temp
+			multiline_texture.ClearAndWrite(
+				renderer,
+				color_picker.font,
+				[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
+				[]int32{0, 0, 0},
+				[]int32{0 + rm_px + test_smooth_scroll.rect.Y, 1*MLSkip + rm_px + test_smooth_scroll.rect.Y, 2*MLSkip + rm_px + test_smooth_scroll.rect.Y},
+			)
+			// temp
+
+			draw_rounded_rect_with_border_filled(renderer, &test_smooth_scroll.rect, &COLOR_WISTERIA)
+		} else {
+			draw_rounded_rect_with_border_filled(renderer, &test_smooth_scroll.rect, &COLOR_LIGHT_GREEN)
+		}
+
+		draw_rect_with_border_filled(renderer, &multiline_texture.bg_rect, &COLOR_IRON)
+		renderer.Copy(multiline_texture.texture, nil, &multiline_texture.bg_rect)
 
 		for i := 0; i < textbox.MetadataSize(); i++ {
 			renderer.Copy(textbox.data[i], nil, &textbox.data_rects[i])
@@ -906,6 +966,20 @@ func main() {
 					}
 				}
 			}
+			// test
+			test_smooth_scroll.animate = true
+			test_smooth_scroll.new_max_dest += 10
+
+			//rm_px += 1
+
+			//multiline_texture.ClearAndWrite(
+			//    renderer,
+			//    color_picker.font,
+			//    []string{"foobar", "cooonoobar", "booobar"},
+			//    []int32{0, 0, 0},
+			//    []int32{1*MLSkip + rm_px, 2*MLSkip + rm_px, 3*MLSkip + rm_px},
+			//)
+			// test
 		}
 
 		if move_text_up {
@@ -924,6 +998,16 @@ func main() {
 					}
 				}
 			}
+			// test
+			rm_px -= 1
+			multiline_texture.ClearAndWrite(
+				renderer,
+				color_picker.font,
+				[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
+				[]int32{0, 0, 0},
+				[]int32{rm_px, 1*MLSkip + rm_px, 2*MLSkip + rm_px},
+			)
+			// test
 		}
 
 		if page_down {
@@ -1685,20 +1769,19 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 	converted.Free()
 }
 
+// TODO: why do we pass renderer here?
 func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []string, color sdl.Color) {
 	var err error
 	for i := 0; i < tbox.MetadataSize(); i++ {
 		if text[i] != "\n" {
 			surface, _ := font.RenderUTF8Blended(text[i], color)
 			converted, _ := surface.Convert(tbox.fmt, 0)
-			if surface.W <= int32(LINE_LENGTH) {
-				// make sure that texture H >= surface.H
+			if surface.W <= int32(LINE_LENGTH) { // TODO: make sure that texture H >= surface.H ??
 				err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: tbox.texture_h}, converted.Pixels(), int(converted.Pitch))
 				if err != nil {
 					fmt.Println(err)
 				}
-				// TODO: check if we are wes till using this else clause?
-			} else {
+			} else { // TODO: check if we are wes till using this else clause?
 				err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: surface.H}, converted.Pixels(), int(converted.Pitch))
 				if err != nil {
 					fmt.Println(err)
@@ -1710,6 +1793,7 @@ func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []strin
 	}
 }
 
+// TODO: why do we pass renderer here?
 func (tbox *TextBox) Clear(renderer *sdl.Renderer, font *ttf.Font) {
 	surface, _ := font.RenderUTF8Blended(" ", sdl.Color{R: 0, G: 0, B: 0, A: 0})
 	converted, _ := surface.Convert(tbox.fmt, 0)
@@ -1821,5 +1905,45 @@ func FoobarEaserOut(renderer *sdl.Renderer, r sdl.Rect, f func(b, d, c, t float3
 		} else {
 			return false
 		}
+	}
+}
+
+func (ML *MultiLine) New(renderer *sdl.Renderer, font *ttf.Font) {
+	surface, _ := font.RenderUTF8Blended(" ", COLOR_BLACK)
+	ML.fmt, _ = sdl.AllocFormat(sdl.PIXELFORMAT_RGBA8888)
+	converted, _ := surface.Convert(ML.fmt, 0)
+	ML.lineskip = int32(font.LineSkip())
+	ML.texture, _ = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_STREAMING, 300, 300)
+	ML.texture.Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+	ML.texture.SetBlendMode(sdl.BLENDMODE_BLEND)
+	ML.bg_rect = sdl.Rect{int32(LINE_LENGTH), 0, 300, 300}
+	surface.Free()
+	converted.Free()
+}
+
+func (ML *MultiLine) Write(font *ttf.Font, text string, color sdl.Color, x, y int32) {
+	surface, _ := font.RenderUTF8Blended(text, color)
+	converted, _ := surface.Convert(ML.fmt, 0)
+	ML.texture.Update(&sdl.Rect{X: x, Y: y, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+	surface.Free()
+	converted.Free()
+}
+
+func (ML *MultiLine) Clear(renderer *sdl.Renderer, font *ttf.Font) {
+	surface, _ := font.RenderUTF8Blended(" ", sdl.Color{R: 0, G: 0, B: 0, A: 0})
+	converted, _ := surface.Convert(ML.fmt, 0)
+
+	bytes, _, _ := ML.texture.Lock(nil)
+	copy(bytes, converted.Pixels())
+	ML.texture.Unlock()
+
+	surface.Free()
+	converted.Free()
+}
+
+func (ML *MultiLine) ClearAndWrite(renderer *sdl.Renderer, font *ttf.Font, text []string, x, y []int32) {
+	ML.Clear(renderer, font)
+	for i, t := range text {
+		ML.Write(font, t, COLOR_BLACK, x[i], y[i])
 	}
 }
