@@ -526,9 +526,11 @@ func main() {
 	multiline_texture.ClearAndWrite(
 		renderer,
 		color_picker.font,
-		[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
-		[]int32{0, 0, 0},
-		[]int32{0, 1*MLSkip - rm_px, 2*MLSkip - rm_px},
+		test_tokens[0:24],
+		//[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
+		MLSkip,
+		rm_px,
+		//[]int32{0, 1*MLSkip - rm_px, 2*MLSkip - rm_px},
 	)
 	// test shit
 
@@ -976,9 +978,11 @@ func main() {
 			multiline_texture.ClearAndWrite(
 				renderer,
 				color_picker.font,
-				[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
-				[]int32{0, 0, 0},
-				[]int32{rm_px, 1*MLSkip + rm_px, 2*MLSkip + rm_px},
+				test_tokens[0:24],
+				//[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
+				MLSkip,
+				rm_px,
+				//[]int32{rm_px, 1*MLSkip + rm_px, 2*MLSkip + rm_px},
 			)
 			// test
 		}
@@ -1004,9 +1008,11 @@ func main() {
 			multiline_texture.ClearAndWrite(
 				renderer,
 				color_picker.font,
-				[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
-				[]int32{0, 0, 0},
-				[]int32{rm_px, 1*MLSkip + rm_px, 2*MLSkip + rm_px},
+				test_tokens[0:24],
+				//[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
+				MLSkip,
+				rm_px,
+				//[]int32{rm_px, 1*MLSkip + rm_px, 2*MLSkip + rm_px},
 			)
 			// test
 		}
@@ -1955,17 +1961,18 @@ func (ML *MultiLine) Clear(renderer *sdl.Renderer, font *ttf.Font) {
 	converted.Free()
 }
 
-func (ML *MultiLine) ClearAndWrite(renderer *sdl.Renderer, font *ttf.Font, text []string, x, y []int32) {
+func (ML *MultiLine) ClearAndWrite(renderer *sdl.Renderer, font *ttf.Font, text []string, lineskip, adder int32) {
+	mult := int32(0)
 	can_clear := true
 	for i, t := range text {
 		// NOTE(Edgar): Not sure why we are crashing here
-		if y[i] <= ML.bg_rect.H-10 && y[i] > 0-10 { // TODO: should have a ML.surface_H/ML.surface_W
-			if can_clear {
+		mult = int32(i)*lineskip + adder
+		if mult <= ML.bg_rect.H-10 && mult > -10 { // TODO: should have a ML.surface_H/ML.surface_W
+			if can_clear { // NOTE(Edgar): This is a hack that stops us from crashing
 				ML.Clear(renderer, font)
 				can_clear = false
 			}
-			ML.Write(font, t, COLOR_BLACK, x[i], y[i])
-			println(i, y[i], ML.bg_rect.H)
+			ML.Write(font, t, COLOR_BLACK, 0, mult)
 		}
 	}
 }
