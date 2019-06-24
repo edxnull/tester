@@ -517,6 +517,7 @@ func main() {
 	// test shit
 	var multiline_texture MultiLine
 	multiline_texture.New(renderer, color_picker.font)
+	defer multiline_texture.texture.Destroy()
 
 	multiline_texture.Write(color_picker.font, "foobar", COLOR_BLACK, 0, 0)
 	multiline_texture.Write(color_picker.font, "cooonoobar", COLOR_BLACK, 0, multiline_texture.lineskip)
@@ -854,7 +855,7 @@ func main() {
 
 		// TESTING
 		if test_smooth_scroll.animate {
-			test_smooth_scroll.rect.Y = int32(EaseInOutQuad(float32(test_smooth_scroll.rect.Y), float32(400), float32(400), test_smooth_scroll.animation_time))
+			test_smooth_scroll.rect.Y = int32(EaseOutQuad(float32(test_smooth_scroll.rect.Y), float32(400), float32(400), test_smooth_scroll.animation_time))
 			test_smooth_scroll.animation_time += 2
 			if test_smooth_scroll.rect.Y >= test_smooth_scroll.new_max_dest {
 				test_smooth_scroll.animate = false
@@ -862,13 +863,13 @@ func main() {
 			}
 
 			// temp
-			multiline_texture.ClearAndWrite(
-				renderer,
-				color_picker.font,
-				[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
-				[]int32{0, 0, 0},
-				[]int32{0 + rm_px + test_smooth_scroll.rect.Y, 1*MLSkip + rm_px + test_smooth_scroll.rect.Y, 2*MLSkip + rm_px + test_smooth_scroll.rect.Y},
-			)
+			//multiline_texture.ClearAndWrite(
+			//	renderer,
+			//	color_picker.font,
+			//	[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
+			//	[]int32{0, 0, 0},
+			//	[]int32{0 + rm_px + test_smooth_scroll.rect.Y, 1*MLSkip + rm_px + test_smooth_scroll.rect.Y, 2*MLSkip + rm_px + test_smooth_scroll.rect.Y},
+			//)
 			// temp
 
 			draw_rounded_rect_with_border_filled(renderer, &test_smooth_scroll.rect, &COLOR_WISTERIA)
@@ -970,15 +971,15 @@ func main() {
 			test_smooth_scroll.animate = true
 			test_smooth_scroll.new_max_dest += 10
 
-			//rm_px += 1
+			rm_px += 1
 
-			//multiline_texture.ClearAndWrite(
-			//    renderer,
-			//    color_picker.font,
-			//    []string{"foobar", "cooonoobar", "booobar"},
-			//    []int32{0, 0, 0},
-			//    []int32{1*MLSkip + rm_px, 2*MLSkip + rm_px, 3*MLSkip + rm_px},
-			//)
+			multiline_texture.ClearAndWrite(
+				renderer,
+				color_picker.font,
+				[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
+				[]int32{0, 0, 0},
+				[]int32{rm_px, 1*MLSkip + rm_px, 2*MLSkip + rm_px},
+			)
 			// test
 		}
 
@@ -1924,7 +1925,20 @@ func (ML *MultiLine) New(renderer *sdl.Renderer, font *ttf.Font) {
 func (ML *MultiLine) Write(font *ttf.Font, text string, color sdl.Color, x, y int32) {
 	surface, _ := font.RenderUTF8Blended(text, color)
 	converted, _ := surface.Convert(ML.fmt, 0)
+
 	ML.texture.Update(&sdl.Rect{X: x, Y: y, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+
+	//if y < ML.bg_rect.H {
+	//	ML.texture.Update(&sdl.Rect{X: x, Y: y, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+	//} else if y >= ML.bg_rect.H { // test
+	//	ML.texture.Update(&sdl.Rect{X: x, Y: surface.H, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+	//}
+	//if y > 0 {
+	//    ML.texture.Update(&sdl.Rect{X: x, Y: y, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+	//} else if y <= -10 { // test
+	//    ML.texture.Update(&sdl.Rect{X: x, Y: -10, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+	//}
+
 	surface.Free()
 	converted.Free()
 }
@@ -1942,8 +1956,16 @@ func (ML *MultiLine) Clear(renderer *sdl.Renderer, font *ttf.Font) {
 }
 
 func (ML *MultiLine) ClearAndWrite(renderer *sdl.Renderer, font *ttf.Font, text []string, x, y []int32) {
-	ML.Clear(renderer, font)
+	can_clear := true
 	for i, t := range text {
-		ML.Write(font, t, COLOR_BLACK, x[i], y[i])
+		// NOTE(Edgar): Not sure why we are crashing here
+		if y[i] <= ML.bg_rect.H-10 && y[i] > 0-10 { // TODO: should have a ML.surface_H/ML.surface_W
+			if can_clear {
+				ML.Clear(renderer, font)
+				can_clear = false
+			}
+			ML.Write(font, t, COLOR_BLACK, x[i], y[i])
+			println(i, y[i], ML.bg_rect.H)
+		}
 	}
 }
