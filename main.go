@@ -29,6 +29,13 @@ import (
 // Q: what happens when we pass in a value bigger than uint16?
 
 // GENERAL
+// [ ] https://4gophers.ru/articles/smid-optimizaciya-v-go/
+// [ ] https://habr.com/ru/company/badoo/blog/301990/
+// [ ] http://m0sth8.github.io/runtime-1/#1
+// [ ] optimizing go: https://www.youtube.com/watch?v=0i1nO9gwACY
+// [ ] optimizing go binaries: https://www.youtube.com/watch?v=HpriPuIfrGE
+
+// [ ] https://pavelfatin.com/scrolling-with-pleasure/
 // [ ] https://github.com/dlion/modularLocalization
 // [ ] https://arslan.io/2017/09/14/the-ultimate-guide-to-writing-a-go-tool/
 // [ ] https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html
@@ -356,7 +363,7 @@ func main() {
 
 	line_tokens := strings.Split(string(get_filedata(text_dir, filename)), "\r\n") // "\r\n" instead of "\n"
 
-	ticker := time.NewTicker(time.Second / 40)
+	ticker := time.NewTicker(time.Second / 60)
 
 	ttf_font_list := get_filenames(font_dir, []string{"ttf", "otf"})
 	txt_list := get_filenames(text_dir, []string{".txt"})
@@ -497,7 +504,7 @@ func main() {
 		animation_time float32
 	}{sdl.Rect{0, 250, 100, 100}, true, 0.0}
 
-	test_smooth_scroll := struct {
+	smooth := struct {
 		rect           sdl.Rect
 		animate        bool
 		animation_time float32
@@ -642,6 +649,7 @@ func main() {
 					scrollbar.CalcPosDuringAction(int(scrollbar.rect.Y), TEST_TOKENS_LEN)
 				}
 			case *sdl.MouseWheelEvent:
+				println("(debug) mouse motion event in Y: ", t.Y)
 				switch {
 				case t.Y > 0:
 					move_text_up = true
@@ -875,43 +883,46 @@ func main() {
 		}
 
 		// TESTING
-		if test_smooth_scroll.animate {
-			if !test_smooth_scroll.reverse {
-				test_smooth_scroll.rect.Y = int32(EaseInOutQuad(float32(test_smooth_scroll.rect.Y),
-					float32(test_smooth_scroll.new_max_dest), float32(test_smooth_scroll.new_max_dest), test_smooth_scroll.animation_time))
-				//println("down ", test_smooth_scroll.rect.Y, test_smooth_scroll.new_max_dest)
-				test_smooth_scroll.animation_time += 1
-				if test_smooth_scroll.rect.Y >= test_smooth_scroll.new_max_dest {
-					test_smooth_scroll.animate = false
-					test_smooth_scroll.animation_time = 0.0
-					test_smooth_scroll.rect.Y = test_smooth_scroll.new_max_dest // error correction, cuz sometimes it's wrong yo!
+		if smooth.animate {
+			if smooth.reverse == false {
+				smooth.rect.Y = int32(EaseInQuad(float32(smooth.rect.Y),
+					float32(smooth.new_max_dest), float32(smooth.new_max_dest), smooth.animation_time))
+				//println("down ", smooth.rect.Y, smooth.new_max_dest)
+				smooth.animation_time += 1
+				if smooth.rect.Y >= smooth.new_max_dest {
+					smooth.animate = false
+					smooth.animation_time = 0.0
+					smooth.rect.Y = smooth.new_max_dest // error correction, cuz sometimes it's wrong yo!
 				}
 			} else {
-				test_smooth_scroll.rect.Y -= int32(EaseInOutQuad(
-					float32(0),
-					float32(test_smooth_scroll.new_max_dest), float32(test_smooth_scroll.new_max_dest), test_smooth_scroll.animation_time))
-				//println("up ", test_smooth_scroll.rect.Y, test_smooth_scroll.new_max_dest, test_smooth_scroll.skip)
-				test_smooth_scroll.animation_time += 1
-				if test_smooth_scroll.rect.Y <= test_smooth_scroll.new_max_dest-(test_smooth_scroll.skip*2) {
-					test_smooth_scroll.animate = false
-					test_smooth_scroll.animation_time = 0.0
-					test_smooth_scroll.new_max_dest -= test_smooth_scroll.skip * 2
-					test_smooth_scroll.rect.Y = test_smooth_scroll.new_max_dest // error correction, cuz sometimes it's wrong yo!
+				if smooth.new_max_dest <= 0 { // another error correction
+					smooth.rect.Y -= int32(EaseInQuad(float32(0),
+						float32(smooth.skip), float32(smooth.skip), smooth.animation_time))
+				} else {
+					smooth.rect.Y -= int32(EaseInQuad(float32(0),
+						float32(smooth.new_max_dest), float32(smooth.new_max_dest), smooth.animation_time))
+				}
+				println("up ", smooth.rect.Y, smooth.new_max_dest, smooth.skip)
+				smooth.animation_time += 1
+				if smooth.rect.Y <= smooth.new_max_dest {
+					smooth.animate = false
+					smooth.animation_time = 0.0
+					smooth.rect.Y = smooth.new_max_dest // error correction, cuz sometimes it's wrong yo!
 				}
 			}
 
 			// temp
-			//multiline_texture.ClearAndWrite(
-			//	renderer,
-			//	color_picker.font,
-			//	test_tokens[0:24],
-			//	//[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
-			//	MLSkip,
-			//	rm_px+test_smooth_scroll.rect.Y,
-			//)
+			multiline_texture.ClearAndWrite(
+				renderer,
+				color_picker.font,
+				test_tokens[0:24],
+				//[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
+				MLSkip,
+				rm_px+smooth.rect.Y,
+			)
 			// temp
 		}
-		draw_rounded_rect_with_border_filled(renderer, &test_smooth_scroll.rect, &COLOR_WISTERIA)
+		draw_rounded_rect_with_border_filled(renderer, &smooth.rect, &COLOR_WISTERIA)
 
 		draw_rounded_rect_with_border_filled(renderer, &multiline_texture.bg_rect, &COLOR_IRON)
 		renderer.Copy(multiline_texture.texture, nil, &multiline_texture.bg_rect)
@@ -1004,21 +1015,21 @@ func main() {
 				}
 			}
 			// test
-			test_smooth_scroll.animate = true
-			test_smooth_scroll.reverse = false
-			test_smooth_scroll.new_max_dest += test_smooth_scroll.skip * 2
+			smooth.animate = true
+			smooth.reverse = false
+			smooth.new_max_dest += smooth.skip * 2
 
-			rm_px += 1
+			//rm_px += 1
 
-			multiline_texture.ClearAndWrite(
-				renderer,
-				color_picker.font,
-				test_tokens[0:24],
-				//[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
-				MLSkip,
-				rm_px,
-				//[]int32{rm_px, 1*MLSkip + rm_px, 2*MLSkip + rm_px},
-			)
+			//multiline_texture.ClearAndWrite(
+			//	renderer,
+			//	color_picker.font,
+			//	test_tokens[0:24],
+			//	//[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
+			//	MLSkip,
+			//	rm_px,
+			//	//[]int32{rm_px, 1*MLSkip + rm_px, 2*MLSkip + rm_px},
+			//)
 			// test
 		}
 
@@ -1039,20 +1050,21 @@ func main() {
 				}
 			}
 
-			test_smooth_scroll.animate = true
-			test_smooth_scroll.reverse = true
+			smooth.animate = true
+			smooth.reverse = true
+			smooth.new_max_dest -= smooth.skip * 2
 			// test
-			rm_px -= 1
-			multiline_texture.ClearAndWrite(
-				renderer,
-				color_picker.font,
-				test_tokens[0:24],
-				//[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
-				MLSkip,
-				//rm_px,
-				rm_px,
-				//[]int32{rm_px, 1*MLSkip + rm_px, 2*MLSkip + rm_px},
-			)
+			//rm_px -= 1
+			//multiline_texture.ClearAndWrite(
+			//	renderer,
+			//	color_picker.font,
+			//	test_tokens[0:24],
+			//	//[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
+			//	MLSkip,
+			//	//rm_px,
+			//	rm_px,
+			//	//[]int32{rm_px, 1*MLSkip + rm_px, 2*MLSkip + rm_px},
+			//)
 			// test
 		}
 
