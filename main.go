@@ -863,7 +863,6 @@ func main() {
 
 		if easerin_reverse.animate {
 			easerin_reverse.rect.X -= int32(EaseInQuad(float32(0), float32(400), float32(easerin_reverse.rect.X+10), easerin_reverse.animation_time))
-			println(easerin_reverse.rect.X)
 			easerin_reverse.animation_time += 2
 			if easerin_reverse.rect.X <= 0 {
 				easerin_reverse.animate = false
@@ -885,9 +884,15 @@ func main() {
 		// TESTING
 		if smooth.animate {
 			if smooth.reverse == false {
-				smooth.rect.Y = int32(EaseInQuad(float32(smooth.rect.Y),
-					float32(smooth.new_max_dest), float32(smooth.new_max_dest), smooth.animation_time))
-				//println("down ", smooth.rect.Y, smooth.new_max_dest)
+                if smooth.new_max_dest <= 0 {
+                    //println("[debug] smooth.step < 0")
+                    smooth.new_max_dest = smooth.skip * 2
+                    //smooth.rect.Y = int32(EaseInQuad(float32(smooth.rect.Y),
+                    //    float32(smooth.new_max_dest), float32(smooth.new_max_dest), smooth.animation_time))
+                }
+                smooth.rect.Y = int32(EaseInQuad(float32(smooth.rect.Y),
+                    float32(smooth.new_max_dest), float32(smooth.new_max_dest), smooth.animation_time))
+                //println("down ", smooth.rect.Y, smooth.new_max_dest)
 				smooth.animation_time += 1
 				if smooth.rect.Y >= smooth.new_max_dest {
 					smooth.animate = false
@@ -910,6 +915,12 @@ func main() {
 					smooth.rect.Y = smooth.new_max_dest // error correction, cuz sometimes it's wrong yo!
 				}
 			}
+
+            // TODO: instead of doing it this way where we have test_tokens[0:24] at all times
+            //       we should have start:end variables that control how much data we have on the screen
+            //       just like we did in our main textbox window. Otherwise we have to keep the track of <= 0 numbers
+            //       which would reach crash at some point. It's late at night and hot, so I might change my mind
+            //       about this sometime later.
 
 			// temp
 			multiline_texture.ClearAndWrite(
