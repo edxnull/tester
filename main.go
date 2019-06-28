@@ -247,6 +247,11 @@ type MultiLine struct {
 	lineskip int32
 }
 
+type MenuWithButtons struct {
+	rect    sdl.Rect
+	buttons []sdl.Rect
+}
+
 const (
 	CURSOR_TYPE_ARROW = iota
 	CURSOR_TYPE_HAND
@@ -589,6 +594,16 @@ func main() {
 	color_picker.CenterRectAB() // TODO: REMOVE THIS TEMP HACK
 	color_picker.CenterRects()  // TODO: REMOVE THIS TEMP HACK
 
+	menuwbtn := MenuWithButtons{
+		rect: sdl.Rect{0, 50, int32(LINE_LENGTH), 20},
+	}
+
+	button_a := sdl.Rect{0, 50, 20, 20}
+	button_b := sdl.Rect{22, 50, 20, 20}
+	button_c := sdl.Rect{44, 50, 20, 20}
+
+	menuwbtn.AddButtons(button_a, button_b, button_c)
+
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch t := event.(type) {
@@ -834,6 +849,8 @@ func main() {
 		renderer.SetDrawColor(255, 255, 255, 0)
 		renderer.Clear()
 
+		//menuwbtn.Draw(renderer)
+
 		if easerout.animate {
 			easerout.rect.X = int32(EaseOutQuad(float32(easerout.rect.X), float32(400), float32(400-easerout.rect.X), easerout.animation_time))
 			easerout.animation_time += 2
@@ -884,15 +901,15 @@ func main() {
 		// TESTING
 		if smooth.animate {
 			if smooth.reverse == false {
-                if smooth.new_max_dest <= 0 {
-                    //println("[debug] smooth.step < 0")
-                    smooth.new_max_dest = smooth.skip * 2
-                    //smooth.rect.Y = int32(EaseInQuad(float32(smooth.rect.Y),
-                    //    float32(smooth.new_max_dest), float32(smooth.new_max_dest), smooth.animation_time))
-                }
-                smooth.rect.Y = int32(EaseInQuad(float32(smooth.rect.Y),
-                    float32(smooth.new_max_dest), float32(smooth.new_max_dest), smooth.animation_time))
-                //println("down ", smooth.rect.Y, smooth.new_max_dest)
+				if smooth.new_max_dest <= 0 {
+					//println("[debug] smooth.step < 0")
+					smooth.new_max_dest = smooth.skip * 2
+					//smooth.rect.Y = int32(EaseInQuad(float32(smooth.rect.Y),
+					//    float32(smooth.new_max_dest), float32(smooth.new_max_dest), smooth.animation_time))
+				}
+				smooth.rect.Y = int32(EaseInQuad(float32(smooth.rect.Y),
+					float32(smooth.new_max_dest), float32(smooth.new_max_dest), smooth.animation_time))
+				//println("down ", smooth.rect.Y, smooth.new_max_dest)
 				smooth.animation_time += 1
 				if smooth.rect.Y >= smooth.new_max_dest {
 					smooth.animate = false
@@ -916,11 +933,11 @@ func main() {
 				}
 			}
 
-            // TODO: instead of doing it this way where we have test_tokens[0:24] at all times
-            //       we should have start:end variables that control how much data we have on the screen
-            //       just like we did in our main textbox window. Otherwise we have to keep the track of <= 0 numbers
-            //       which would reach crash at some point. It's late at night and hot, so I might change my mind
-            //       about this sometime later.
+			// TODO: instead of doing it this way where we have test_tokens[0:24] at all times
+			//       we should have start:end variables that control how much data we have on the screen
+			//       just like we did in our main textbox window. Otherwise we have to keep the track of <= 0 numbers
+			//       which would reach crash at some point. It's late at night and hot, so I might change my mind
+			//       about this sometime later.
 
 			// temp
 			multiline_texture.ClearAndWrite(
@@ -2015,6 +2032,7 @@ func (ML *MultiLine) Clear(renderer *sdl.Renderer, font *ttf.Font) {
 	surface, _ := font.RenderUTF8Blended(" ", sdl.Color{R: 0, G: 0, B: 0, A: 0})
 	converted, _ := surface.Convert(ML.fmt, 0)
 
+	// TODO: do we need to do converted pixels here??
 	bytes, _, _ := ML.texture.Lock(nil)
 	copy(bytes, converted.Pixels())
 	ML.texture.Unlock()
@@ -2037,4 +2055,16 @@ func (ML *MultiLine) ClearAndWrite(renderer *sdl.Renderer, font *ttf.Font, text 
 			ML.Write(font, t, COLOR_BLACK, 0, mult)
 		}
 	}
+}
+
+func (mbtn *MenuWithButtons) AddButtons(buttons ...sdl.Rect) {
+	mbtn.buttons = make([]sdl.Rect, len(buttons))
+	for i, button := range buttons {
+		mbtn.buttons[i] = button
+	}
+}
+
+func (mbtn *MenuWithButtons) Draw(renderer *sdl.Renderer) {
+	draw_rounded_rect_with_border_filled(renderer, &mbtn.rect, &COLOR_IRON)
+	draw_multiple_rects_with_border_filled(renderer, mbtn.buttons, &COLOR_LIGHT_GREEN)
 }

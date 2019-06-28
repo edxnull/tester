@@ -31,3 +31,5 @@ REM go test -bench=. -benchmem
 REM go build -race
 REM godoc -http=":8081"
 REM http://127.0.0.1:8081/pkg/
+REM godoc -http=6060
+REM localhost:6060
