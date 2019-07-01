@@ -632,7 +632,13 @@ func main() {
 		bg_rect: sdl.Rect{0, 0, 150, WIN_H},
 		rect:    sdl.Rect{0, 0, 150, WIN_H},
 		font:    load_font(font_dir+"Inconsolata-Regular.ttf", 14),
-		text:    []string{"Open File", "Load Font", "Debug Menu", "...More"},
+		text: []string{
+			"Open File",
+			"Load Font",
+			"Debug Menu",
+			"Properties",
+			"...More",
+		},
 	}
 	sidebar.font_texture = make([]*sdl.Texture, len(sidebar.text))
 	sidebar.font_rect = make([]sdl.Rect, len(sidebar.text))
@@ -649,9 +655,13 @@ func main() {
 	sidebar.AddButtons(5, 20)
 
 	for index := range sidebar.font_rect {
-		//_, _, tw, th, _ := sidebar.font_texture[index].Query()
-		sidebar.font_rect[index] = sidebar.buttons[index]
+		_, _, tw, th, _ := sidebar.font_texture[index].Query()
+		sidebar.font_rect[index].X = sidebar.buttons[index].X // NOTE: no need to do this before CenterTextRectX
+		sidebar.font_rect[index].Y = sidebar.buttons[index].Y
+		sidebar.font_rect[index].W = tw
+		sidebar.font_rect[index].H = th
 	}
+	sidebar.CenterTextRectX()
 
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -2154,18 +2164,19 @@ func (sbar *Sidebar) Draw(renderer *sdl.Renderer) {
 	draw_rect_without_border(renderer, &sbar.rect, &COLOR_PICKLED_BLUEWOOD)
 
 	if len(sbar.buttons) > 0 {
-		draw_multiple_rects_without_border_filled(renderer, sbar.buttons, &COLOR_LIGHT_GREEN)
-	}
-	// NOTE: here we are drawing on top of draw_multiple_rects...
-	if sbar.highlight {
-		draw_rect_without_border(renderer, &sbar.buttons[sbar.buttonindex], &COLOR_SUPERNOVA)
+		draw_multiple_rects_without_border_filled(renderer, sbar.buttons, &COLOR_WISTERIA)
 	}
 
-	draw_multiple_rects_with_border_filled(renderer, sbar.font_rect, &COLOR_ELECTRIC_PURPLE)
-
+	draw_multiple_rects_with_border_filled(renderer, sbar.font_rect, &COLOR_WISTERIA)
 	for index := range sbar.font_texture {
 		renderer.Copy(sbar.font_texture[index], nil, &sbar.font_rect[index])
 	}
+
+	// NOTE: here we are drawing on top of draw_multiple_rects...
+	if sbar.highlight {
+		draw_rect_without_border(renderer, &sbar.buttons[sbar.buttonindex], &sdl.Color{100, 100, 155, 60})
+	}
+
 }
 
 func (sbar *Sidebar) AddButtons(numbtn, height int32) {
@@ -2196,4 +2207,10 @@ func (sbar *Sidebar) MouseOver(event *sdl.MouseMotionEvent) (int, bool) {
 		}
 	}
 	return 0, false
+}
+
+func (sbar *Sidebar) CenterTextRectX() {
+	for index := range sbar.font_rect {
+		sbar.font_rect[index].X = (sbar.bg_rect.W / 2) - (sbar.font_rect[index].W / 2)
+	}
 }
