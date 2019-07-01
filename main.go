@@ -158,16 +158,25 @@ type Font struct {
 	width, height int32
 }
 
+// template
+// sdl.Color{R:, G:, B:, A: }
+// http://www.flatuicolorpicker.com/
+
 var (
-	COLOR_WHITE       = sdl.Color{R: 255, G: 255, B: 255, A: 255}
-	COLOR_BLACK       = sdl.Color{R: 0, G: 0, B: 0, A: 255}
-	COLOR_RED         = sdl.Color{R: 255, G: 0, B: 0, A: 255}
-	COLOR_GREEN       = sdl.Color{R: 0, G: 255, B: 0, A: 255}
-	COLOR_BLUE        = sdl.Color{R: 0, G: 0, B: 255, A: 255}
-	COLOR_WISTERIA    = sdl.Color{R: 155, G: 89, B: 182, A: 255}
-	COLOR_WISTFUL     = sdl.Color{R: 174, G: 168, B: 211, A: 255}
-	COLOR_LIGHT_GREEN = sdl.Color{R: 123, G: 239, B: 178, A: 255}
-	COLOR_IRON        = sdl.Color{R: 218, G: 223, B: 225, A: 255}
+	COLOR_WHITE            = sdl.Color{R: 255, G: 255, B: 255, A: 255}
+	COLOR_BLACK            = sdl.Color{R: 0, G: 0, B: 0, A: 255}
+	COLOR_RED              = sdl.Color{R: 255, G: 0, B: 0, A: 255}
+	COLOR_GREEN            = sdl.Color{R: 0, G: 255, B: 0, A: 255}
+	COLOR_GREEN_MADANG     = sdl.Color{R: 200, G: 247, B: 197, A: 255}
+	COLOR_BLUE             = sdl.Color{R: 0, G: 0, B: 255, A: 255}
+	COLOR_WISTERIA         = sdl.Color{R: 155, G: 89, B: 182, A: 255}
+	COLOR_WISTFUL          = sdl.Color{R: 174, G: 168, B: 211, A: 255}
+	COLOR_LIGHT_GREEN      = sdl.Color{R: 123, G: 239, B: 178, A: 255}
+	COLOR_IRON             = sdl.Color{R: 218, G: 223, B: 225, A: 255}
+	COLOR_SAN_MARINER      = sdl.Color{R: 44, G: 130, B: 201, A: 255}
+	COLOR_ELECTRIC_PURPLE  = sdl.Color{R: 165, G: 55, B: 253, A: 255}
+	COLOR_PICKLED_BLUEWOOD = sdl.Color{R: 52, G: 73, B: 94, A: 255}
+	COLOR_SUPERNOVA        = sdl.Color{R: 255, G: 203, B: 5, A: 255}
 )
 
 type LineMetaData struct {
@@ -252,6 +261,14 @@ type MenuWithButtons struct {
 	buttons []sdl.Rect
 }
 
+type Sidebar struct {
+	rect        sdl.Rect
+	bg_rect     sdl.Rect
+	buttons     []sdl.Rect
+	highlight   bool
+	buttonindex int
+}
+
 const (
 	CURSOR_TYPE_ARROW = iota
 	CURSOR_TYPE_HAND
@@ -299,6 +316,10 @@ func main() {
 	}
 
 	runtime.LockOSThread() // NOTE: not sure I need this here!
+
+	println("[INFO] NumCPU on this system: ", runtime.NumCPU())
+	// TODO: investigate how to create software that could respond/work with available cores
+	//       what happens when only one core is available, as opposed to multiple cores?
 
 	if err := sdl.Init(sdl.INIT_TIMER | sdl.INIT_VIDEO | sdl.INIT_AUDIO); err != nil {
 		panic(err)
@@ -604,6 +625,13 @@ func main() {
 
 	menuwbtn.AddButtons(button_a, button_b, button_c)
 
+	sidebar := Sidebar{
+		bg_rect: sdl.Rect{0, 0, 150, WIN_H},
+		rect:    sdl.Rect{0, 0, 150, WIN_H},
+	}
+
+	sidebar.AddButtons(5, 20)
+
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch t := event.(type) {
@@ -662,6 +690,19 @@ func main() {
 						scrollbar.rect.Y = WIN_H - scrollbar.rect.H
 					}
 					scrollbar.CalcPosDuringAction(int(scrollbar.rect.Y), TEST_TOKENS_LEN)
+				}
+				if buttonIndex, ok := sidebar.MouseOver(t); ok {
+					if sidebar.buttonindex != buttonIndex {
+						sidebar.buttonindex = buttonIndex
+						sidebar.highlight = true
+						println("OK")
+					}
+				} else {
+					if sidebar.highlight {
+						sidebar.buttonindex = -1 // reset buttonindex
+						sidebar.highlight = false
+						println("END OK")
+					}
 				}
 			case *sdl.MouseWheelEvent:
 				println("(debug) mouse motion event in Y: ", t.Y)
@@ -850,7 +891,6 @@ func main() {
 		renderer.Clear()
 
 		//menuwbtn.Draw(renderer)
-
 		if easerout.animate {
 			easerout.rect.X = int32(EaseOutQuad(float32(easerout.rect.X), float32(400), float32(400-easerout.rect.X), easerout.animation_time))
 			easerout.animation_time += 2
@@ -1198,6 +1238,8 @@ func main() {
 		renderer.SetDrawColor(255, 100, 0, 100)
 		renderer.DrawLine(wrapline.x1+int32(X_OFFSET), wrapline.y1, wrapline.x2+int32(X_OFFSET), wrapline.y2)
 
+		sidebar.Draw(renderer)
+
 		renderer.Present()
 
 		//NOTE: this is not for framerate independance
@@ -1242,6 +1284,8 @@ func main() {
 	ttf.Quit()
 	sdl.Quit()
 	img.Quit()
+
+	println("[INFO] NumCgoCall during this application run: ", runtime.NumCgoCall())
 
 	// PROFILING SNIPPET
 	if *memprofile != "" {
@@ -1621,7 +1665,7 @@ func draw_multiple_rects_with_border_filled(renderer *sdl.Renderer, rects []sdl.
 	renderer.DrawRects(rects)
 }
 
-func draw_multiple_rects_without_border(renderer *sdl.Renderer, rects []sdl.Rect, c *sdl.Color) {
+func draw_multiple_rects_without_border_filled(renderer *sdl.Renderer, rects []sdl.Rect, c *sdl.Color) {
 	renderer.SetDrawColor((*c).R, (*c).G, (*c).B, (*c).A)
 	renderer.FillRects(rects)
 }
@@ -2067,4 +2111,44 @@ func (mbtn *MenuWithButtons) AddButtons(buttons ...sdl.Rect) {
 func (mbtn *MenuWithButtons) Draw(renderer *sdl.Renderer) {
 	draw_rounded_rect_with_border_filled(renderer, &mbtn.rect, &COLOR_IRON)
 	draw_multiple_rects_with_border_filled(renderer, mbtn.buttons, &COLOR_LIGHT_GREEN)
+}
+
+func (sbar *Sidebar) Draw(renderer *sdl.Renderer) {
+	draw_rect_without_border(renderer, &sbar.rect, &COLOR_PICKLED_BLUEWOOD)
+	if len(sbar.buttons) > 0 {
+		draw_multiple_rects_without_border_filled(renderer, sbar.buttons, &COLOR_LIGHT_GREEN)
+	}
+	// NOTE: here we are drawing on top of draw_multiple_rects...
+	if sbar.highlight {
+		draw_rect_without_border(renderer, &sbar.buttons[sbar.buttonindex], &COLOR_SUPERNOVA)
+	}
+}
+
+func (sbar *Sidebar) AddButtons(numbtn, height int32) {
+	rectW := sbar.rect.W
+	sbar.buttons = make([]sdl.Rect, numbtn)
+	space := int32(3)
+	for i := range sbar.buttons {
+		if i == 0 {
+			sbar.buttons[i] = sdl.Rect{X: 0, Y: height*int32(i) + space, W: rectW, H: height}
+		} else {
+			sbar.buttons[i] = sdl.Rect{X: 0, Y: height*int32(i) + space, W: rectW, H: height}
+		}
+		space += 3
+	}
+}
+
+func (sbar *Sidebar) MouseOver(event *sdl.MouseMotionEvent) (int, bool) { //int32 here is the position index
+	var x, y, xw, xy bool
+	for index := range sbar.buttons {
+		x = event.X > sbar.buttons[index].X
+		y = event.Y > sbar.buttons[index].Y
+		xw = event.X < sbar.buttons[index].X+sbar.buttons[index].W
+		xy = event.Y < sbar.buttons[index].Y+sbar.buttons[index].H
+
+		if (x && y) && (xw && xy) {
+			return index, true
+		}
+	}
+	return 0, false
 }
