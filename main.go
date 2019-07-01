@@ -262,11 +262,15 @@ type MenuWithButtons struct {
 }
 
 type Sidebar struct {
-	rect        sdl.Rect
-	bg_rect     sdl.Rect
-	buttons     []sdl.Rect
-	highlight   bool
-	buttonindex int
+	rect         sdl.Rect
+	bg_rect      sdl.Rect
+	buttons      []sdl.Rect
+	highlight    bool
+	buttonindex  int
+	font         *ttf.Font
+	font_rect    []sdl.Rect
+	font_texture []*sdl.Texture
+	text         []string
 }
 
 const (
@@ -317,7 +321,6 @@ func main() {
 
 	runtime.LockOSThread() // NOTE: not sure I need this here!
 
-	println("[INFO] NumCPU on this system: ", runtime.NumCPU())
 	// TODO: investigate how to create software that could respond/work with available cores
 	//       what happens when only one core is available, as opposed to multiple cores?
 
@@ -628,9 +631,27 @@ func main() {
 	sidebar := Sidebar{
 		bg_rect: sdl.Rect{0, 0, 150, WIN_H},
 		rect:    sdl.Rect{0, 0, 150, WIN_H},
+		font:    load_font(font_dir+"Inconsolata-Regular.ttf", 14),
+		text:    []string{"Open File", "Load Font", "Debug Menu", "...More"},
+	}
+	sidebar.font_texture = make([]*sdl.Texture, len(sidebar.text))
+	sidebar.font_rect = make([]sdl.Rect, len(sidebar.text))
+
+	for index := range sidebar.font_texture {
+		sidebar.font_texture[index] = make_ttf_texture(
+			renderer,
+			sidebar.font,
+			sidebar.text[index],
+			&COLOR_WHITE,
+		)
 	}
 
 	sidebar.AddButtons(5, 20)
+
+	for index := range sidebar.font_rect {
+		//_, _, tw, th, _ := sidebar.font_texture[index].Query()
+		sidebar.font_rect[index] = sidebar.buttons[index]
+	}
 
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -691,17 +712,21 @@ func main() {
 					}
 					scrollbar.CalcPosDuringAction(int(scrollbar.rect.Y), TEST_TOKENS_LEN)
 				}
+
+				// NOTE: We can skip sidebar.highlight = false here
+				//       in this block, but it's totally fine (I think).
+				//       Also, I think that MouseOver should call Update
+				//       behind the scenes, so that we don't have to have
+				//       all of this spaghetty crap.
 				if buttonIndex, ok := sidebar.MouseOver(t); ok {
 					if sidebar.buttonindex != buttonIndex {
 						sidebar.buttonindex = buttonIndex
 						sidebar.highlight = true
-						println("OK")
 					}
 				} else {
 					if sidebar.highlight {
 						sidebar.buttonindex = -1 // reset buttonindex
 						sidebar.highlight = false
-						println("END OK")
 					}
 				}
 			case *sdl.MouseWheelEvent:
@@ -1279,12 +1304,24 @@ func main() {
 		gfonts.fonts[index].data = nil
 		gfonts.textures[index].Destroy()
 	}
+
+	for index := range sidebar.font_texture {
+		if sidebar.font_texture[index] != nil {
+			sidebar.font_texture[index].Destroy()
+		}
+	}
+
+	if sidebar.font != nil {
+		sidebar.font.Close()
+	}
+
 	font.Close()
 
 	ttf.Quit()
 	sdl.Quit()
 	img.Quit()
 
+	println("[INFO] NumCPU on this system: ", runtime.NumCPU())
 	println("[INFO] NumCgoCall during this application run: ", runtime.NumCgoCall())
 
 	// PROFILING SNIPPET
@@ -2115,12 +2152,19 @@ func (mbtn *MenuWithButtons) Draw(renderer *sdl.Renderer) {
 
 func (sbar *Sidebar) Draw(renderer *sdl.Renderer) {
 	draw_rect_without_border(renderer, &sbar.rect, &COLOR_PICKLED_BLUEWOOD)
+
 	if len(sbar.buttons) > 0 {
 		draw_multiple_rects_without_border_filled(renderer, sbar.buttons, &COLOR_LIGHT_GREEN)
 	}
 	// NOTE: here we are drawing on top of draw_multiple_rects...
 	if sbar.highlight {
 		draw_rect_without_border(renderer, &sbar.buttons[sbar.buttonindex], &COLOR_SUPERNOVA)
+	}
+
+	draw_multiple_rects_with_border_filled(renderer, sbar.font_rect, &COLOR_ELECTRIC_PURPLE)
+
+	for index := range sbar.font_texture {
+		renderer.Copy(sbar.font_texture[index], nil, &sbar.font_rect[index])
 	}
 }
 
@@ -2138,7 +2182,8 @@ func (sbar *Sidebar) AddButtons(numbtn, height int32) {
 	}
 }
 
-func (sbar *Sidebar) MouseOver(event *sdl.MouseMotionEvent) (int, bool) { //int32 here is the position index
+// returning int here is the position index
+func (sbar *Sidebar) MouseOver(event *sdl.MouseMotionEvent) (int, bool) {
 	var x, y, xw, xy bool
 	for index := range sbar.buttons {
 		x = event.X > sbar.buttons[index].X
