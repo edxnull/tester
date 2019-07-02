@@ -29,6 +29,10 @@ import (
 // Q: what happens when we pass in a value bigger than uint16?
 
 // GENERAL
+
+// [ ] what if instead of splitting strings all over our code, we load a string once and then just have pointers or position int32's?
+//     when we reload fonts we inevitably have to reload text, which is not great (it also creates a lot of garbage).
+
 // [ ] https://4gophers.ru/articles/smid-optimizaciya-v-go/
 // [ ] https://habr.com/ru/company/badoo/blog/301990/
 // [ ] http://m0sth8.github.io/runtime-1/#1
@@ -53,7 +57,6 @@ import (
 // [ ] https://stackoverflow.com/questions/29105540/aligning-text-in-golang-with-truetype
 // [ ] checkout github.com/fatih/structs
 // [ ] use asciinema.org for inspiration!
-// [ ] use maps for callbacks? map[string]func or map[bool]func
 // [ ] use https://godoc.org/github.com/fsnotify/fsnotify for checking if our settings file has been changed?
 // [ ] separate updating and rendering?
 // [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
@@ -205,6 +208,13 @@ type Scrollbar struct {
 	rect     sdl.Rect
 }
 
+type GlobalMousePosition struct {
+	X int32
+	Y int32
+}
+
+//var globmousepos = GlobalMousePosition{0, 0}
+
 type FontSelector struct {
 	show              bool
 	fonts             []Font
@@ -271,12 +281,18 @@ type Sidebar struct {
 	font_rect    []sdl.Rect
 	font_texture []*sdl.Texture
 	text         []string
+	callbacks    map[string]func()
 }
 
 const (
 	CURSOR_TYPE_ARROW = iota
 	CURSOR_TYPE_HAND
 	CURSOR_TYPE_SIZEWE
+)
+
+const (
+	GUI_ID_NONE = iota
+	GUI_ID_CLRSL
 )
 
 func main() {
@@ -444,6 +460,8 @@ func main() {
 	print_word := false
 	engage_loop := false
 	inc_dbg_str := true
+
+	current_GuiID := GUI_ID_NONE
 
 	mouseover_word_texture_FONT := make([]bool, len(ttf_font_list))
 
@@ -639,6 +657,7 @@ func main() {
 			"Properties",
 			"...More",
 		},
+		callbacks: make(map[string]func()),
 	}
 	sidebar.font_texture = make([]*sdl.Texture, len(sidebar.text))
 	sidebar.font_rect = make([]sdl.Rect, len(sidebar.text))
@@ -662,6 +681,18 @@ func main() {
 		sidebar.font_rect[index].H = th
 	}
 	sidebar.CenterTextRectX()
+
+	for index := range sidebar.text {
+		txt := sidebar.text[index]
+		sidebar.callbacks[txt] = func() {
+			fmt.Println(txt)
+		}
+	}
+
+	rendererInfo, err := renderer.GetInfo()
+	if err != nil {
+		panic(err)
+	}
 
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -687,6 +718,10 @@ func main() {
 					}
 				}
 			case *sdl.MouseMotionEvent:
+				//globmousepos.X = t.X
+				//globmousepos.Y = t.Y
+				//println("[DEBUG] ", globmousepos.X, globmousepos.Y)
+
 				for i := 0; i < textbox.MetadataSize(); i++ {
 					check_collision_mouse_over_words(t, &textbox.metadata[i].word_rects, &textbox.metadata[i].mouse_over_word)
 				}
@@ -732,6 +767,8 @@ func main() {
 					if sidebar.buttonindex != buttonIndex {
 						sidebar.buttonindex = buttonIndex
 						sidebar.highlight = true
+						txt := sidebar.text[sidebar.buttonindex]
+						sidebar.callbacks[txt]()
 					}
 				} else {
 					if sidebar.highlight {
@@ -922,8 +959,18 @@ func main() {
 				continue
 			}
 		}
+
 		renderer.SetDrawColor(255, 255, 255, 0)
 		renderer.Clear()
+
+		// TODO: What if instead of rendering everything to the screen 60 fps, we would only redraw
+		//       needed elements through first saving to an external backbuffer texture?
+		//       Should this be achieved by:
+		//       - set the backbuffer texture as the current render target
+		//       - render stuff to the texture
+		//       - switch the current render target back to the default one
+		//       - render the default render target
+		//       We need to check if we can have a texture render target through RendererInfo
 
 		//menuwbtn.Draw(renderer)
 		if easerout.animate {
@@ -1053,7 +1100,7 @@ func main() {
 		// TODO: this won't work on selecting color_picker elements
 		if print_word {
 			color_picker.show = !color_picker.show
-			color_picker.updated = false
+			color_picker.updated = false // this should probably be: color_picker.redrawn
 		}
 
 		//draw_rect_with_border_filled(renderer, &img_tx_rect, &sdl.Color{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF})
@@ -1082,7 +1129,7 @@ func main() {
 			engage_loop = false
 		}
 
-		if color_picker.show {
+		if color_picker.show && current_GuiID == GUI_ID_CLRSL {
 			draw_rect_with_border_filled(renderer, &color_picker.bg_rect, &color_picker.bg_color)
 			renderer.Copy(color_picker.texture, nil, &color_picker.texture_rect)
 			for i := 0; i < len(color_picker.rects); i++ {
@@ -1283,6 +1330,8 @@ func main() {
 		<-ticker.C
 		// fmt.Println(time.Now().Second())
 	}
+
+	println("[INFO] RENDERER TEXTURE MAX_W:", rendererInfo.MaxTextureWidth, "MAX_H:", rendererInfo.MaxTextureHeight)
 
 	ticker.Stop()
 	renderer.Destroy()
