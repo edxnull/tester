@@ -276,6 +276,7 @@ type Sidebar struct {
 	bg_rect      sdl.Rect
 	buttons      []sdl.Rect
 	highlight    bool
+	clicked      bool
 	buttonindex  int
 	font         *ttf.Font
 	font_rect    []sdl.Rect
@@ -682,12 +683,11 @@ func main() {
 	}
 	sidebar.CenterTextRectX()
 
-	for index := range sidebar.text {
-		txt := sidebar.text[index]
-		sidebar.callbacks[txt] = func() {
-			fmt.Println(txt)
-		}
-	}
+	sidebar.callbacks["Open File"] = get_filedata
+	sidebar.callbacks["Load Font"] = func() { println("Load Font") }
+	sidebar.callbacks["Debug Menu"] = func() { println("Debug Menu") }
+	sidebar.callbacks["Properties"] = func() { println("Properties") }
+	sidebar.callbacks["...More"] = func() { println("...More") }
 
 	rendererInfo, err := renderer.GetInfo()
 	if err != nil {
@@ -767,8 +767,6 @@ func main() {
 					if sidebar.buttonindex != buttonIndex {
 						sidebar.buttonindex = buttonIndex
 						sidebar.highlight = true
-						txt := sidebar.text[sidebar.buttonindex]
-						sidebar.callbacks[txt].(func())()
 					}
 				} else {
 					if sidebar.highlight {
@@ -788,6 +786,19 @@ func main() {
 				switch t.Type {
 				case sdl.MOUSEBUTTONDOWN:
 				case sdl.MOUSEBUTTONUP:
+					if sidebar.highlight {
+						sidebar.clicked = true
+					}
+					if sidebar.clicked {
+						txt := sidebar.text[sidebar.buttonindex]
+						if txt == "Open File" { // convert into switch here
+							bytes := sidebar.callbacks[txt].(func(string, string) []byte)(text_dir, "Hanyu.txt") // temp
+							println(len(bytes))
+						} else {
+							sidebar.callbacks[txt].(func())()
+						}
+						sidebar.clicked = false
+					}
 					print_word = true
 				}
 
