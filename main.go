@@ -664,6 +664,8 @@ func main() {
 			"Debug Menu",
 			"Properties",
 			"...More",
+			"Aa +",
+			"Aa -",
 		},
 		callbacks: make(map[string]interface{}),
 	}
@@ -679,7 +681,7 @@ func main() {
 		)
 	}
 
-	sidebar.AddButtons(5, 20)
+	sidebar.AddButtons(len(sidebar.text), 20)
 
 	for index := range sidebar.font_rect {
 		_, _, tw, th, _ := sidebar.font_texture[index].Query()
@@ -691,7 +693,7 @@ func main() {
 	sidebar.CenterTextRectX()
 
 	sidebar.callbacks["Open File"] = get_filedata
-	sidebar.callbacks["Load Font"] = func() { println("Load Font") }
+	sidebar.callbacks["Load Font"] = func(cmd *CmdConsole) { cmd.show = !cmd.show }
 	sidebar.callbacks["Debug Menu"] = func() { println("Debug Menu") }
 	sidebar.callbacks["Properties"] = func() { println("Properties") }
 	sidebar.callbacks["...More"] = func() { println("...More") }
@@ -797,12 +799,17 @@ func main() {
 						sidebar.clicked = true
 					}
 					if sidebar.clicked {
-						txt := sidebar.text[sidebar.buttonindex]
-						if txt == "Open File" { // convert into switch here
+						switch txt := sidebar.text[sidebar.buttonindex]; txt {
+						case "Open File":
 							bytes := sidebar.callbacks[txt].(func(string, string) []byte)(text_dir, "Hanyu.txt") // temp
 							println(len(bytes))
-						} else {
-							sidebar.callbacks[txt].(func())()
+						case "Load Font":
+							sidebar.callbacks[txt].(func(*CmdConsole))(&cmd) // cmd.show = true
+						default:
+							if _, ok := sidebar.callbacks[txt].(func()); ok {
+								sidebar.callbacks[txt].(func())()
+							}
+
 						}
 						sidebar.clicked = false
 					}
@@ -1921,7 +1928,7 @@ func generate_rects_for_fonts(renderer *sdl.Renderer, font *FontSelector) {
 			font.fonts[index].name,
 			&sdl.Color{R: 0, G: 0, B: 0, A: 0})
 
-		font.ttf_rects[index] = sdl.Rect{X: 0, Y: int32(adder_y), W: int32(gx * len(element.name)), H: int32(gy)}
+		font.ttf_rects[index] = sdl.Rect{X: 150, Y: int32(adder_y), W: int32(gx * len(element.name)), H: int32(gy)}
 
 		if font.bg_rect.W < font.ttf_rects[index].W {
 			font.bg_rect.W = font.ttf_rects[index].W
@@ -1930,6 +1937,7 @@ func generate_rects_for_fonts(renderer *sdl.Renderer, font *FontSelector) {
 		font.highlight_rect[index] = font.ttf_rects[index]
 
 		font.bg_rect.H += font.ttf_rects[index].H
+		font.bg_rect.X = 150
 		adder_y += gy
 
 		if index == len(font.fonts)-1 {
@@ -2246,7 +2254,7 @@ func (sbar *Sidebar) Draw(renderer *sdl.Renderer) {
 
 }
 
-func (sbar *Sidebar) AddButtons(numbtn, height int32) {
+func (sbar *Sidebar) AddButtons(numbtn int, height int32) {
 	rectW := sbar.rect.W
 	sbar.buttons = make([]sdl.Rect, numbtn)
 	space := int32(3)
