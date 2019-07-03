@@ -281,7 +281,7 @@ type Sidebar struct {
 	font_rect    []sdl.Rect
 	font_texture []*sdl.Texture
 	text         []string
-	callbacks    map[string]func()
+	callbacks    map[string]interface{}
 }
 
 const (
@@ -657,7 +657,7 @@ func main() {
 			"Properties",
 			"...More",
 		},
-		callbacks: make(map[string]func()),
+		callbacks: make(map[string]interface{}),
 	}
 	sidebar.font_texture = make([]*sdl.Texture, len(sidebar.text))
 	sidebar.font_rect = make([]sdl.Rect, len(sidebar.text))
@@ -768,7 +768,7 @@ func main() {
 						sidebar.buttonindex = buttonIndex
 						sidebar.highlight = true
 						txt := sidebar.text[sidebar.buttonindex]
-						sidebar.callbacks[txt]()
+						sidebar.callbacks[txt].(func())()
 					}
 				} else {
 					if sidebar.highlight {
