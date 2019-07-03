@@ -286,6 +286,21 @@ type Sidebar struct {
 }
 
 const (
+	POPUP_POS_LEFT = iota
+	POPUP_POS_RIGHT
+)
+
+type PopupLine struct {
+	a sdl.Point
+	b sdl.Point
+}
+
+type Popup struct {
+	rect sdl.Rect
+	tri  [2]PopupLine
+}
+
+const (
 	CURSOR_TYPE_ARROW = iota
 	CURSOR_TYPE_HAND
 	CURSOR_TYPE_SIZEWE
@@ -301,6 +316,7 @@ const (
 	GUI_ID_TOOLBAR
 	GUI_ID_COLOR_PICKER
 	GUI_ID_FONT_SELECTOR
+	GUI_ID_POPUP
 )
 
 func main() {
@@ -697,6 +713,9 @@ func main() {
 	sidebar.callbacks["Debug Menu"] = func() { println("Debug Menu") }
 	sidebar.callbacks["Properties"] = func() { println("Properties") }
 	sidebar.callbacks["...More"] = func() { println("...More") }
+
+	popup_a := NewPopup(40, 20, 20, POPUP_POS_RIGHT)
+	popup_b := NewPopup(20, 20, 20, POPUP_POS_LEFT)
 
 	rendererInfo, err := renderer.GetInfo()
 	if err != nil {
@@ -1346,6 +1365,9 @@ func main() {
 		renderer.DrawLine(wrapline.x1+int32(X_OFFSET), wrapline.y1, wrapline.x2+int32(X_OFFSET), wrapline.y2)
 
 		sidebar.Draw(renderer)
+
+		popup_a.Draw(renderer)
+		popup_b.Draw(renderer)
 
 		renderer.Present()
 
@@ -2288,4 +2310,60 @@ func (sbar *Sidebar) CenterTextRectX() {
 	for index := range sbar.font_rect {
 		sbar.font_rect[index].X = (sbar.bg_rect.W / 2) - (sbar.font_rect[index].W / 2)
 	}
+}
+
+func NewPopup(x, y, size, t int32) Popup {
+	switch t {
+	case POPUP_POS_RIGHT:
+		return Popup{
+			tri: [2]PopupLine{
+				PopupLine{
+					a: sdl.Point{x, y},
+					b: sdl.Point{x + size, size + y},
+				},
+
+				PopupLine{
+					a: sdl.Point{x + size, size + y},
+					b: sdl.Point{x, size + size + y},
+				},
+			},
+		}
+	case POPUP_POS_LEFT:
+		return Popup{
+			tri: [2]PopupLine{
+				PopupLine{
+					a: sdl.Point{x, size + y},
+					b: sdl.Point{x + size, y},
+				},
+
+				PopupLine{
+					a: sdl.Point{x, size + y},
+					b: sdl.Point{x + size, size + size + y},
+				},
+			},
+		}
+	}
+	return Popup{} // we should never reach this part
+}
+
+func (popup *Popup) Draw(renderer *sdl.Renderer) {
+	renderer.SetDrawColor(255, 255, 255, 255)
+	renderer.DrawLines([]sdl.Point{
+		popup.tri[0].a,
+		popup.tri[0].b,
+		popup.tri[1].a,
+		popup.tri[1].b,
+	})
+	//renderer.DrawLine(
+	//    popup.tri[0].a.X,
+	//    popup.tri[0].a.Y,
+	//    popup.tri[0].b.X,
+	//    popup.tri[0].b.Y,
+	//)
+	//renderer.DrawLine(
+	//    popup.tri[1].a.X,
+	//    popup.tri[1].a.Y,
+	//    popup.tri[1].b.X,
+	//    popup.tri[1].b.Y,
+	//)
 }
