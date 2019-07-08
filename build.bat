@@ -33,3 +33,6 @@ REM godoc -http=":8081"
 REM http://127.0.0.1:8081/pkg/
 REM godoc -http=6060
 REM localhost:6060
+
+REM BOUND CHECK ELIMINATION
+REM go build -gcflags="-d=ssa/check_bce/debug=1" main.go

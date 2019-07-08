@@ -38,6 +38,8 @@ import (
 // [ ] http://m0sth8.github.io/runtime-1/#1
 // [ ] optimizing go: https://www.youtube.com/watch?v=0i1nO9gwACY
 // [ ] optimizing go binaries: https://www.youtube.com/watch?v=HpriPuIfrGE
+// [ ] CKong by nybblesio
+//     https://www.youtube.com/watch?v=1KHVphJm6PU&list=PLWMUVtnFsZu6_5hRjaiSV8EIEK2CJ9c_Q
 
 // [ ] https://pavelfatin.com/scrolling-with-pleasure/
 // [ ] https://github.com/dlion/modularLocalization
@@ -284,11 +286,6 @@ type Sidebar struct {
 	text         []string
 	callbacks    map[string]interface{}
 }
-
-const (
-	POPUP_POS_LEFT = iota
-	POPUP_POS_RIGHT
-)
 
 type PopupLine struct {
 	a sdl.Point
@@ -714,8 +711,7 @@ func main() {
 	sidebar.callbacks["Properties"] = func() { println("Properties") }
 	sidebar.callbacks["...More"] = func() { println("...More") }
 
-	popup_a := NewPopup(40, 20, 20, POPUP_POS_RIGHT)
-	popup_b := NewPopup(20, 20, 20, POPUP_POS_LEFT)
+	//popup_a := NewPopup(10, 10, 5, byte('R'))
 
 	rendererInfo, err := renderer.GetInfo()
 	if err != nil {
@@ -1366,8 +1362,7 @@ func main() {
 
 		sidebar.Draw(renderer)
 
-		popup_a.Draw(renderer)
-		popup_b.Draw(renderer)
+		//popup_a.Draw(renderer)
 
 		renderer.Present()
 
@@ -1426,6 +1421,12 @@ func main() {
 	ttf.Quit()
 	sdl.Quit()
 	img.Quit()
+
+	runtime.UnlockOSThread() // NOTE: not sure I need this here!
+
+	println("[INFO] RENDERER TEXTURE MAX_W:", rendererInfo.MaxTextureWidth, "MAX_H:", rendererInfo.MaxTextureHeight)
+
+	ticker.Stop()
 
 	println("[INFO] NumCPU on this system: ", runtime.NumCPU())
 	println("[INFO] NumCgoCall during this application run: ", runtime.NumCgoCall())
@@ -2312,10 +2313,11 @@ func (sbar *Sidebar) CenterTextRectX() {
 	}
 }
 
-func NewPopup(x, y, size, t int32) Popup {
+func NewPopup(x, y, size int32, t byte) Popup {
+	popup := Popup{}
 	switch t {
-	case POPUP_POS_RIGHT:
-		return Popup{
+	case byte('R'): // Right
+		popup = Popup{
 			tri: [2]PopupLine{
 				PopupLine{
 					a: sdl.Point{x, y},
@@ -2328,8 +2330,8 @@ func NewPopup(x, y, size, t int32) Popup {
 				},
 			},
 		}
-	case POPUP_POS_LEFT:
-		return Popup{
+	case byte('L'): // Left
+		popup = Popup{
 			tri: [2]PopupLine{
 				PopupLine{
 					a: sdl.Point{x, size + y},
@@ -2342,11 +2344,13 @@ func NewPopup(x, y, size, t int32) Popup {
 				},
 			},
 		}
+		//default: Eventually we should return an error here
 	}
-	return Popup{} // we should never reach this part
+	return popup
 }
 
 func (popup *Popup) Draw(renderer *sdl.Renderer) {
+	draw_rect_without_border(renderer, &popup.rect, &COLOR_WHITE)
 	renderer.SetDrawColor(255, 255, 255, 255)
 	renderer.DrawLines([]sdl.Point{
 		popup.tri[0].a,
