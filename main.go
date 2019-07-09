@@ -316,6 +316,15 @@ const (
 	GUI_ID_POPUP
 )
 
+const (
+	BOM_NONE_OR_UNSUPPORTED uint8 = iota
+	BOM_UTF8
+	BOM_UTF16_BE
+	BOM_UTF16_LE
+	BOM_UTF32_BE
+	BOM_UTF32_LE
+)
+
 func main() {
 	// PROFILING SNIPPET
 
@@ -1446,6 +1455,29 @@ func main() {
 	// PROFILING SNIPPET
 }
 
+func GetBOM(bom []byte, file *os.File) uint8 {
+	switch b0, b1, b2, b3 := bom[0], bom[1], bom[2], bom[3]; {
+	case b0 == 0xEF && b1 == 0xBB && b2 == 0xBF:
+		file.Seek(3, os.SEEK_SET)
+		return BOM_UTF8
+	case b0 == 0xFE && b1 == 0xFF:
+		file.Seek(3, os.SEEK_SET)
+		return BOM_UTF16_BE
+	case b0 == 0xFF && b1 == 0xFE:
+		file.Seek(3, os.SEEK_SET)
+		return BOM_UTF16_LE
+	case b0 == 0x00 && b1 == 0x00 && b2 == 0xFE && b3 == 0xFF:
+		// no need to file.Seek
+		return BOM_UTF32_BE
+	case b0 == 0xFE && b1 == 0xFF && b2 == 0x00 && b3 == 0x00:
+		// no need to file.Seek
+		return BOM_UTF32_LE
+	default: // No Encoding or Unsupported encodings
+		file.Seek(0, os.SEEK_SET)
+		return BOM_NONE_OR_UNSUPPORTED
+	}
+}
+
 func load_font(name string, size int) *ttf.Font {
 	var font *ttf.Font
 	var err error
@@ -1721,6 +1753,50 @@ func NumWrappedLines(str []string, max_len int, xsize int) int32 {
 	}
 	// set slices to nil?
 	return result
+}
+
+func GetSliceCount(input string, linelen int) int32 {
+	result := int32(0)
+	for _, split := range strings.Split(input, "\n") {
+		slice := GetSlice(split, linelen)
+		for _, end := slice(); ; _, end = slice() {
+			result += 1
+			if end {
+				break
+			}
+		}
+		slice = nil
+	}
+	return result
+}
+
+func GetSlice(s string, end int) func() (string, bool) {
+	start := 0
+	last := 0
+	return func() (string, bool) {
+		t := s[:] // TODO: move it down to for i:=0 ....?
+		if last+end > len(s) {
+			end = len(s) - last
+		}
+		for i := 0; i < end; i++ {
+			_, size := utf8.DecodeRuneInString(t)
+			t = t[size:]
+			last += size
+		}
+		t = "" // TODO: is it correct to set t to an empty string?
+		if last >= len(s) {
+			result := s[start:]
+			return result, true
+		}
+		if !utf8.ValidString(s[start:last]) {
+			_, size := utf8.DecodeLastRuneInString(s[start:last])
+			last = last - size
+		}
+		last = strings.LastIndex(s[:last], " ") + 1 // +1 is to remove extra space
+		result := s[start:last]
+		start = last
+		return result, false
+	}
 }
 
 func assert_if(cond bool) {
