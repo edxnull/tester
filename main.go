@@ -424,19 +424,12 @@ func main() {
 	sdl.SetCursor(cursors[CURSOR_TYPE_ARROW])
 	cursor_state := CURSOR_TYPE_ARROW
 
-	//filename := "rus_bal_hiwnikov.txt"
-	//filename := "Russian.txt"
-	//filename := "French.txt"
-	//filename := "Mandarin.txt" // //TODO: we are crashing!
-	//filename := "Hanyu.txt"
-	// TODO: proper Wrapping for non ASCII texts!
-	filename := "HP01.txt"
-	//filename := "hobbit_rus.txt" //TODO: we are crashing!
-	// TODO: proper Wrapping for non ASCII texts!
+	filename := "French.txt"
 	font_dir := "./fonts/"
 	text_dir := "./text/"
 
-	line_tokens := strings.Split(string(get_filedata(text_dir, filename)), "\r\n") // "\r\n" instead of "\n"
+	file_data := string(get_filedata(text_dir, filename))
+	line_tokens := strings.Split(file_data, "\n") // "\r\n" instead of "\n"?
 
 	ticker := time.NewTicker(time.Second / 60)
 
@@ -454,7 +447,10 @@ func main() {
 
 	//FontHasGlyphsFromRangeTable(font, unicode.Latin)
 
-	test_tokens := WrapLines(line_tokens, LINE_LENGTH, gfonts.current_font_w)
+	start := time.Now()
+	//test_tokens := WrapLines(line_tokens, LINE_LENGTH, gfonts.current_font_w)
+	test_tokens := NewWrapLines(file_data, LINE_LENGTH, gfonts.current_font_w)
+	fmt.Println("[BENCHMARK] new_test_tokens took:", time.Now().Sub(start))
 
 	TEST_TOKENS_LEN := len(test_tokens)
 
@@ -808,7 +804,7 @@ func main() {
 					}
 				}
 			case *sdl.MouseWheelEvent:
-				println("(debug) mouse motion event in Y: ", t.Y)
+				//println("(debug) mouse motion event in Y: ", t.Y)
 				switch {
 				case t.Y > 0:
 					move_text_up = true
@@ -898,7 +894,7 @@ func main() {
 						font = reload_font(font, font_dir+test_font_name, test_font_size)
 						qw, _, _ := font.SizeUTF8(" ")
 						test_tokens = nil
-						test_tokens = WrapLines(line_tokens, LINE_LENGTH, qw)
+						test_tokens = NewWrapLines(file_data, LINE_LENGTH, qw)
 						textbox.MakeNULL() // could this be a problem later?
 
 						ClearMetadata(&linemeta)
@@ -953,7 +949,7 @@ func main() {
 						font = reload_font(font, font_dir+test_font_name, test_font_size)
 						qw, _, _ := font.SizeUTF8(" ")
 						test_tokens = nil
-						test_tokens = WrapLines(line_tokens, LINE_LENGTH, qw)
+						test_tokens = NewWrapLines(file_data, LINE_LENGTH, qw)
 						textbox.MakeNULL() // could this be a problem later?
 
 						ClearMetadata(&linemeta)
@@ -1111,20 +1107,20 @@ func main() {
 			//       about this sometime later.
 
 			// temp
-			multiline_texture.ClearAndWrite(
-				renderer,
-				color_picker.font,
-				test_tokens[0:24],
-				//[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
-				MLSkip,
-				rm_px+smooth.rect.Y,
-			)
+			//multiline_texture.ClearAndWrite(
+			//	renderer,
+			//	color_picker.font,
+			//	test_tokens[0:24],
+			//	//[]string{"the road goes ever ever one", "under cloud and under start", "yet feet that wondering have gone"},
+			//	MLSkip,
+			//	rm_px+smooth.rect.Y,
+			//)
 			// temp
 		}
-		draw_rounded_rect_with_border_filled(renderer, &smooth.rect, &COLOR_WISTERIA)
+		//draw_rounded_rect_with_border_filled(renderer, &smooth.rect, &COLOR_WISTERIA)
 
-		draw_rounded_rect_with_border_filled(renderer, &multiline_texture.bg_rect, &COLOR_IRON)
-		renderer.Copy(multiline_texture.texture, nil, &multiline_texture.bg_rect)
+		//draw_rounded_rect_with_border_filled(renderer, &multiline_texture.bg_rect, &COLOR_IRON)
+		//renderer.Copy(multiline_texture.texture, nil, &multiline_texture.bg_rect)
 
 		for i := 0; i < textbox.MetadataSize(); i++ {
 			renderer.Copy(textbox.data[i], nil, &textbox.data_rects[i])
@@ -1369,7 +1365,7 @@ func main() {
 		renderer.SetDrawColor(255, 100, 0, 100)
 		renderer.DrawLine(wrapline.x1+int32(X_OFFSET), wrapline.y1, wrapline.x2+int32(X_OFFSET), wrapline.y2)
 
-		sidebar.Draw(renderer)
+		//sidebar.Draw(renderer)
 
 		//popup_a.Draw(renderer)
 
@@ -1644,6 +1640,30 @@ func check_collision(event *sdl.MouseMotionEvent, rect *sdl.Rect) bool {
 
 	if (mx_gt_rx && mx_lt_rx_rw) && (my_gt_ry && my_lt_ry_rh) {
 		result = true
+	}
+	return result
+}
+
+func NewWrapLines(input string, length int, font_w int) []string {
+	//sizeInPx := int(math.RoundToEven(float64(length/font_w))) - 1
+	result := make([]string, GetSliceCount(input, length))
+	pos := 0
+	for _, split := range strings.Split(input, "\n") {
+		slice := GetSlice(split, length)
+		for s, end := slice(); ; s, end = slice() {
+			//TODO: this is where we should do something about sizeInPx
+			if s != "" {
+				result[pos] = s
+				pos += 1
+			}
+			if end {
+				break
+			}
+		}
+		slice = nil
+	}
+	if result[len(result)-1] == "" {
+		return result[:len(result)-1]
 	}
 	return result
 }
