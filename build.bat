@@ -41,4 +41,4 @@ REM go build -gcflags="-d=ssa/check_bce/debug=1" main.go
 
 REM [!]
 REM go build -ldflags="-s -w"
-REM This can reduce golang binary size and *working set bytes* NOTE(WHY?)
+REM This can reduce golang binary size and *working set bytes*

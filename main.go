@@ -16,15 +16,15 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	_"unicode"
-	_"unicode/utf16"
+	_ "unicode"
+	_ "unicode/utf16"
 	"unicode/utf8"
 )
 
-// https://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/ 
+// https://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/
 // https://golang.org/doc/code.html
 // https://mmcloughlin.com/posts/geohash-assembly
-// https://medium.com/@minimarcel/effect-of-cpu-caches-57db81490a7f 
+// https://medium.com/@minimarcel/effect-of-cpu-caches-57db81490a7f
 
 // Added a custom GlyphIsProvided to C:\Users\Edgaras\go\src\github.com\veandco\go-sdl2\ttf
 // Custom Added by EG!
@@ -378,7 +378,7 @@ func main() {
 	// TODO: investigate how to create software that could respond/work with available cores
 	//       what happens when only one core is available, as opposed to multiple cores?
 
-    // NOTE(Edgar) do we actually need sdl.INIT_TIMER here? Let's remove it for now.
+	// NOTE(Edgar) do we actually need sdl.INIT_TIMER here? Let's remove it for now.
 	if err := sdl.Init(sdl.INIT_VIDEO | sdl.INIT_AUDIO); err != nil {
 		panic(err)
 	}
@@ -544,8 +544,8 @@ func main() {
 	}
 
 	textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-	//textbox.Update(renderer, font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
-	textbox.Update(renderer, font, test_tokens[0:textbox.MetadataSize()], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+	//textbox.Update(font, test_tokens[0:qsize], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+	textbox.Update(font, test_tokens[0:textbox.MetadataSize()], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
 	re := make([]sdl.Rect, qsize)
 	rey := genY(font, qsize)
@@ -941,7 +941,7 @@ func main() {
 						}
 
 						textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-						textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+						textbox.Update(font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
 						re = nil
 						re = make([]sdl.Rect, qsize)
@@ -992,7 +992,7 @@ func main() {
 						}
 
 						textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-						textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+						textbox.Update(font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
 						re = nil
 						re = make([]sdl.Rect, qsize)
@@ -1207,8 +1207,8 @@ func main() {
 			if NEXT_ELEMENT <= TEST_TOKENS_LEN {
 				NEXT_ELEMENT += 1
 				START_ELEMENT += 1
-				textbox.Clear(renderer, font)
-				textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+				textbox.Clear(font)
+				textbox.Update(font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 				scrollbar.CalcPos(NEXT_ELEMENT, TEST_TOKENS_LEN)
 				inc_dbg_str = true
 				for i := 0; i < len(textbox.data); i++ {
@@ -1242,8 +1242,8 @@ func main() {
 			if START_ELEMENT > 0 {
 				NEXT_ELEMENT -= 1
 				START_ELEMENT -= 1
-				textbox.Clear(renderer, font)
-				textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+				textbox.Clear(font)
+				textbox.Update(font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 				scrollbar.CalcPos(NEXT_ELEMENT, TEST_TOKENS_LEN)
 				inc_dbg_str = true
 				for i := 0; i < len(textbox.data); i++ {
@@ -1281,8 +1281,8 @@ func main() {
 				START_ELEMENT = TEST_TOKENS_LEN - qsize
 				NEXT_ELEMENT = TEST_TOKENS_LEN
 			}
-			textbox.Clear(renderer, font)
-			textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+			textbox.Clear(font)
+			textbox.Update(font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 			for i := 0; i < len(textbox.data); i++ {
 				textbox.metadata[i] = &linemeta[START_ELEMENT+i]
 				for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
@@ -1300,8 +1300,8 @@ func main() {
 				START_ELEMENT = 0
 				NEXT_ELEMENT = qsize
 			}
-			textbox.Clear(renderer, font)
-			textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+			textbox.Clear(font)
+			textbox.Update(font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 			for i := 0; i < len(textbox.data); i++ {
 				textbox.metadata[i] = &linemeta[START_ELEMENT+i]
 				for j := 0; j < len(textbox.metadata[i].word_rects); j++ {
@@ -1338,7 +1338,7 @@ func main() {
 							test_font_name = gfonts.fonts[i].name
 							textbox.MakeNULL()
 							textbox.CreateEmpty(renderer, font, sdl.Color{R: 0, G: 0, B: 0, A: 255})
-							textbox.Update(renderer, font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
+							textbox.Update(font, test_tokens[START_ELEMENT:NEXT_ELEMENT], sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
 							ClearMetadata(&linemeta)
 							generate_line_metadata(font, &linemeta, &test_tokens)
@@ -1557,18 +1557,23 @@ func populate_line_metadata(line *LineMetaData, line_text string, font *ttf.Font
 		text_len -= 1
 	}
 
-    // TODO(Proposal)
-    // have struct {textpos, rectpos, width int32} for each word, instead of
-    //type byteOffset int32 // this means that we can store a 2GB file
-    //type Metadata struct {
-    //    byteoffset byteOffset
-    //    rectpos    int32
-    //    width      int32
-    //}
+	// TODO(Proposal)
+	// have struct {textpos, rectpos, width int32} for each word, instead of
+	// type byteOffset int32 // this means that we can store a 2GB file
+	// type Metadata struct {
+	//     byteoffset byteOffset
+	//     rectpos    int32
+	//    width      int32
+	//}
 
-    //TODO(Proposal)
-    // Container => App(Crate0, Crate1, Crate2)
-    // Crate => ... Widgets and such
+	// TODO(Proposal)
+	// Container => App(Crate0, Crate1, Crate2)
+	// Crate => ... Widgets and such
+
+	// TODO(Proposal)
+	// Is it possible to separate backend and front end of this application so that
+	// frontend is sdl2 and backend is exclusively golang.
+	// Frontend and Backend should be able to communicate (somehow), but not more than that.
 
 	line.word_rects = make([]sdl.Rect, text_len)
 	line.mouse_over_word = make([]bool, text_len)
@@ -2160,11 +2165,9 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 	converted.Free()
 }
 
-// TODO: why do we pass renderer here?
-func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []string, color sdl.Color) {
+func (tbox *TextBox) Update(font *ttf.Font, text []string, color sdl.Color) {
 	var err error
 	for i := 0; i < tbox.MetadataSize(); i++ {
-        println("[debug] ", i, text[i])
 		if text[i] != "\n" {
 			surface, _ := font.RenderUTF8Blended(text[i], color)
 			converted, _ := surface.Convert(tbox.fmt, 0)
@@ -2185,8 +2188,7 @@ func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []strin
 	}
 }
 
-// TODO: why do we pass renderer here?
-func (tbox *TextBox) Clear(renderer *sdl.Renderer, font *ttf.Font) {
+func (tbox *TextBox) Clear(font *ttf.Font) {
 	surface, _ := font.RenderUTF8Blended(" ", sdl.Color{R: 0, G: 0, B: 0, A: 0})
 	converted, _ := surface.Convert(tbox.fmt, 0)
 	for i := 0; i < len(tbox.data); i++ {
@@ -2334,7 +2336,7 @@ func (ML *MultiLine) Write(font *ttf.Font, text string, color sdl.Color, x, y in
 	converted.Free()
 }
 
-func (ML *MultiLine) Clear(renderer *sdl.Renderer, font *ttf.Font) {
+func (ML *MultiLine) Clear(font *ttf.Font) {
 	surface, _ := font.RenderUTF8Blended(" ", sdl.Color{R: 0, G: 0, B: 0, A: 0})
 	converted, _ := surface.Convert(ML.fmt, 0)
 
@@ -2355,7 +2357,7 @@ func (ML *MultiLine) ClearAndWrite(renderer *sdl.Renderer, font *ttf.Font, text 
 		mult = int32(i)*lineskip + adder
 		if mult <= ML.bg_rect.H-10 && mult > -10 { // TODO: should have a ML.surface_H/ML.surface_W
 			if can_clear { // NOTE(Edgar): This is a hack that stops us from crashing
-				ML.Clear(renderer, font)
+				ML.Clear(font)
 				can_clear = false
 			}
 			ML.Write(font, t, COLOR_BLACK, 0, mult)
