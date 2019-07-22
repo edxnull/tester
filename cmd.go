@@ -37,7 +37,7 @@ func NewCmdConsole(renderer *sdl.Renderer) CmdConsole {
 	}
 
 	cmd.font_w, cmd.font_h, _ = cmd.font.SizeUTF8(" ")
-	cmd.ttf_texture = make_ttf_texture(renderer, cmd.font, " ", &sdl.Color{R: 0, G: 0, B: 0, A: 255})
+	cmd.ttf_texture = MakeTTF_Texture(renderer, cmd.font, " ", &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 	cmd.ttf_rect = sdl.Rect{
 		X: 0,
 		Y: WIN_H - int32(cmd.font_h),
@@ -113,7 +113,7 @@ func (cmd *CmdConsole) Reset(renderer *sdl.Renderer) {
 		cmd.ttf_texture.Destroy()
 
 		if len(cmd.input_buffer.String()) > 0 {
-			cmd.ttf_texture = make_ttf_texture(renderer, cmd.font, temp_string, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
+			cmd.ttf_texture = MakeTTF_Texture(renderer, cmd.font, temp_string, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 		}
 
 		if len(temp_string) != 0 {

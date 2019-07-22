@@ -6,8 +6,10 @@ REM set GOARCH=386
 REM go build -gcflags="-N -l" main.go
 REM go build ./
 REM go fmt ./
-go build -i ./
 REM go build -i -gcflags="-N -l" ./
+REM go build -i -ldflags "-s -w -H windowsgui" ./
+
+go build -i ./
 tester.exe
 echo "Finished...."
 
@@ -36,3 +38,7 @@ REM localhost:6060
 
 REM BOUND CHECK ELIMINATION
 REM go build -gcflags="-d=ssa/check_bce/debug=1" main.go
+
+REM [!]
+REM go build -ldflags="-s -w"
+REM This can reduce golang binary size and *working set bytes* NOTE(WHY?)

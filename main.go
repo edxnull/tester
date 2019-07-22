@@ -1,11 +1,9 @@
-// +build windows, 386
-
 package main
 
 import (
 	"flag"
 	"fmt"
-	"github.com/veandco/go-sdl2/img"
+	//"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 	"io/ioutil"
@@ -18,13 +16,23 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode"
-	"unicode/utf16"
+	_"unicode"
+	_"unicode/utf16"
 	"unicode/utf8"
 )
 
-// TODO
+// https://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/ 
+// https://golang.org/doc/code.html
+// https://mmcloughlin.com/posts/geohash-assembly
+// https://medium.com/@minimarcel/effect-of-cpu-caches-57db81490a7f 
+
 // Added a custom GlyphIsProvided to C:\Users\Edgaras\go\src\github.com\veandco\go-sdl2\ttf
+// Custom Added by EG!
+// GlyphIsProvided returns the availability of the glyph ch from the loaded font.
+//func (f *Font) GlyphIsProvided(ch uint16) int {
+//    return int(C.TTF_GlyphIsProvided(f.f, C.Uint16(ch)))
+//}
+
 // Should we submit that to the actual repo?
 // Q: what happens when we pass in a value bigger than uint16?
 
@@ -370,7 +378,8 @@ func main() {
 	// TODO: investigate how to create software that could respond/work with available cores
 	//       what happens when only one core is available, as opposed to multiple cores?
 
-	if err := sdl.Init(sdl.INIT_TIMER | sdl.INIT_VIDEO | sdl.INIT_AUDIO); err != nil {
+    // NOTE(Edgar) do we actually need sdl.INIT_TIMER here? Let's remove it for now.
+	if err := sdl.Init(sdl.INIT_VIDEO | sdl.INIT_AUDIO); err != nil {
 		panic(err)
 	}
 
@@ -378,9 +387,9 @@ func main() {
 		panic(err)
 	}
 
-	if img.Init(img.INIT_PNG) == 0 {
-		panic("img.Init failed!")
-	}
+	//if img.Init(img.INIT_PNG) == 0 {
+	//	panic("img.Init failed!")
+	//}
 
 	window, err := sdl.CreateWindow(WIN_TITLE, sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, WIN_W, WIN_H,
 		sdl.WINDOW_SHOWN|sdl.WINDOW_RESIZABLE)
@@ -394,19 +403,19 @@ func main() {
 		panic(err)
 	}
 
-	img_surf, err := img.Load("./img/cube2.png")
-	if err != nil {
-		fmt.Errorf("Something went wrong with img.Load(): %v", err)
-	}
+	//img_surf, err := img.Load("./img/cube2.png")
+	//if err != nil {
+	//	fmt.Errorf("Something went wrong with img.Load(): %v", err)
+	//}
 	//key, err := img_surf.GetColorKey()
 	//println("COLOR KEY:", key)
-	img_surf.SetColorKey(true, 0x0)
-	img_tx, _ := renderer.CreateTextureFromSurface(img_surf)
+	//img_surf.SetColorKey(true, 0x0)
+	//img_tx, _ := renderer.CreateTextureFromSurface(img_surf)
 
-	img_surf.Free()
-	defer img_tx.Destroy()
+	//img_surf.Free()
+	//defer img_tx.Destroy()
 	//img_tx.SetBlendMode(sdl.BLENDMODE_BLEND)
-	img_tx_rect := sdl.Rect{int32(LINE_LENGTH) - 100, 0, 40, 40}
+	//img_tx_rect := sdl.Rect{int32(LINE_LENGTH) - 100, 0, 40, 40}
 
 	db := DBOpen()
 	defer db.Close()
@@ -424,7 +433,7 @@ func main() {
 	sdl.SetCursor(cursors[CURSOR_TYPE_ARROW])
 	cursor_state := CURSOR_TYPE_ARROW
 
-	filename := "French.txt"
+	filename := "French.txt" //"HP01.txt"
 	font_dir := "./fonts/"
 	text_dir := "./text/"
 
@@ -448,8 +457,8 @@ func main() {
 	//FontHasGlyphsFromRangeTable(font, unicode.Latin)
 
 	start := time.Now()
-	//test_tokens := WrapLines(line_tokens, LINE_LENGTH, gfonts.current_font_w)
-	test_tokens := NewWrapLines(file_data, LINE_LENGTH, gfonts.current_font_w)
+	test_tokens := WrapLines(line_tokens, LINE_LENGTH, gfonts.current_font_w)
+	//test_tokens := NewWrapLines(file_data, LINE_LENGTH, gfonts.current_font_w)
 	fmt.Println("[BENCHMARK] new_test_tokens took:", time.Now().Sub(start))
 
 	TEST_TOKENS_LEN := len(test_tokens)
@@ -461,7 +470,7 @@ func main() {
 
 	dbg_str := make_console_text(0, TEST_TOKENS_LEN)
 	dbg_rect := sdl.Rect{X: 0, Y: WIN_H - (cmd.bg_rect.H * 2), W: int32(gfonts.current_font_w * len(dbg_str)), H: int32(gfonts.current_font_h)}
-	dbg_ttf := make_ttf_texture(renderer, gfonts.current_font, dbg_str, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
+	dbg_ttf := MakeTTF_Texture(renderer, gfonts.current_font, dbg_str, &sdl.Color{R: 0, G: 0, B: 0, A: 255})
 
 	sdl.SetHint(sdl.HINT_FRAMEBUFFER_ACCELERATION, "1")
 	sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "1")
@@ -622,7 +631,7 @@ func main() {
 	)
 	// test shit
 
-	color_picker.texture = make_ttf_texture(renderer, color_picker.font, "this is our demo popup", &sdl.Color{R: 0, G: 0, B: 0, A: 0})
+	color_picker.texture = MakeTTF_Texture(renderer, color_picker.font, "this is our demo popup", &sdl.Color{R: 0, G: 0, B: 0, A: 0})
 
 	cp := color_picker.bg_color // ! only used here
 	color_picker.toolbar = Toolbar{
@@ -630,14 +639,14 @@ func main() {
 		bg_color: sdl.Color{cp.R, cp.G - 22, cp.B - 50, cp.A - 10},
 	}
 
-	color_picker.toolbar.texture[0] = make_ttf_texture(renderer, color_picker.font, "o", &COLOR_WHITE)
-	color_picker.toolbar.texture[1] = make_ttf_texture(renderer, color_picker.font, "x", &COLOR_WHITE)
+	color_picker.toolbar.texture[0] = MakeTTF_Texture(renderer, color_picker.font, "o", &COLOR_WHITE)
+	color_picker.toolbar.texture[1] = MakeTTF_Texture(renderer, color_picker.font, "x", &COLOR_WHITE)
 
 	_, _, cptw_0, cpth_0, _ := color_picker.toolbar.texture[0].Query()
 	_, _, cptw_1, cpth_1, _ := color_picker.toolbar.texture[1].Query()
 
 	for i := 0; i < len(color_picker.rects); i++ {
-		color_picker.rect_textures[i] = make_ttf_texture(renderer, color_picker.font, strconv.Itoa(i), &sdl.Color{R: 0, G: 0, B: 0, A: 0})
+		color_picker.rect_textures[i] = MakeTTF_Texture(renderer, color_picker.font, strconv.Itoa(i), &sdl.Color{R: 0, G: 0, B: 0, A: 0})
 	}
 
 	_, _, qw, qh, _ := color_picker.texture.Query()
@@ -691,7 +700,7 @@ func main() {
 	sidebar.font_rect = make([]sdl.Rect, len(sidebar.text))
 
 	for index := range sidebar.font_texture {
-		sidebar.font_texture[index] = make_ttf_texture(
+		sidebar.font_texture[index] = MakeTTF_Texture(
 			renderer,
 			sidebar.font,
 			sidebar.text[index],
@@ -1149,7 +1158,7 @@ func main() {
 		}
 
 		//draw_rect_with_border_filled(renderer, &img_tx_rect, &sdl.Color{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF})
-		renderer.Copy(img_tx, nil, &img_tx_rect)
+		//renderer.Copy(img_tx, nil, &img_tx_rect)
 
 		if engage_loop && !cmd.show {
 			for i := 0; i < textbox.MetadataSize(); i++ {
@@ -1425,13 +1434,11 @@ func main() {
 
 	ttf.Quit()
 	sdl.Quit()
-	img.Quit()
+	//img.Quit()
 
 	runtime.UnlockOSThread() // NOTE: not sure I need this here!
 
 	println("[INFO] RENDERER TEXTURE MAX_W:", rendererInfo.MaxTextureWidth, "MAX_H:", rendererInfo.MaxTextureHeight)
-
-	ticker.Stop()
 
 	println("[INFO] NumCPU on this system: ", runtime.NumCPU())
 	println("[INFO] NumCgoCall during this application run: ", runtime.NumCgoCall())
@@ -1497,7 +1504,7 @@ func reload_font(font *ttf.Font, name string, size int) *ttf.Font {
 	return font
 }
 
-func make_ttf_texture(renderer *sdl.Renderer, font *ttf.Font, text string, color *sdl.Color) *sdl.Texture {
+func MakeTTF_Texture(renderer *sdl.Renderer, font *ttf.Font, text string, color *sdl.Color) *sdl.Texture {
 	var surface *sdl.Surface
 	var texture *sdl.Texture
 
@@ -1549,6 +1556,19 @@ func populate_line_metadata(line *LineMetaData, line_text string, font *ttf.Font
 	if text[text_len-1] == "" { // guard against an empty ""
 		text_len -= 1
 	}
+
+    // TODO(Proposal)
+    // have struct {textpos, rectpos, width int32} for each word, instead of
+    //type byteOffset int32 // this means that we can store a 2GB file
+    //type Metadata struct {
+    //    byteoffset byteOffset
+    //    rectpos    int32
+    //    width      int32
+    //}
+
+    //TODO(Proposal)
+    // Container => App(Crate0, Crate1, Crate2)
+    // Crate => ... Widgets and such
 
 	line.word_rects = make([]sdl.Rect, text_len)
 	line.mouse_over_word = make([]bool, text_len)
@@ -1651,7 +1671,7 @@ func NewWrapLines(input string, length int, font_w int) []string {
 	for _, split := range strings.Split(input, "\n") {
 		slice := GetSlice(split, length)
 		for s, end := slice(); ; s, end = slice() {
-			//TODO: this is where we should do something about sizeInPx
+			// TODO: this is where we should do something about sizeInPx
 			if s != "" {
 				result[pos] = s
 				pos += 1
@@ -2043,7 +2063,7 @@ func generate_rects_for_fonts(renderer *sdl.Renderer, font *FontSelector) {
 		font.fonts[index].width = int32(gx)
 		font.fonts[index].height = int32(gy)
 
-		font.textures[index] = make_ttf_texture(renderer, font.fonts[index].data,
+		font.textures[index] = MakeTTF_Texture(renderer, font.fonts[index].data,
 			font.fonts[index].name,
 			&sdl.Color{R: 0, G: 0, B: 0, A: 0})
 
@@ -2144,6 +2164,7 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 func (tbox *TextBox) Update(renderer *sdl.Renderer, font *ttf.Font, text []string, color sdl.Color) {
 	var err error
 	for i := 0; i < tbox.MetadataSize(); i++ {
+        println("[debug] ", i, text[i])
 		if text[i] != "\n" {
 			surface, _ := font.RenderUTF8Blended(text[i], color)
 			converted, _ := surface.Convert(tbox.fmt, 0)
@@ -2225,35 +2246,35 @@ func (CP *ColorPicker) UpdateWindowPos(r sdl.Rect, skip int32) {
 }
 
 //TODO: add .R32
-func FontHasGlyphsFromRangeTable(font *ttf.Font, rtable *unicode.RangeTable) {
-	for current := 0; current < len(rtable.R16); current += 1 {
-		delta := rtable.R16[current].Hi - rtable.R16[current].Lo
-
-		if delta > 0 {
-			//print(current) //print(" ")
-			//print(delta) //print(" ")
-			mk := make([]uint16, delta)
-
-			i := 0
-			for rng := rtable.R16[current].Lo; rng < rtable.R16[current].Hi; rng += rtable.R16[current].Stride {
-				mk[i] = rng
-				i++ // move this i++
-			}
-
-			r := utf16.Decode(mk)
-			for _, x := range r {
-				//if unicode.IsLetter(x) && font.GlyphIsProvided(uint16(x)) > 0 {
-				if font.GlyphIsProvided(uint16(x)) > 0 {
-					print(string(x))
-				} else {
-					println("not provided: ", string(x), x)
-				}
-			}
-			println("")
-			mk = nil
-		}
-	}
-}
+//func FontHasGlyphsFromRangeTable(font *ttf.Font, rtable *unicode.RangeTable) {
+//	for current := 0; current < len(rtable.R16); current += 1 {
+//		delta := rtable.R16[current].Hi - rtable.R16[current].Lo
+//
+//		if delta > 0 {
+//			//print(current) //print(" ")
+//			//print(delta) //print(" ")
+//			mk := make([]uint16, delta)
+//
+//			i := 0
+//			for rng := rtable.R16[current].Lo; rng < rtable.R16[current].Hi; rng += rtable.R16[current].Stride {
+//				mk[i] = rng
+//				i++ // move this i++
+//			}
+//
+//			r := utf16.Decode(mk)
+//			for _, x := range r {
+//				//if unicode.IsLetter(x) && font.GlyphIsProvided(uint16(x)) > 0 {
+//				if font.GlyphIsProvided(uint16(x)) > 0 {
+//					print(string(x))
+//				} else {
+//					println("not provided: ", string(x), x)
+//				}
+//			}
+//			println("")
+//			mk = nil
+//		}
+//	}
+//}
 
 // TODO: refactor this later to take an int instead of sdl.Rect
 //       that way i'll be able to use it for X, Y, W, H and R, G, B, A
@@ -2317,7 +2338,7 @@ func (ML *MultiLine) Clear(renderer *sdl.Renderer, font *ttf.Font) {
 	surface, _ := font.RenderUTF8Blended(" ", sdl.Color{R: 0, G: 0, B: 0, A: 0})
 	converted, _ := surface.Convert(ML.fmt, 0)
 
-	// TODO: do we need to do converted pixels here??
+	// TODO: do we need to do converted pixels here?? -> NO
 	bytes, _, _ := ML.texture.Lock(nil)
 	copy(bytes, converted.Pixels())
 	ML.texture.Unlock()
