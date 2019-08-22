@@ -309,7 +309,8 @@ func main() {
 	sdl.SetCursor(cursors[CURSOR_TYPE_ARROW])
 	cursor_state := CURSOR_TYPE_ARROW
 
-	filename := "HP01.txt" //"French.txt" //"HP01.txt"
+    //"HP01.txt"
+	filename := "French.txt"
 	font_dir := "./fonts/"
 	text_dir := "./text/"
 
@@ -331,10 +332,10 @@ func main() {
 	generate_rects_for_fonts(renderer, &gfonts)
 
 	//FontHasGlyphsFromRangeTable(font, unicode.Latin)
+	//test_tokens := WrapLines(line_tokens, LINE_LENGTH, gfonts.current_font_w)
 
 	start := time.Now()
-	test_tokens := WrapLines(line_tokens, LINE_LENGTH, gfonts.current_font_w)
-	//test_tokens := NewWrapLines(file_data, LINE_LENGTH, gfonts.current_font_w)
+	test_tokens := NewWrapLines(file_data, LINE_LENGTH, gfonts.current_font_w)
 	fmt.Println("[BENCHMARK] new_test_tokens took:", time.Now().Sub(start))
 
 	TEST_TOKENS_LEN := len(test_tokens)
@@ -976,7 +977,7 @@ func main() {
 					smooth.rect.Y -= int32(EaseInQuad(float32(0),
 						float32(smooth.new_max_dest), float32(smooth.new_max_dest), smooth.animation_time))
 				}
-				println("up ", smooth.rect.Y, smooth.new_max_dest, smooth.skip)
+				//println("up ", smooth.rect.Y, smooth.new_max_dest, smooth.skip)
 				smooth.animation_time += 1
 				if smooth.rect.Y <= smooth.new_max_dest {
 					smooth.animate = false
@@ -1544,11 +1545,11 @@ func check_collision(event *sdl.MouseMotionEvent, rect *sdl.Rect) bool {
 }
 
 func NewWrapLines(input string, length int, font_w int) []string {
-	//sizeInPx := int(math.RoundToEven(float64(length/font_w))) - 1
-	result := make([]string, GetSliceCount(input, length))
+	sizeInPx := int(math.RoundToEven(float64(length/font_w))) - 1
+	result := make([]string, GetSliceCount(input, sizeInPx))
 	pos := 0
 	for _, split := range strings.Split(input, "\n") {
-		slice := GetSlice(split, length)
+		slice := GetSlice(split, sizeInPx)
 		for s, end := slice(); ; s, end = slice() {
 			// TODO: this is where we should do something about sizeInPx
 			if s != "" {
@@ -2044,25 +2045,26 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 func (tbox *TextBox) Update(font *ttf.Font, text []string, color sdl.Color) {
 	var err error
 
-    //for i := range text {
-    //    //assert_if(len(text[i]) <= 1)
-    //    assert_if(text[i] == " ")
-    //}
+    for i := range text {
+        assert_if(text[i] == " ")
+    }
 
 	for i := 0; i < tbox.MetadataSize(); i++ {
 		if text[i] != "\n" {
 			surface, _ := font.RenderUTF8Blended(text[i], color)
 			converted, _ := surface.Convert(tbox.fmt, 0)
 			if surface.W <= int32(LINE_LENGTH) { // TODO: make sure that texture H >= surface.H ??
-				err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: tbox.texture_h}, converted.Pixels(), int(converted.Pitch))
+				err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: tbox.texture_h},
+                                                                converted.Pixels(), int(converted.Pitch))
 				if err != nil {
 					fmt.Println(err)
 				}
-			} else { // TODO: check if we are wes till using this else clause?
-				err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: surface.H}, converted.Pixels(), int(converted.Pitch))
-				if err != nil {
-					fmt.Println(err)
-				}
+			} else {
+                err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: tbox.texture_h},
+                                                                converted.Pixels(), int(converted.Pitch))
+                if err != nil {
+                    fmt.Println(err)
+                }
 			}
 			surface.Free()
 			converted.Free()
