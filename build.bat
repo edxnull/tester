@@ -9,7 +9,7 @@ REM go fmt ./
 REM go build -i -gcflags="-N -l" ./
 REM go build -i -ldflags "-s -w -H windowsgui" ./
 
-go build -i ./
+go build ./
 tester.exe
 echo "Finished...."
 

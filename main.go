@@ -21,137 +21,13 @@ import (
 	"unicode/utf8"
 )
 
-// https://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/
-// https://golang.org/doc/code.html
-// https://mmcloughlin.com/posts/geohash-assembly
-// https://medium.com/@minimarcel/effect-of-cpu-caches-57db81490a7f
-
-// Added a custom GlyphIsProvided to C:\Users\Edgaras\go\src\github.com\veandco\go-sdl2\ttf
-// Custom Added by EG!
-// GlyphIsProvided returns the availability of the glyph ch from the loaded font.
-//func (f *Font) GlyphIsProvided(ch uint16) int {
-//    return int(C.TTF_GlyphIsProvided(f.f, C.Uint16(ch)))
-//}
-
-// Should we submit that to the actual repo?
-// Q: what happens when we pass in a value bigger than uint16?
-
-// GENERAL
-
-// [ ] what if instead of splitting strings all over our code, we load a string once and then just have pointers or position int32's?
-//     when we reload fonts we inevitably have to reload text, which is not great (it also creates a lot of garbage).
-
-// [ ] https://4gophers.ru/articles/smid-optimizaciya-v-go/
-// [ ] https://habr.com/ru/company/badoo/blog/301990/
-// [ ] http://m0sth8.github.io/runtime-1/#1
-// [ ] optimizing go: https://www.youtube.com/watch?v=0i1nO9gwACY
-// [ ] optimizing go binaries: https://www.youtube.com/watch?v=HpriPuIfrGE
-// [ ] CKong by nybblesio
-//     https://www.youtube.com/watch?v=1KHVphJm6PU&list=PLWMUVtnFsZu6_5hRjaiSV8EIEK2CJ9c_Q
-
-// [ ] https://pavelfatin.com/scrolling-with-pleasure/
-// [ ] https://github.com/dlion/modularLocalization
-// [ ] https://arslan.io/2017/09/14/the-ultimate-guide-to-writing-a-go-tool/
-// [ ] https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html
-// [ ] https://www.youtube.com/user/dotconferences/videos
-// [ ] add "runtime" for if runtime.GOOS == "windows" { println("blah") } else { println("blah") }
-// [ ] use sdl.GetPlatform() || [runtime.GOOS == ""] || [foo_unix.go; foo_windows.go style]
-// [ ] https://github.com/golang-standarts/project-layout
-// [ ] instead of having images saved in a application folder, maybe we could generate img and then just load it up into a texture?
-//     - use fogleman/gg or golang/image for that
-// [ ] use C:\Windows\fonts for fonts?
-// [ ] I'm sure that the app needs to have a modal way of execution, otherwise it's a nightmare to maintain.
-// [ ] create a telegram bot for this app?
-// [ ] use telegram for saving messages/audio and stuff?
-// [ ] maybe try using github.com/golang/freetype/truetype package instead of sdl2 ttf one!
-// [ ] https://stackoverflow.com/questions/29105540/aligning-text-in-golang-with-truetype
-// [ ] checkout github.com/fatih/structs
-// [ ] use asciinema.org for inspiration!
-// [ ] use https://godoc.org/github.com/fsnotify/fsnotify for checking if our settings file has been changed?
-// [ ] separate updating and rendering?
-// [ ] maybe it would be possible to use unicode symbols like squares/triangles to indicate clickable objects?
-// [ ] predefined colors in a .settings file?
-// [ ] refactor FontSelector
-// [ ] make sure that we don't exceed max sdl.texture width
-// [ ] should we compress strings?? Huffman encoding?
-// [ ] should we use hash algorithms?
-// [ ] searching
-// [ ] justify text
-// [ ] fuzzy search
-// [ ] copy text
-// [ ] copy & pasting commands
-// [ ] get an N and a list of unique words in a file
-// [ ] save words to a trie tree?
-// [ ] figure out what to do about languages like left to right and asian languages
-// [ ] export/import csv
-// [ ] make sure we handle utf8
-// [ ] cmd input commands + parsing
-// [ ] [bug_icon] in-app file a bug button & menu
-// [ ] should we keep fonts in memory? or free them instead?
-// [ ] https://en.wikipedia.org/wiki/Newline
-// [ ] add proper error handling
-// [ ] add logs???
-// [ ] try proper font resizing -> resize the rect first and then reload ? or it's just enough to resize the rect by using font query?
-
-// SDL RELATED
-// [ ] !batch optimize Cgo calls
-// [ ] optimize TextBox Update and Clear (somehow)
-// [ ] try using r.SetScale() => sdl.SetLogicalSize + sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "linear")
-// [ ] use r.DrawLines() to draw triangles?
-// [ ] use r.DrawRects() r.FillRects() for speed?
-// [ ] use (t *sdl.Texture) GLBind/GLUnbind for faster rendering?
-// [ ] use r.SetClipRect r.GetClipRect for rendering
-// [ ] USE sdl.WINDOWEVENT_EXPOSED for proper redrawing
-// [ ] renderer.SetLogicalSize(WIN_W, WIN_H) -> SetLogicalSize is important for device independant rendering!
-// [ ] proper time handling like dt and such
-// [ ] how can we not render everything on every frame?
-// [ ] add error handling code like println(sdl.GetError())?
-
-// VISUAL
-// [ ] http://blog.moagrius.com/actionscript/jsas-understanding-easing/
-// [ ] https://github.com/malkia/ufo/tree/master/samples/SDL
-// [ ] http://perso.univ-lyon1.fr/thierry.excoffier/ZMW/Welcome.html
-// [ ] http://northstar-www.dartmouth.edu/doc/idl/html_6.2/Creating_Widget_Applications.html
-// [ ] add equations of motion for nice animation effects https://easings.net/
-// [ ] tables [rows x columns]
-// [ ] color rgb or rgba [color] [r, g, b] ... [r, g, b, a]
-// [ ] checkbox rect within a rect [x] or [[]]
-// [ ] tooltip on word hover
-// [ ] interactive tooltip
-// [ ] progress bar for loading files and other purposes
-// [ ] visualising word stats
-// [ ] smooth scrolling
-// [ ] bezier curve easing functions
-// [ ] taskbar / menu bar
-// [ ] grapical popup error messages like: error => your command is too long, etc...
-
-// AUDIO
-// [ ] loading and playing audio files
-// [ ] recording audio?
-// [ ] needs to support tags/breakpoints for situations where you can't hear clearly or don't understand
-
-// TESTING
-// [ ] automated visual tests
-// [ ] create automated tests to scroll through the page from top to bottom checking if we ever fail to allocate/deallocate *Line
-// [ ] add a way to submit github tickets within the app for alpha/beta testing?
-
-// GO RELATED
-// [ ] move to a 64-bit version of golang and sdl2 (needed for DELVE debugger)
-// [ ] test struct padding?
-// [ ] list.go should we set data to nil everytime?
-// [ ] get rid of int (because on 64-bit systems it would become 64 bit and waste memory) or not???? maybe use int16 in some cases
-
-// DEBUGERS
-// [ ] try github aarzilli/gdlv
-// [ ] try go-delve/delve
-
 const WIN_TITLE string = "GO_TEXT_APPLICATION"
 
 const WIN_W int32 = 800
 const WIN_H int32 = 600
 
 const X_OFFSET int = 7
-const TTF_FONT_SIZE int = 14
+const TTF_FONT_SIZE int = 16
 const TTF_FONT_SIZE_FOR_FONT_LIST int = 12
 const LINE_LENGTH int = 500
 
@@ -433,7 +309,7 @@ func main() {
 	sdl.SetCursor(cursors[CURSOR_TYPE_ARROW])
 	cursor_state := CURSOR_TYPE_ARROW
 
-	filename := "French.txt" //"HP01.txt"
+	filename := "HP01.txt" //"French.txt" //"HP01.txt"
 	font_dir := "./fonts/"
 	text_dir := "./text/"
 
@@ -1389,10 +1265,6 @@ func main() {
 
 	println("[INFO] RENDERER TEXTURE MAX_W:", rendererInfo.MaxTextureWidth, "MAX_H:", rendererInfo.MaxTextureHeight)
 
-	ticker.Stop()
-	renderer.Destroy()
-	window.Destroy()
-
 	textbox.MakeNULL()
 	textbox.fmt.Free()
 
@@ -1429,16 +1301,18 @@ func main() {
 	if sidebar.font != nil {
 		sidebar.font.Close()
 	}
-
 	font.Close()
 
 	ttf.Quit()
+
+	ticker.Stop()
+	renderer.Destroy()
+	window.Destroy()
+
 	sdl.Quit()
 	//img.Quit()
 
 	runtime.UnlockOSThread() // NOTE: not sure I need this here!
-
-	println("[INFO] RENDERER TEXTURE MAX_W:", rendererInfo.MaxTextureWidth, "MAX_H:", rendererInfo.MaxTextureHeight)
 
 	println("[INFO] NumCPU on this system: ", runtime.NumCPU())
 	println("[INFO] NumCgoCall during this application run: ", runtime.NumCgoCall())
@@ -2042,6 +1916,7 @@ func allocate_font_space(font *FontSelector, size int) {
 
 func generate_fonts(font *FontSelector, ttf_font_list []string, font_dir string) {
 	//CURRENT := "Inconsolata-Regular.ttf"
+	//CURRENT := "Inconsolata-Bold.ttf"
 	CURRENT := "AnonymousPro-Regular.ttf"
 	//CURRENT := "DejaVuSansMono.ttf"
 	//CURRENT := "Miroslav.ttf"
@@ -2161,12 +2036,19 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 		tbox.data_rects[i] = sdl.Rect{X: int32(X_OFFSET), Y: accy, W: qw, H: qh}
 		accy += skip
 	}
+
 	surface.Free()
 	converted.Free()
 }
 
 func (tbox *TextBox) Update(font *ttf.Font, text []string, color sdl.Color) {
 	var err error
+
+    //for i := range text {
+    //    //assert_if(len(text[i]) <= 1)
+    //    assert_if(text[i] == " ")
+    //}
+
 	for i := 0; i < tbox.MetadataSize(); i++ {
 		if text[i] != "\n" {
 			surface, _ := font.RenderUTF8Blended(text[i], color)
@@ -2202,8 +2084,10 @@ func (tbox *TextBox) Clear(font *ttf.Font) {
 
 func (tbox *TextBox) MakeNULL() {
 	for i := 0; i < len(tbox.data); i++ {
-		tbox.data[i].Destroy()
-		tbox.data[i] = nil
+        if tbox.data[i] != nil {
+            tbox.data[i].Destroy()
+            tbox.data[i] = nil
+        }
 	}
 }
 

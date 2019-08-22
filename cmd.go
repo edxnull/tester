@@ -129,7 +129,9 @@ func (cmd *CmdConsole) Reset(renderer *sdl.Renderer) {
 
 func (cmd *CmdConsole) MakeNULL() {
 	cmd.input_buffer.Reset()
-	cmd.ttf_texture.Destroy()
-	cmd.ttf_texture = nil
+    if cmd.ttf_rect != nil {
+        cmd.ttf_texture.Destroy()
+        cmd.ttf_texture = nil
+    }
 	cmd.cursor_rect.X = 0
 }
