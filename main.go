@@ -309,7 +309,7 @@ func main() {
 	sdl.SetCursor(cursors[CURSOR_TYPE_ARROW])
 	cursor_state := CURSOR_TYPE_ARROW
 
-    //"HP01.txt"
+	//"HP01.txt"
 	filename := "French.txt"
 	font_dir := "./fonts/"
 	text_dir := "./text/"
@@ -1246,6 +1246,8 @@ func main() {
 
 			draw_rect_with_border_filled(renderer, &dbg_rect, &sdl.Color{R: 180, G: 123, B: 55, A: 255})
 			renderer.Copy(dbg_ttf, nil, &dbg_rect)
+
+			sidebar.Draw(renderer)
 		}
 
 		renderer.SetDrawColor(255, 100, 0, 100)
@@ -2045,9 +2047,9 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 func (tbox *TextBox) Update(font *ttf.Font, text []string, color sdl.Color) {
 	var err error
 
-    for i := range text {
-        assert_if(text[i] == " ")
-    }
+	for i := range text {
+		assert_if(text[i] == " ")
+	}
 
 	for i := 0; i < tbox.MetadataSize(); i++ {
 		if text[i] != "\n" {
@@ -2055,16 +2057,16 @@ func (tbox *TextBox) Update(font *ttf.Font, text []string, color sdl.Color) {
 			converted, _ := surface.Convert(tbox.fmt, 0)
 			if surface.W <= int32(LINE_LENGTH) { // TODO: make sure that texture H >= surface.H ??
 				err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: tbox.texture_h},
-                                                                converted.Pixels(), int(converted.Pitch))
+					converted.Pixels(), int(converted.Pitch))
 				if err != nil {
 					fmt.Println(err)
 				}
 			} else {
-                err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: tbox.texture_h},
-                                                                converted.Pixels(), int(converted.Pitch))
-                if err != nil {
-                    fmt.Println(err)
-                }
+				err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: tbox.texture_h},
+					converted.Pixels(), int(converted.Pitch))
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 			surface.Free()
 			converted.Free()
@@ -2086,10 +2088,10 @@ func (tbox *TextBox) Clear(font *ttf.Font) {
 
 func (tbox *TextBox) MakeNULL() {
 	for i := 0; i < len(tbox.data); i++ {
-        if tbox.data[i] != nil {
-            tbox.data[i].Destroy()
-            tbox.data[i] = nil
-        }
+		if tbox.data[i] != nil {
+			tbox.data[i].Destroy()
+			tbox.data[i] = nil
+		}
 	}
 }
 
