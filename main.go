@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"unsafe"
+
 	//"github.com/veandco/go-sdl2/img"
-	"github.com/veandco/go-sdl2/sdl"
-	"github.com/veandco/go-sdl2/ttf"
 	"io/ioutil"
 	"log"
 	"math"
@@ -19,9 +19,12 @@ import (
 	_ "unicode"
 	_ "unicode/utf16"
 	"unicode/utf8"
+
+	"github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/ttf"
 )
 
-const WIN_TITLE string = "GO_TEXT_APPLICATION"
+const WIN_TITLE string = "App"
 
 const WIN_W int32 = 800
 const WIN_H int32 = 600
@@ -2023,7 +2026,7 @@ func (tbox *TextBox) CreateEmpty(renderer *sdl.Renderer, font *ttf.Font, color s
 		if err != nil {
 			fmt.Println(err)
 		}
-		err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+		err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, unsafe.Pointer(&converted.Pixels()[0]), int(converted.Pitch))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -2057,13 +2060,13 @@ func (tbox *TextBox) Update(font *ttf.Font, text []string, color sdl.Color) {
 			converted, _ := surface.Convert(tbox.fmt, 0)
 			if surface.W <= int32(LINE_LENGTH) { // TODO: make sure that texture H >= surface.H ??
 				err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: tbox.texture_h},
-					converted.Pixels(), int(converted.Pitch))
+					unsafe.Pointer(&converted.Pixels()[0]), int(converted.Pitch))
 				if err != nil {
 					fmt.Println(err)
 				}
 			} else {
 				err = tbox.data[i].Update(&sdl.Rect{X: 0, Y: 0, W: int32(LINE_LENGTH), H: tbox.texture_h},
-					converted.Pixels(), int(converted.Pitch))
+					unsafe.Pointer(&converted.Pixels()[0]), int(converted.Pitch))
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -2196,7 +2199,7 @@ func (ML *MultiLine) New(renderer *sdl.Renderer, font *ttf.Font) {
 	converted, _ := surface.Convert(ML.fmt, 0)
 	ML.lineskip = int32(font.LineSkip())
 	ML.texture, _ = renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_STREAMING, 300, 300)
-	ML.texture.Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+	ML.texture.Update(&sdl.Rect{X: 0, Y: 0, W: surface.W, H: surface.H}, unsafe.Pointer(&converted.Pixels()[0]), int(converted.Pitch))
 	ML.texture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	ML.bg_rect = sdl.Rect{int32(LINE_LENGTH), 0, 300, 300}
 	surface.Free()
@@ -2207,7 +2210,7 @@ func (ML *MultiLine) Write(font *ttf.Font, text string, color sdl.Color, x, y in
 	surface, _ := font.RenderUTF8Blended(text, color)
 	converted, _ := surface.Convert(ML.fmt, 0)
 
-	ML.texture.Update(&sdl.Rect{X: x, Y: y, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
+	ML.texture.Update(&sdl.Rect{X: x, Y: y, W: surface.W, H: surface.H}, unsafe.Pointer(&converted.Pixels()[0]), int(converted.Pitch))
 
 	//if y < ML.bg_rect.H {
 	//	ML.texture.Update(&sdl.Rect{X: x, Y: y, W: surface.W, H: surface.H}, converted.Pixels(), int(converted.Pitch))
